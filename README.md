@@ -1,6 +1,6 @@
 [discord-invite]: https://discord.gg/invite/eXioStorm#6069
 [FAQ]: https://img.shields.io/badge/Wiki-FAQ-blue.svg
-[![Discord](https://cdn.discordapp.com/icons/431382619595210752/51b170a7b134a674f1525bc9953f8710.webp?size=24)][discord-invite]
+[![Discord](https://cdn.discordapp.com/icons/431382619595210752/c49e2e3619e61505da62f93cd8fd952d.webp?size=24)][discord-invite]
 [![Discord](https://discordapp.com/api/guilds/431382619595210752/widget.png)][discord-invite]
 
 [ ![FAQ] ](https://github.com/eXioStorm/EchoEngine)
