@@ -10,4 +10,4 @@ animator? spriteAnimator? idfk man. will work on naming conventions later.
 * lets try to think of how it should work when shared...
 * batchRender.add(animator.update(null), 100, 200)?
 * **have update return a texture**?
-* need functional operations to pause, resume, stop?
+* need functional operations to pause, resume, stop? example when we need this : Player jumps, we want to stop the idle animation so when we start it next time it resets to the first frame. same for when we switch from the jumping animation. currentAnimator.stop(); currentAnimator = animatorMap.get(jumping);
