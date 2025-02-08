@@ -9,4 +9,4 @@ animator? spriteAnimator? idfk man. will work on naming conventions later.
 * we also need to be able to share the animator if needed, for things like grass for example. and we need to make sure that it is capable of being independent too. so we'll probably have some sort of identifier for the animator.
 * lets try to think of how it should work when shared...
 * batchRender.add(animator.update(null), 100, 200)?
-* have update return a texture?
+* **have update return a texture**?
