@@ -10,3 +10,4 @@ animator? spriteAnimator? idfk man. will work on naming conventions later.
 * lets try to think of how it should work when shared...
 * batchRender.add(animator.update(null), 100, 200)?
 * **have update return a texture**?
+* need functional operations to pause, resume, stop?
