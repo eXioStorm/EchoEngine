@@ -10,5 +10,6 @@
   * for in-game paint tools we can either use something like a 9-bit color map to reduce VRAM usage, or setup something like a limited-size atlas that's separate from our program textures. 
   * need to figure out how layering works. need to have layers that are permanent like UI elements, while also allowing things like players being able to walk behind things and things like certain tiles belong to different layers so we can have players walk behind things if the tile they're walking on is a different layer.
   * trying to research PBO(pixel buffer objects) / bindless textures, not sure how either of these things can be used with our setup.
+  * I'm not sure if we could automate it by checking if any files are modified later than a certain time, but it would be good to save this expensive atlas generation somehow so it only runs once(or not at all via a pre-configured setup when we distribute. then being once per modification.)
 #### Shaders
   * Still learning setting this up, will be super important for things like particles, highlighting, font rendering(changing font color), etc.
