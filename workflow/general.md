@@ -4,8 +4,8 @@
 * Naming convention
 * Modularity
 <br>Need to continously watch code and re-structure when it starts to web with other classes. This was already done multiple times, once with the GamePanel class, and our **main()** classes.
-* Documentation
-<br>When our code is cleaned up, modular, and fairly feature-rich, We should work on a java doc to provide detailed explanations for methods used and class summary.
+* Documentation & legibility
+<br>When our code is cleaned up, modular, and fairly feature-rich, We should work on a java doc to provide detailed explanations for methods used and class summary. Additionally, lets keep code open-source and no use of obfuscation tools.
 * Compatibility
 <br>For example we're using OpenGL instead of Vulkan, even though Vulkan would give us a massive performance potential. Like Java, OpenGL keeps us compatible with many systems. Unfortunately we'll be violating this rule with our non-virtualized multi-keyboard support on Linux.
 * Dynamic Assets
