@@ -2,7 +2,8 @@
 
 #### Encapsulation
 * hiding information from being accessed(for example say we have something that must stay the same value, we don't want anything accidentally broken by someone changing that value.)
-* hiding system internals so our IDE doesn't fill with bloat when we look for a method inside a class**), and controlling how that data is managed.
+* hiding system internals so our IDE doesn't fill with bloat when we look for a method inside a class
+* and controlling how that data is managed.
 #### Naming conventions
 * Packages are all lowercase(all).
 * Classes and Interfaces are all uppercase(UpperCamelCase).
