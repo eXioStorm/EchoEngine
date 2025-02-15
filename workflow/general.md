@@ -1,8 +1,15 @@
   # General things to keep an eye on and correct
 
 #### Encapsulation
-* encapsulation is about hiding information from being accessed(for example say we have something that must stay the same value, we don't want anything accidentally broken by someone changing that information. **OR just hiding system internals so our IDE doesn't fill with bloat when we look for a method inside a class**), and controlling how that data is managed.
-#### Naming convention
+* hiding information from being accessed(for example say we have something that must stay the same value, we don't want anything accidentally broken by someone changing that value.)
+* hiding system internals so our IDE doesn't fill with bloat when we look for a method inside a class**), and controlling how that data is managed.
+#### Naming conventions
+* Packages are all lowercase(all).
+* Classes and Interfaces are all uppercase(UpperCamelCase).
+* Methods are lowerCamelCase.
+* Variables should be lowerCamelCase, while Constants should be ALL_UPPERCASE using underscores.
+
+* Avoid "magic numbers", use Constants in this case instead.
 #### Modularity
 * Need to continously watch code and re-structure when it starts to web with other classes. This was already done multiple times, once with the GamePanel class, and our **main()** classes.
 * Try to look at multiple ways of achieving the same goal, for example immediate mode rendering vs retained mode rendering both take in a file path to load an image, immediate mode was using a method to initialize our Texture with that path, and then had direct draw calls when that texture was used. Retained mode rendering isn't too much different besides having many extra internal steps, and needing extra methods for data management which is entirely unused when we used immediate mode. **(could still have data management, it just wouldn't effect the performance enough to bother with when we're already being so inefficient... perhaps this behaviour could be isolated to a different class that could work with both methods?)** try thinking of ways to bridge these differences and isolating functional behavior so that it's within the rendering class itself instead of webbing between multiple classes.
