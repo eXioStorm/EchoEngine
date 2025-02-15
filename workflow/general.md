@@ -1,6 +1,7 @@
   # General things to keep an eye on and correct
 
 #### Encapsulation
+* encapsulation is about hiding information from being accessed(for example say we have something that must stay the same value, we don't want anything accidentally broken by someone changing that information. **OR just hiding system internals so our IDE doesn't fill with bloat when we look for a method inside a class**), and controlling how that data is managed.
 #### Naming convention
 #### Modularity
 * Need to continously watch code and re-structure when it starts to web with other classes. This was already done multiple times, once with the GamePanel class, and our **main()** classes.
