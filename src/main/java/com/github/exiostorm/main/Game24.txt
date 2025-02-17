@@ -1,0 +1,114 @@
+package com.github.exiostorm.main;
+
+import com.github.exiostorm.renderer.Texture;
+import com.github.exiostorm.renderer.Window;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.opengl.GL;
+
+import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL11.*;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+//TODO move old game files so we can work on our version, split our game panel from our runnable main.
+//Summary: was trying to use OpenGL, but that may take too long.
+public class Game24 {
+	private ExecutorService executorService;
+	private static final int NUM_THREADS = Runtime.getRuntime().availableProcessors(); // Get available threads for multithreading
+	Window window;
+	public static final int WIDTH = 360;
+	public static final int HEIGHT = 240;
+	public static final int SCALE = 2;
+	private Texture bgTexture;
+
+	//Camera camera;
+	//World world;
+	//TileRenderer tileRenderer;
+	//Shader shader;
+	//Player player;
+
+	public Game24(){
+		executorService = Executors.newFixedThreadPool(NUM_THREADS - 1);
+		init();
+		loop();
+		System.out.println("Closing Game Window");
+		
+		glfwTerminate();
+		shutdown();
+	}
+	
+	private void init(){
+		GLFWErrorCallback.createPrint(System.err).set();
+		if (!glfwInit()) throw new IllegalStateException("Failed to Initialize");
+		
+		window = new Window();
+		window.setName("Echo Engine");
+		window.setSize(WIDTH * SCALE, HEIGHT * SCALE);
+		window.setFullScreen(false);
+		window.init();
+		
+	}
+
+	private void shutdown() {
+		try {
+			executorService.shutdown();
+			if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+				executorService.shutdownNow();
+			}
+			System.out.println("Executor Service Shutdown Properly");
+		} catch (InterruptedException e) {
+			executorService.shutdownNow();
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	private void loop(){
+		int i = 0;
+		GL.createCapabilities();// these arent being looped, loop starts at "while" below.
+		glClearColor(0,0,0,0);
+		System.out.println("OpenGL: " + glGetString(GL_VERSION));
+		bgTexture = new Texture("Resources/Sprites/Player/PlayerSprites.png");
+		
+		//world = new World(128, 128, 64);
+		//tileRenderer = new TileRenderer();
+		//shader = new Shader("shader");
+		//player = new Player();
+		//camera = new Camera(window.getWidth(), window.getHeight());
+		//camera.setPosition(new Vector3f(0, 0, 0));
+		
+		glfwSetKeyCallback(window.getWindow(), (window, key, scancode, action, mods) -> {
+			if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE ) glfwSetWindowShouldClose(window, true);
+			
+		});
+		//TODO our game loop goes here.
+		while(!window.shouldClose()){
+			render();
+			window.pollEvents();
+			
+			//player.update(144, window, camera, world);
+			//world.correctCamera(window, camera);
+			//world.render(tileRenderer, shader, camera, window);
+			//player.render(shader, camera);
+			//world.setTile(Tile.feelsBad, 0, 0);
+			//world.setTile(Tile.feelsBad, 63, 63);
+			
+			
+		}
+	}
+	private void render() {
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//bgTexture.bind();
+		
+		int error = glGetError();
+		if (error != GL_NO_ERROR)
+			System.out.println(error);
+		
+		window.swapBuffers();
+	}
+	
+	public static void main(String[] args){
+		new Game24();
+}
+}

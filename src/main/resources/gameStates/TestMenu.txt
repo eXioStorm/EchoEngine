@@ -1,0 +1,68 @@
+import com.github.exiostorm.main.GamePanel;
+import com.github.exiostorm.main.State;
+
+import com.github.exiostorm.renderer.TextRenderer;
+import com.github.exiostorm.renderer.Texture;
+
+import static org.lwjgl.opengl.GL11.*;
+//TODO whoops. no logic implemented for changing states to unload assets. buttons still register hovering even when not visible.
+public class TestMenu implements State {
+    private Texture backgroundTexture;
+    private Texture testTexture;
+    private int frameTester = 0;
+
+
+    @Override
+    public void init() {
+        //TODO something here to select UIHandler?
+        backgroundTexture = new Texture("src/main/resources/Backgrounds/Untitled1.png"); // Replace with your path
+        testTexture = new Texture("src/main/resources/Backgrounds/test1.png");
+    }
+
+    @Override
+    public void update() {
+    }
+
+    @Override
+    public void render() {
+        // Set up orthographic projection for 2D rendering
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, GamePanel.WIDTH, GamePanel.HEIGHT, 0, -1, 1); // 2D orthographic projection
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        // Clear the screen
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Enable textures
+        glEnable(GL_TEXTURE_2D);
+        backgroundTexture.drawImmediate(0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight());
+        //TODO delete method below when confident we don't need it anymore.
+        /*backgroundTexture.draw(0, 0, backgroundTexture.getWidth() * Math.min((float) GamePanel.WIDTH / backgroundTexture.getWidth(), (float) GamePanel.HEIGHT / backgroundTexture.getHeight()), backgroundTexture.getHeight() * Math.min((float) GamePanel.WIDTH / backgroundTexture.getWidth(), (float) GamePanel.HEIGHT / backgroundTexture.getHeight()) );*/
+        testTexture.drawImmediate(
+                (GamePanel.WIDTH - testTexture.getWidth()) / 2.0f,
+                (GamePanel.HEIGHT - testTexture.getHeight()) / 2.0f,
+                testTexture.getWidth(),
+                testTexture.getHeight()
+        );
+
+
+        // Enable blending for transparent text rendering
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // Render text on top of the background
+        TextRenderer.renderText("Welcome to the Game!", "arial", 0xfcf803, 0.9f, 0.0f * GamePanel.WIDTH, 0.1f * GamePanel.HEIGHT, 0.5f);  // Larger title font
+        //TextRenderer.renderText(String.valueOf(12345),"arial", 0xa134eb, 1.0f, 0.0f * GamePanel.WIDTH, 0.2f * GamePanel.HEIGHT, 0.5f);  // Larger title font
+        TextRenderer.renderText(String.valueOf(frameTester++),"Inkfree", 0xfcf803, 1.0f, 1.5f * GamePanel.WIDTH, 1.8f * GamePanel.HEIGHT, 0.5f);  // Larger title font
+        //TextRenderer.renderText("Press ENTER to Start","Inkfree", 0.0f * GamePanel.WIDTH, 0.3f * GamePanel.HEIGHT, 0.5f);  // Smaller menu font
+        //TextRenderer.renderText("Default font test!",0.0f * GamePanel.WIDTH, 0.4f * GamePanel.HEIGHT, 0.5f);
+
+        // Disable blending after text rendering
+        glDisable(GL_BLEND);
+
+        // Disable textures when done
+        glDisable(GL_TEXTURE_2D);
+    }
+}

@@ -1,0 +1,180 @@
+import com.github.exiostorm.audio.JukeBox;
+import com.github.exiostorm.gui.Button;
+import com.github.exiostorm.gui.GUIElement;
+import com.github.exiostorm.main.GamePanel;
+import com.github.exiostorm.main.State;
+import com.github.exiostorm.renderer.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.github.exiostorm.testing.silenceengine.graphics.IGraphicsDevice.Constants.GL_SHADING_LANGUAGE_VERSION;
+import static org.lwjgl.opengl.GL11.*;
+
+public class IMOpenGL implements State {
+    BatchRenderer renderer;
+    private Texture backgroundTexture;
+    Shader exampleShader;
+    private Texture testTexture;
+    private Texture patrickTexture;
+    TextureAtlas atlas;
+
+
+    private int frameTester = 0;
+    public static List<GUIElement> guiElements = new ArrayList<>();
+
+
+    @Override
+    public void init() {
+        System.out.println("GLSL Version: " + glGetString(GL_SHADING_LANGUAGE_VERSION));
+        initAudio();
+        //TODO something here to select UIHandler? <- huh?
+        initTextures();
+        initShaders();
+        initInterfaces();
+        //test();
+
+    }
+
+    @Override
+    public void update() {
+    }
+
+
+    @Override
+    public void render() {
+
+        // Set up orthographic projection for 2D rendering
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, GamePanel.WIDTH, GamePanel.HEIGHT, 0, -1, 1); // 2D orthographic projection
+        glMatrixMode(GL_MODELVIEW);
+        // Clear the screen
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // draw everything on plane 0?
+        glDisable(GL_DEPTH_TEST);
+        // Enable textures
+        glEnable(GL_TEXTURE_2D);
+        // Enable blending for transparent text rendering
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+        backgroundTexture.drawImmediate(0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight());
+
+        //guiElements.getLast().render();
+        //guiElements.getFirst().render();
+
+        // Render all GUI elements
+        for (GUIElement element : guiElements) {
+            element.render();
+        }
+
+        // Render text on top of the background
+        TextRenderer.renderText("Echo Engine Project", "arial", 0xfcf803, 0.9f, 0.65f * GamePanel.WIDTH, 0.1f * GamePanel.HEIGHT, 0.5f);  // Larger title font
+        TextRenderer.renderText(String.valueOf(12345),"arial", 0xa134eb, 1.0f, 0.0f * GamePanel.WIDTH, 0.2f * GamePanel.HEIGHT, 0.5f);  // Larger title font
+        TextRenderer.renderText(String.valueOf(frameTester++),"Inkfree", 0xfcf803, 1.0f, 1.5f * GamePanel.WIDTH, 1.8f * GamePanel.HEIGHT, 0.5f);  // Larger title font
+        TextRenderer.renderText("test : \"ΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩ\"<- shouldn't be empty","Inkfree", 0.0f * GamePanel.WIDTH, 0.3f * GamePanel.HEIGHT, 0.5f);  // Smaller menu font
+        TextRenderer.renderText("Default font test!",0.0f * GamePanel.WIDTH, 0.4f * GamePanel.HEIGHT, 0.5f);
+
+/*
+        renderer.begin();
+        //renderer.draw(backgroundTexture, 0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight(), exampleShader, false);
+        //renderer.draw(testTexture, 10, 10, testTexture.getWidth(), testTexture.getHeight(), exampleShader, false);
+        renderer.draw(patrickTexture, 200, 140, patrickTexture.getWidth(), patrickTexture.getHeight(), exampleShader, false);
+        renderer.end();
+*/
+
+        //exampleShader.enable();
+        //exampleShader.setUniform("isFixedFunction", true); // For fixed-function
+        //exampleShader.disable();
+
+
+        // Disable blending after text rendering
+        glDisable(GL_BLEND);
+        // something with plane 0 / 3d rendering
+        glEnable(GL_DEPTH_TEST);
+        // Disable textures when done
+        glDisable(GL_TEXTURE_2D);
+    }
+    private void initShaders() {
+        exampleShader = new Shader("src/main/resources/Shaders/test_vertex.glsl", "src/main/resources/Shaders/test_fragment.glsl");
+        /*
+        exampleShader = new Shader("src/main/resources/Shaders/example_vertex.glsl", "src/main/resources/Shaders/example_fragment.glsl");
+        exampleShader.enable();
+        exampleShader.setUniform("textureSampler", 0); // Bind sampler2D to texture unit 0
+        exampleShader.setUniform("brightness", 1.5f);  // Brighter texture
+        exampleShader.setUniform("overlayColor", new Vector3f(0.1f, 0.8f, 0.2f));  // tint
+        exampleShader.setUniform("isFixedFunction", true); // For fixed-function
+        exampleShader.disable();*/
+    }
+    private void initTextures(){
+        backgroundTexture = new Texture("src/main/resources/Backgrounds/storm2.png"); // Replace with your path
+        testTexture = new Texture("src/main/resources/Backgrounds/test3.png");
+        patrickTexture = new Texture("src/main/resources/HUD/funnybutton.png");
+    }
+    private void initAudio(){
+        JukeBox.load("SFX/menuoption.ogg", "buttons", "menuoption");
+        JukeBox.load("SFX/menuselect.ogg", "buttons", "menuselect");
+    }
+    private void initInterfaces(){
+        // Create the button and add it to the GUI elements
+        Button squareButton = new Button(GamePanel.WIDTH-testTexture.getWidth(), (float) (GamePanel.HEIGHT - testTexture.getHeight()) / 2, testTexture);
+        squareButton.getTexture().setShader(exampleShader);
+        squareButton.setOnHoverAction(button -> {
+            if (!squareButton.isHovered()) {
+                JukeBox.play("menuoption", "effect", 1, true);
+                squareButton.setUseShader(true);
+                System.out.println("Hovering over button: " + button);
+            }
+        });
+        squareButton.setUnHoverAction(button -> {
+            if (squareButton.isHovered()) {
+                JukeBox.play("menuoption", "effect", 1, true);
+                squareButton.setUseShader(false);
+                System.out.println("Stopped hovering over button: " + button);
+            }
+        });
+        squareButton.setOnClickAction(button -> {
+            JukeBox.play("menuselect", "effect", 1, false);
+            System.out.println("Clicked button : " + button+", at : "+squareButton.getMousePosition()[0]+"x"+squareButton.getMousePosition()[1]);
+        });
+        guiElements.add(squareButton);
+        Button patrickButton = new Button((float) (GamePanel.WIDTH - patrickTexture.getHeight()) / 3, (float) (GamePanel.HEIGHT - patrickTexture.getHeight()) / 2, patrickTexture);
+        patrickButton.getTexture().setShader(exampleShader);
+        patrickButton.setOnHoverAction(button -> {
+            if (!patrickButton.isHovered()) {
+                JukeBox.play("menuoption", "effect", 1, true);
+                patrickButton.setUseShader(true);
+                System.out.println("Hovering over button: " + button);
+            }
+        });
+        patrickButton.setUnHoverAction(button -> {
+            if (patrickButton.isHovered()) {
+                JukeBox.play("menuoption", "effect", 1, true);
+                patrickButton.setUseShader(false);
+                System.out.println("Stopped hovering over button: " + button);
+            }
+        });
+        patrickButton.setOnClickAction(button -> {
+            JukeBox.play("menuselect", "effect", 1, false);
+            System.out.println("Clicked button : " + button+", at : "+patrickButton.getMousePosition()[0]+"x"+patrickButton.getMousePosition()[1]);
+        });
+        guiElements.add(patrickButton);
+    }
+    public void test(){
+        List<Texture> textures = List.of(/*backgroundTexture, testTexture, */patrickTexture);
+        atlas = new TextureAtlas(textures);
+        /*
+        // Use the BufferedImage (e.g., save to a file)
+        try {
+            ImageIO.write(patrickTexture.toBufferedImage(), "png", new File("src/main/resources/tests/"+Math.random()+".png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+        // Initialize the batch renderer
+        renderer = new BatchRenderer(atlas, exampleShader);
+        //renderer.addTexture(testTexture, GamePanel.WIDTH / 2f, GamePanel.HEIGHT / 2f, testTexture.getWidth(), testTexture.getHeight());
+        //renderer.addTexture(patrickTexture, 0, 0, patrickTexture.getWidth(), patrickTexture.getHeight());
+    }
+}

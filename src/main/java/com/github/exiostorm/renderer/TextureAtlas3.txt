@@ -1,0 +1,131 @@
+package com.github.exiostorm.renderer;
+
+import lombok.Getter;
+
+import java.awt.image.BufferedImage;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.*;
+import java.util.List;
+
+import static org.lwjgl.opengl.GL11.*;
+
+public class TextureAtlas3 {
+    private int atlasID;
+    @Getter
+    private int textureID;
+    private int atlasWidth, atlasHeight;
+    private List<Texture> textures;
+    private Map<Integer, float[]> uvMap = new HashMap<>(); // Maps each texture to its UV coordinates
+
+    public TextureAtlas3(List<Texture> textures) {
+        this.textures = textures;
+        createAtlas();
+    }
+
+    private void createAtlas() {
+        int rowWidth = 0, currentHeight = 0;
+        int maxHeightInRow = 0;
+
+        // Sort textures to minimize space wastage
+        //textures.sort(Comparator.comparingInt(Texture::getHeight).reversed()); //commented out because we crash otherwise
+
+        for (Texture texture : textures) {
+            if (rowWidth + texture.getWidth() > 2048) { // Assuming max atlas width
+                atlasWidth = Math.max(atlasWidth, rowWidth);
+                rowWidth = 0;
+                currentHeight += maxHeightInRow;
+                maxHeightInRow = 0;
+            }
+            rowWidth += texture.getWidth();
+            maxHeightInRow = Math.max(maxHeightInRow, texture.getHeight());
+        }
+
+        atlasWidth = Math.max(atlasWidth, rowWidth);
+        atlasHeight = currentHeight + maxHeightInRow;
+
+        ByteBuffer atlasData = ByteBuffer.allocateDirect(atlasWidth * atlasHeight * 4).order(ByteOrder.nativeOrder());
+
+        int offsetX = 0, offsetY = 0;
+        maxHeightInRow = 0;
+
+        for (Texture texture : textures) {
+            ByteBuffer textureData = texture.getByteBuffer((byte) 0);
+            for (int y = 0; y < texture.getHeight(); y++) {
+                for (int x = 0; x < texture.getWidth(); x++) {
+                    int index = ((y + offsetY) * atlasWidth + (x + offsetX)) * 4;
+                    atlasData.put(index, textureData.get((y * texture.getWidth() + x) * 4));
+                    atlasData.put(index + 1, textureData.get((y * texture.getWidth() + x) * 4 + 1));
+                    atlasData.put(index + 2, textureData.get((y * texture.getWidth() + x) * 4 + 2));
+                    atlasData.put(index + 3, textureData.get((y * texture.getWidth() + x) * 4 + 3));
+                }
+            }
+
+            uvMap.put(texture.getTexture(), new float[] {
+                    (float) offsetX / atlasWidth,
+                    (float) offsetY / atlasHeight,
+                    (float) (offsetX + texture.getWidth()) / atlasWidth,
+                    (float) (offsetY + texture.getHeight()) / atlasHeight,
+            });
+
+            offsetX += texture.getWidth();
+            if (offsetX > atlasWidth) {
+                offsetX = 0;
+                offsetY += maxHeightInRow;
+                maxHeightInRow = 0;
+            }
+            maxHeightInRow = Math.max(maxHeightInRow, texture.getHeight());
+        }
+
+        // Upload atlas to GPU
+        textureID = glGenTextures();
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlasWidth, atlasHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, atlasData);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    private ByteBuffer convertBufferedImageToByteBuffer(BufferedImage image) {
+        int[] pixels = new int[image.getWidth() * image.getHeight()];
+        image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
+
+        ByteBuffer buffer = ByteBuffer.allocateDirect(image.getWidth() * image.getHeight() * 4).order(ByteOrder.nativeOrder());
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                int pixel = pixels[y * image.getWidth() + x];
+                buffer.put((byte) ((pixel >> 16) & 0xFF)); // Red
+                buffer.put((byte) ((pixel >> 8) & 0xFF));  // Green
+                buffer.put((byte) (pixel & 0xFF));         // Blue
+                buffer.put((byte) ((pixel >> 24) & 0xFF)); // Alpha
+            }
+        }
+        buffer.flip();
+        return buffer;
+    }
+    private int nextPowerOfTwo(int value) {
+        int power = 1;
+        while (power < value) {
+            power *= 2;
+        }
+        return power;
+    }
+
+
+    public float[] getUV(Texture texture) {
+        float[] uv = uvMap.get(texture.getTexture()); // Retrieve UV coordinates for the texture
+        //System.out.println("Atlas UV for " + texture.getPath() + ": " + Arrays.toString(uv));
+        return uv;
+    }
+
+    public void bind() {
+        glBindTexture(GL_TEXTURE_2D, textureID);
+    }
+
+    public void unbind() {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    public void cleanup() {
+        glDeleteTextures(atlasID);
+    }
+}

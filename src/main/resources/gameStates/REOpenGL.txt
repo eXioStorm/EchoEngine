@@ -1,0 +1,231 @@
+import com.github.exiostorm.audio.JukeBox;
+import com.github.exiostorm.gui.Button;
+import com.github.exiostorm.gui.GUIElement;
+import com.github.exiostorm.main.GamePanel;
+import com.github.exiostorm.main.State;
+import com.github.exiostorm.renderer.*;
+import org.lwjgl.BufferUtils;
+
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.github.exiostorm.testing.silenceengine.graphics.IGraphicsDevice.Constants.GL_SHADING_LANGUAGE_VERSION;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL30.glGenVertexArrays;
+
+public class REOpenGL implements State {
+    BatchRenderer renderer;
+    private Texture backgroundTexture;
+    Shader exampleShader;
+    private Texture testTexture;
+    private Texture patrickTexture;
+    TextureAtlas atlas;
+    int vboID, vaoID, eboID;//TODO temporary until we sort out what class to make or include this for/in.
+
+    private int frameTester = 0;
+    public static List<GUIElement> guiElements = new ArrayList<>();
+    private int texWidth, texHeight, screenWidth, screenHeight;
+    private float halfTexHeight, halfTexWidth;
+    private float[] vertices;
+    private FloatBuffer verticesBuffer;
+    private IntBuffer indicesBuffer;
+    private int[] indices;
+    float centerX = 0.0f; // X coordinate in NDC for center
+    float centerY = 0.0f; // Y coordinate in NDC for center
+
+
+    @Override
+    public void init() {
+        System.out.println("GLSL Version: " + glGetString(GL_SHADING_LANGUAGE_VERSION));
+        initAudio();
+        //TODO something here to select UIHandler? <- huh?
+        initTextures();
+        initShaders();
+        initInterfaces();
+        mathSetup();
+        retainedSetup();
+        //test();
+
+    }
+
+    @Override
+    public void update() {
+    }
+
+
+    @Override
+    public void render() {
+
+        // Set up orthographic projection for 2D rendering
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, GamePanel.WIDTH, GamePanel.HEIGHT, 0, -1, 1); // 2D orthographic projection
+        glMatrixMode(GL_MODELVIEW);
+        // Clear the screen
+        glClearColor(0.2f, 0.9f, 0.3f, 0.999f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // draw everything on plane 0?
+        glDisable(GL_DEPTH_TEST);
+        // Enable textures
+        glEnable(GL_TEXTURE_2D);
+        // Enable blending for transparent text rendering
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        retainedRender();
+
+        // Disable blending after text rendering
+        glDisable(GL_BLEND);
+        // something with plane 0 / 3d rendering
+        glEnable(GL_DEPTH_TEST);
+        // Disable textures when done
+        glDisable(GL_TEXTURE_2D);
+    }
+    private void initShaders() {
+        exampleShader = new Shader("src/main/resources/Shaders/retained_vertex.glsl", "src/main/resources/Shaders/retained_fragment.glsl");
+    }
+    private void initTextures(){
+        backgroundTexture = new Texture("src/main/resources/Backgrounds/storm2.png"); // Replace with your path
+        testTexture = new Texture("src/main/resources/Backgrounds/test3.png");
+        patrickTexture = new Texture("src/main/resources/HUD/funnybutton.png");
+    }
+    private void initAudio(){
+        JukeBox.load("SFX/menuoption.ogg", "buttons", "menuoption");
+        JukeBox.load("SFX/menuselect.ogg", "buttons", "menuselect");
+    }
+    private void initInterfaces(){
+        // Create the button and add it to the GUI elements
+        Button squareButton = new Button(GamePanel.WIDTH-testTexture.getWidth(), (float) (GamePanel.HEIGHT - testTexture.getHeight()) / 2, testTexture);
+        squareButton.getTexture().setShader(exampleShader);
+        squareButton.setOnHoverAction(button -> {
+            if (!squareButton.isHovered()) {
+                JukeBox.play("menuoption", "effect", 1, true);
+                squareButton.setUseShader(true);
+                System.out.println("Hovering over button: " + button);
+            }
+        });
+        squareButton.setUnHoverAction(button -> {
+            if (squareButton.isHovered()) {
+                JukeBox.play("menuoption", "effect", 1, true);
+                squareButton.setUseShader(false);
+                System.out.println("Stopped hovering over button: " + button);
+            }
+        });
+        squareButton.setOnClickAction(button -> {
+            JukeBox.play("menuselect", "effect", 1, false);
+            System.out.println("Clicked button : " + button+", at : "+squareButton.getMousePosition()[0]+"x"+squareButton.getMousePosition()[1]);
+        });
+        guiElements.add(squareButton);
+        Button patrickButton = new Button((float) (GamePanel.WIDTH - patrickTexture.getHeight()) / 3, (float) (GamePanel.HEIGHT - patrickTexture.getHeight()) / 2, patrickTexture);
+        patrickButton.getTexture().setShader(exampleShader);
+        patrickButton.setOnHoverAction(button -> {
+            if (!patrickButton.isHovered()) {
+                JukeBox.play("menuoption", "effect", 1, true);
+                patrickButton.setUseShader(true);
+                System.out.println("Hovering over button: " + button);
+            }
+        });
+        patrickButton.setUnHoverAction(button -> {
+            if (patrickButton.isHovered()) {
+                JukeBox.play("menuoption", "effect", 1, true);
+                patrickButton.setUseShader(false);
+                System.out.println("Stopped hovering over button: " + button);
+            }
+        });
+        patrickButton.setOnClickAction(button -> {
+            JukeBox.play("menuselect", "effect", 1, false);
+            System.out.println("Clicked button : " + button+", at : "+patrickButton.getMousePosition()[0]+"x"+patrickButton.getMousePosition()[1]);
+        });
+        guiElements.add(patrickButton);
+    }
+    private void retainedSetup(){
+
+
+        vboID = glGenBuffers();
+        vaoID = glGenVertexArrays();
+        eboID = glGenBuffers();
+
+        glBindVertexArray(vaoID);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vboID);
+        glBufferData(GL_ARRAY_BUFFER, verticesBuffer, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
+
+        //TODO bug here with our texture info?
+        glBindBuffer(GL_ARRAY_BUFFER, testTexture.getTexture());
+        glBufferData(GL_ARRAY_BUFFER, verticesBuffer, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        //glBindVertexArray(0); //not the correct place for this? stops working
+        //frameTester=1200;
+    }
+    private void retainedRender(){
+        exampleShader.enable();
+        glActiveTexture(GL_TEXTURE0);
+        testTexture.bind();
+
+        glBindBuffer(GL_ARRAY_BUFFER, vboID);
+        frameTester++;
+        //TODO our bug with our batch renderer may have been something wrong with our stride value here, as it caused trouble here as well.
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 8*Float.BYTES, 0);
+        glEnableVertexAttribArray(0);
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 8*Float.BYTES, 3*Float.BYTES);
+        glEnableVertexAttribArray(1);
+
+        glBindBuffer(GL_ARRAY_BUFFER, testTexture.getTexture());
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, 8*Float.BYTES, 6*Float.BYTES);
+        glEnableVertexAttribArray(2);
+        //System.out.println(frameTester);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
+        glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);
+        exampleShader.disable();
+    }
+    private void mathSetup(){
+        texWidth = testTexture.getWidth();
+        texHeight = testTexture.getHeight();
+        screenWidth = GamePanel.WIDTH;
+        screenHeight = GamePanel.HEIGHT;
+        // Convert texture size to normalized device coordinates (NDC)
+        halfTexWidth = ((float) texWidth / screenWidth) * 2.0f; // Scale to [-1, 1] range
+        halfTexHeight = ((float) texHeight / screenHeight) * 2.0f;
+        System.out.println("@@@@@@@"+halfTexWidth+"/"+halfTexHeight);
+        //TODO from looking at this, it seems texture coords are always the same? that can't be right...
+        // if the texture coords is correct for always 1.0f, then what we can do is pick our texture by specifying fractions of those numbers for our atlas.
+        // no idea how our colors one works, probably something to do with shaders that we don't have implemented yet. we will need this for highlighting things.
+        vertices = new float[]{
+                // positions                                             // colors             // texture coords
+                centerX - halfTexWidth, centerY + halfTexHeight, 0.0f,/**/ 1.0f, 1.0f, 0.0f,/**/ 0.0f, 0.0f,   // top left
+                centerX + halfTexWidth, centerY + halfTexHeight, 0.0f,/**/ 1.0f, 0.0f, 0.0f,/**/ 1.0f, 0.0f,   // top right
+                centerX + halfTexWidth, centerY - halfTexHeight, 0.0f,/**/ 0.0f, 1.0f, 0.0f,/**/ 1.0f, 1.0f,   // bottom right
+                centerX - halfTexWidth, centerY - halfTexHeight, 0.0f,/**/ 0.0f, 0.0f, 1.0f,/**/ 0.0f, 1.0f    // bottom left
+        };
+
+        indices = new int[]{
+                0, 1, 2,  // first triangle (top-left to bottom-right diagonal)
+                2, 3, 0   // second triangle (bottom-right to top-left diagonal)
+        };
+
+        verticesBuffer = BufferUtils.createFloatBuffer(vertices.length).put(vertices).flip();
+
+        indicesBuffer = BufferUtils.createIntBuffer(indices.length).put(indices).flip();
+    }
+    public void test(){
+        List<Texture> textures = List.of(/*backgroundTexture, testTexture, */patrickTexture);
+        atlas = new TextureAtlas(textures);
+        // Initialize the batch renderer
+        renderer = new BatchRenderer(atlas, exampleShader);
+        //renderer.addTexture(testTexture, GamePanel.WIDTH / 2f, GamePanel.HEIGHT / 2f, testTexture.getWidth(), testTexture.getHeight());
+        //renderer.addTexture(patrickTexture, 0, 0, patrickTexture.getWidth(), patrickTexture.getHeight());
+    }
+}

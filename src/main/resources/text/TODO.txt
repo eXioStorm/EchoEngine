@@ -1,0 +1,17 @@
+fix technical debt from using "org.apache.commons.collections4.map.MultiValueMap" -- [	https://golb.hplar.ch/2017/09/Do-it-yourself-Multi-Value-Map-with-Java-8.html	]
+ - This is used in the audio engine "JukeBox" to store categories.
+
+make it so that sources can overlap themselves -- for example; make it generate a new source (which gets deleted when it's done playing) every time that it's told to play while already playing. -- when playing something check if it is already playing, if true, check hashmap for sources that are no longer playing and delete them, then create a new source, add it to the hashmap, then play it. <-- ignore everything just said! -- ##for sounds that would play multiple times in quick succession, set a value that goes +1 every time it would be called, have the audio loop while that value is above 0 (and reset the value when it loops), and if the value is 0 when it checks to loop again stop the loop.## also final and last solution: you can use the categories multivaluemap (a new one) to retain control over overlapping audio(stopping the first sound when the end is reached so that it can loop through again)  -- this will require the user to set up the repeating sound multivaluemap configurations themselves, to help with this, make at least one with the instructions of how to make more.
+
+"Fix" maximum sources(256) -- if alGenSources() fails to generate a new source, delete ALL of the previous sources and add then the new source. -- instead of mixing load and play, make a new method for doing both called PlayL("folder/file.ogg", "category", "reference")
+
+Reduce memory by finding if categories using names (strings) or integers (source data) uses less than the other.
+
+
+figure out how to adjust the player position on the audio file, set the audio to play at 12 seconds instead of 0.(kinda fixed, only works once for each call...)
+
+Make a demo for the audio engine to make the engine it's own package. (run demo independantly as a .jar) -- something like a media player.
+
+add method for queue next after this sound
+
+double check failsafes to fix wording of why they failed.uyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy+
