@@ -6,12 +6,10 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import java.io.File;
-import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.function.Supplier;
 
 public class ResourceLoader {
 	private ResourceLoader() {
@@ -118,7 +116,7 @@ public class ResourceLoader {
 			System.out.println("Invalid key, class, or factory. Cannot add to the map.");
 		}
 	}
-	// ✅ Ensures .java files are compiled only if necessary
+	// Ensures .java files are compiled only if necessary
 	private static File getOrCompileJavaFile(File javaFile) {
 		File classFile = new File(javaFile.getParent(), javaFile.getName().replace(".java", ".class"));
 

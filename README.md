@@ -14,7 +14,7 @@ an attempt to create a platformer with extensive modding capabilities.
 * [Decentralization]() - Taking some lessons from Minecraft, and overall the entire online scene, the design of this system will be such that makes it very difficult to eliminate cheating, with as much data being stored locally when playing with others. Of course we don't want people to ruin other's fun, at the same time we don't want bad actors to exploit any that are impressionable. This may involve processes that limit your influence on other's data, while protecting individual's data such as inventory / character data isolated from servers? No gambling. period. If access restrictions are meant to protect the perceived value of virtual assets in an online service, then any claim in your TOS or policies stating that these assets have no monetary value is self-contradictory—because by enforcing these restrictions, you have artificially assigned value to them.
 
 ## workflow progress
-* [Maven]() - get Maven properly setup so we can use git more easily.
+~~[Maven]() - get Maven properly setup so we can use git more easily.~~
 * ~~[Audio]() - Positional audio that's easy to use.~~
   * ~~add categories~~
   * ~~add a sound type that can overlap itself~~
@@ -58,10 +58,15 @@ an attempt to create a platformer with extensive modding capabilities.
 * I'm using [LWJGL](https://www.lwjgl.org/) (BSD-3-Clause license) to run this project, so far I'm utilizing the following libraries:
   * [OpenAL](https://github.com/LWJGL/lwjgl3-wiki/wiki/2.1.-OpenAL) - BSD-3-Clause license
   * [stb](http://www.java-gaming.org/index.php?topic=36153.0) - page gone? might not be using this anymore, instead probably using LWJGL
+  * [JSON-Java](https://github.com/stleary/JSON-java) - (Public) Probably going to switch to this json library for being public domain. 
   * [minimal-json](https://github.com/ralfstx/minimal-json) - apache 2 license
   * [Gson](https://github.com/google/gson) - noted as duplicate? apache 2 license
   * [Guava](https://github.com/google/guava) - apache 2 license
   * [joml](https://github.com/JOML-CI/JOML) - MIT license
+
+## Build
+Project uses maven to setup dependencies and build. As there's no release yet you'll have to setup the project in your IDE using version control.
+After getting the project setup in your IDE you may want to set the folders "inputMappers", and "gameStates" as source folders. you can find them under "src/main/resources/".
 
 ## special thanks:
 [Mike S.](https://github.com/foreignguymike) Thanks for making the original game code which I eviscerated in order to start learning how to make my own. Also check out his [youtube channel](https://www.youtube.com/channel/UC_IV37n-uBpRp64hQIwywWQ).
