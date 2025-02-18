@@ -59,10 +59,11 @@ an attempt to create a platformer with extensive modding capabilities.
   * [OpenAL](https://github.com/LWJGL/lwjgl3-wiki/wiki/2.1.-OpenAL) - BSD-3-Clause license
   * [stb](http://www.java-gaming.org/index.php?topic=36153.0) - page gone? might not be using this anymore, instead probably using LWJGL
   * [JSON-Java](https://github.com/stleary/JSON-java) - (Public) Probably going to switch to this json library for being public domain. 
-  * [minimal-json](https://github.com/ralfstx/minimal-json) - apache 2 license
-  * [Gson](https://github.com/google/gson) - noted as duplicate? apache 2 license
   * [Guava](https://github.com/google/guava) - apache 2 license
   * [joml](https://github.com/JOML-CI/JOML) - MIT license
+  * [minimal-json](https://github.com/ralfstx/minimal-json) - apache 2 license
+  * [Gson](https://github.com/google/gson) - noted as duplicate? apache 2 license
+  
 
 ## Build
 Project uses maven to setup dependencies and build. As there's no release yet you'll have to setup the project in your IDE using version control.
