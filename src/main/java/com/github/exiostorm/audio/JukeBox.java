@@ -43,6 +43,8 @@ import org.lwjgl.stb.STBVorbisInfo;
 
 
 @SuppressWarnings("deprecation")//MultiValueMap was replaced by MultiValuedMap, however I couldn't quickly figure out how to iterate through MultiValuedMap...
+//TODO Put another dime in the jukebox baby easter egg console log when playing background music with the streaming function we haven't added yet.
+// also love how the xylophone sounds in AOT soundtracks.
 public class JukeBox {
 	static long nextClean;//Used for scheduling the deletion of new sources by storing the nearest expiration time.
 	//I dont think I really need these values... I'll review them later.

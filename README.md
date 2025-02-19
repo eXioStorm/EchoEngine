@@ -14,19 +14,20 @@ an attempt to create a platformer with extensive modding capabilities.
 * [Decentralization]() - Taking some lessons from Minecraft, and overall the entire online scene, the design of this system will be such that makes it very difficult to eliminate cheating, with as much data being stored locally when playing with others. Of course we don't want people to ruin other's fun, at the same time we don't want bad actors to exploit any that are impressionable. This may involve processes that limit your influence on other's data, while protecting individual's data such as inventory / character data isolated from servers? No gambling. period. If access restrictions are meant to protect the perceived value of virtual assets in an online service, then any claim in your TOS or policies stating that these assets have no monetary value is self-contradictory—because by enforcing these restrictions, you have artificially assigned value to them.
 
 ## workflow progress
-~~[Maven]() - get Maven properly setup so we can use git more easily.~~
-* ~~[Audio]() - Positional audio that's easy to use.~~
+  * [General](https://github.com/eXioStorm/EchoEngine/blob/main/workflow/general.md) - General workflow information
+  * ~~[Maven]() - get Maven properly setup so we can use git more easily.~~
+  * ~~[Audio](https://github.com/eXioStorm/EchoEngine/blob/main/workflow/audio/openal.md) - Positional audio that's easy to use.~~
   * ~~add categories~~
   * ~~add a sound type that can overlap itself~~
   * need streaming capabilities to conserve memory when playing long background soundtracks.
-* [Rendering]() - what you will see on the screen. (or wont see)
+* [Rendering](https://github.com/eXioStorm/EchoEngine/tree/main/workflow/render) - what you will see on the screen. (or wont see)
   * ~~render window~~
   * Retained mode OpenGL rendering to keep things well supported across different devices. (mostly done, working on texture atlas management)
   * get Shaders working
   * Buttons & other UI elements. Buttons need to interact with shaders for simple graphical effects such as changing brightness to indicate activation / hovering.
-* [Physics]() - things like collisions...
+* [Physics](https://github.com/eXioStorm/EchoEngine/tree/main/workflow/physics) - things like collisions...
   * thinking of handling certain collisions like : register pixels adjacent to transparent pixels in an array for movement collisions, and all opaque pixels for things like click "collisions".
-* [Inputs]() - Handles all user inputs, gaming controller controls, keyboard buttons, mouse buttons, mouse position, basically any device which you would plug in to your computer to interact with the game.
+* [Inputs](https://github.com/eXioStorm/EchoEngine/blob/main/workflow/input/devices.md) - Handles all user inputs, gaming controller controls, keyboard buttons, mouse buttons, mouse position, basically any device which you would plug in to your computer to interact with the game.
   * MIDI input support so that players may use instruments in-game to play sound fonts 
   * need to capture the device ID for inputs so that multiple separate keyboards may be used. this feature is going to be indefinitely post-poned. requires very extensive knowledge and security planning. "aiming to create a multi-user, multi-input setup on a single machine without full OS virtualization."
     all because Operating Systems have only been designed to communicate the keypress and nothing else. Working around the OS control is very complicated. and a potential security risk.
