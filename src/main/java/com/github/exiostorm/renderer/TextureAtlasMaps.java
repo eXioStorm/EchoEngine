@@ -10,11 +10,15 @@ public class TextureAtlasMaps {
      * to determine where textures can be placed efficiently.
      */
     private List<Rectangle> freeRectangles;
+    /**
+     * value is set inside our calculatePlacement() method, and used by our other methods calculatePrimaryPlacement() and calculateSubPlacement().
+     */
+    private Rectangle calculatedSize;
     private Map<String, Map<String, Rectangle>> primaryAtlas; // Category -> Active SubAtlas (Texture Name -> Placement)
     private Map<String, Map<String, Map<String, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture Name -> Placement))
     private Map<String, Rectangle> subAtlasSizes; // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
     private int[] primaryAtlasSize;
-    private Map<String, float[]> textureUV;
+    private Map<String, float[]> textureUV; // Texture Name -> Placement
     private boolean inMemory = false;
 
     /**
@@ -42,13 +46,14 @@ public class TextureAtlasMaps {
         subAtlases.get(category).putIfAbsent(subAtlas, new HashMap<>());
         subAtlases.get(category).get(subAtlas).put(texture.getPath(), new Rectangle(0, 0, texture.getWidth(), texture.getHeight()));
     }
-    //TODO figure out a way to make this compatible with our mainAtlas setup..
     private void calculatePlacement(Map<String, Rectangle> textureMap) {
         List<Rectangle> sortedTextures = new ArrayList<>(textureMap.values());
         sortedTextures.sort(Comparator.comparingInt(r -> -r.width * r.height)); // Sort by area descending
 
         freeRectangles.clear();
         freeRectangles.add(new Rectangle(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE)); // Initial large free area
+
+        calculatedSize.setBounds(0,0,0,0);
 
         for (Rectangle texture : sortedTextures) {
             int bestAreaFit = Integer.MAX_VALUE;
@@ -78,8 +83,11 @@ public class TextureAtlasMaps {
                     freeRectangles.add(new Rectangle(bestRect.x, bestRect.y + bestRect.height,
                             bestRect.width, freeRect.height - bestRect.height));
                 }
-
                 textureMap.put(getTextureKey(textureMap, texture), bestRect);
+                calculatedSize.x = bestRect.x;
+                calculatedSize.y = bestRect.y;
+                calculatedSize.width = Math.max(calculatedSize.width, bestRect.x + bestRect.width);
+                calculatedSize.height = Math.max(calculatedSize.height, bestRect.y + bestRect.height);
             }
         }
     }
@@ -94,13 +102,29 @@ public class TextureAtlasMaps {
         //TODO need to iterate through each Category and calculate positions, then calculate each category for overall atlas, the atlas size, and our texture uv positions in our texture/UV map.
         // Category -> Active SubAtlas (Texture Name -> Placement)
         // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
-        Map<String, Rectangle> categorySizes = new HashMap<>();
+        Map<String, Rectangle> categoryPositions = new HashMap<>();
         for (String category : primaryAtlas.keySet()) {
-            categorySizes.put(category, subAtlasSizes.get(primaryAtlas.get(category).keySet().iterator().next()));
+            categoryPositions.put(category, subAtlasSizes.get(primaryAtlas.get(category).keySet().iterator().next()));
         }
-        calculatePlacement(categorySizes);
-        primaryAtlasSize[0] = 1; //X
-        primaryAtlasSize[1] = 2; //Y
+
+        calculatePlacement(categoryPositions);
+
+        for (String category : primaryAtlas.keySet()) {
+            //TODO this should hopefully be re-positioning the values for our subatlases
+            // need to change how we get our Rectangle texture to fetch from subatlases instead so we can update more than just the active textures.
+            /*
+            for (Rectangle texture : primaryAtlas.get(category).values()) {
+                texture.setLocation(texture.x + categoryPositions.get(category).x, texture.y + categoryPositions.get(category).y);
+            }*/
+            //TODO ChatGPT is worried that our primaryAtlas wont reflect changes made to values inside subAtlases. might need to fix later.
+            for (Map<String, Rectangle> subAtlas : subAtlases.get(category).values()) {
+                for (Rectangle texture : subAtlas.values()) {
+                    texture.setLocation(texture.x + categoryPositions.get(category).x, texture.y + categoryPositions.get(category).y);
+                }
+            }
+        }
+        primaryAtlasSize[0] = calculatedSize.width; //X
+        primaryAtlasSize[1] = calculatedSize.height; //Y
     }
     public void calculateSubPlacement(){
         //TODO need to iterate through each subAtlas and calculate positions and sizes.
@@ -111,7 +135,7 @@ public class TextureAtlasMaps {
             for (String subAtlasName : subAtlases.get(category).keySet()){
                 //TODO I think this will calculate specifically this section of our subAtlases / by subAtlasName?
                 calculatePlacement(subAtlases.get(category).get(subAtlasName));
-                //subAtlasSizes.put(subAtlasName, ); //We're missing a way to save the size of the calculated atlas. we need to define a Rectangle inside our calculatePlacement() method, and then immediate after using the method we need to retrieve the Rectangle for our size.
+                subAtlasSizes.put(subAtlasName, new Rectangle(calculatedSize));
             }
         }
     }
