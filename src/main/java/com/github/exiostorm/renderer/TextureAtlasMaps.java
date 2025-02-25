@@ -179,13 +179,6 @@ public class TextureAtlasMaps {
     }
 
     /**
-    * This method should be used to populate our Texture UV map so we can quickly retrieve locations based on textures instead of having extra parameters for retrieving positions through checking our subatlas maps.
-    */
-    private float[] getUV(Texture texture) {
-        return null;
-    }
-
-    /**
      * This method should run only during our first initialization of each sub-atlas / application setup when a save is absent.
      */
     public void saveAtlasConfiguration() {
