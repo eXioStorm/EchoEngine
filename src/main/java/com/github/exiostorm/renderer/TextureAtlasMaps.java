@@ -110,9 +110,6 @@ public class TextureAtlasMaps {
             }
      */
     public void calculatePrimaryPlacement(){
-        //TODO need to iterate through each Category and calculate positions, then calculate each category for overall atlas, the atlas size, and our texture uv positions in our texture/UV map.
-        // Category -> Active SubAtlas (Texture Name -> Placement)
-        // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
         Map<String, Rectangle> categoryPositions = new HashMap<>();
         for (String category : primaryAtlas.keySet()) {
             categoryPositions.put(category, subAtlasSizes.get(primaryAtlas.get(category).keySet().iterator().next()));
@@ -121,13 +118,6 @@ public class TextureAtlasMaps {
         rectanglePacker(categoryPositions);
 
         for (String category : primaryAtlas.keySet()) {
-            //TODO this should hopefully be re-positioning the values for our subatlases
-            // need to change how we get our Rectangle texture to fetch from subatlases instead so we can update more than just the active textures.
-            /*
-            for (Rectangle texture : primaryAtlas.get(category).values()) {
-                texture.setLocation(texture.x + categoryPositions.get(category).x, texture.y + categoryPositions.get(category).y);
-            }*/
-            //TODO ChatGPT is worried that our primaryAtlas wont reflect changes made to values inside subAtlases. might need to fix later.
             for (Map<String, Rectangle> subAtlas : subAtlases.get(category).values()) {
                 for (String textureName : subAtlas.keySet()) {
                     subAtlas.get(textureName).setLocation(subAtlas.get(textureName).x + categoryPositions.get(category).x, subAtlas.get(textureName).y + categoryPositions.get(category).y);
@@ -144,11 +134,8 @@ public class TextureAtlasMaps {
         primaryAtlasSize[1] = calculatedSize.height; //Y
     }
     //TODO should probably make changes to this method for individual changes? idk...
-    public void calculateSubPlacements(){
-        //TODO need to iterate through each subAtlas and calculate positions and sizes.
-        // Category -> (SubAtlas Name -> (Texture Name -> Placement))
-
-        // get our categories for our subAtlases
+    // Would prefer to do this step during initialization I think?
+    public void calculateAllSubPlacements(){
         for (String category : subAtlases.keySet()) {
             for (String subAtlasName : subAtlases.get(category).keySet()){
                 //TODO I think this will calculate specifically this section of our subAtlases / by subAtlasName?
@@ -189,10 +176,6 @@ public class TextureAtlasMaps {
             }
         }
         return null;
-    }
-    //TODO this method doesn't make sense. probably because we're missing logic for the overall atlas placement.
-    public Map<String, Map<String, Rectangle>> getCategoryPlacement() {
-        return primaryAtlas;
     }
 
     /**
