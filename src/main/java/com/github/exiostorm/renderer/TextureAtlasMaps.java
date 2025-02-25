@@ -90,6 +90,16 @@ public class TextureAtlasMaps {
     }
     public void calculateSubPlacement(){
         //TODO need to iterate through each subAtlas and calculate positions and sizes.
+        // Category -> (SubAtlas Name -> (Texture Name -> Placement))
+
+        // get our categories for our subAtlases
+        for (String category : subAtlases.keySet()) {
+            for (String subAtlasName : subAtlases.get(category).keySet()){
+                //TODO I think this will calculate specifically this section of our subAtlases / by subAtlasName?
+                calculatePlacement(subAtlases.get(category).get(subAtlasName));
+                //subAtlasSizes.put(subAtlasName, ); //We're missing a way to save the size of the calculated atlas. we need to define a Rectangle inside our calculatePlacement() method, and then immediate after using the method we need to retrieve the Rectangle for our size.
+            }
+        }
     }
 
     /**
