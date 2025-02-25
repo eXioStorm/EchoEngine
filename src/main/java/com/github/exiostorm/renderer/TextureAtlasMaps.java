@@ -12,35 +12,36 @@ public class TextureAtlasMaps {
     private List<Rectangle> freeRectangles;
     private Map<String, Map<String, Rectangle>> primaryAtlas; // Category -> Active SubAtlas (Texture Name -> Placement)
     private Map<String, Map<String, Map<String, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture Name -> Placement))
-    private Map<String, int[]> subAtlasSizes; // SubAtlas Name -> [Used Width, Used Height]
+    private Map<String, Rectangle> subAtlasSizes; // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
     private int[] primaryAtlasSize;
     private Map<String, float[]> textureUV;
 
+    /**
+     * initialized all of our mappings.
+     */
     public TextureAtlasMaps() {
         this.freeRectangles = new ArrayList<>();
         this.subAtlases = new HashMap<>();
         this.primaryAtlas = new HashMap<>();
+        this.subAtlasSizes = new HashMap<>();
+        this.primaryAtlasSize = new int[2];
         this.textureUV = new HashMap<>();
     }
 
     /**
-     * This method should be removed, the logic should be handled inside of our method "addTexture()"
+     * Hmmm... some issues with this method perhaps... maybe with our overall setup? Maybe not. Thinking about our JukeBox and category modifications.
+     * This is our method for adding textures, all textures belong to a subAtlas.
+     * @param category Category this texture belongs to.
+     * @param subAtlas SubAtlas this texture belongs to.
+     * @param texture The texture itself.
      */
-    private boolean addCategory(String category) {
-        if (primaryAtlas.containsKey(category)) return false;
-        primaryAtlas.put(category, new HashMap<>());
-        return true;
-    }
-
-    public boolean addTexture(String category, String subAtlas, Texture texture) {
-        if (!primaryAtlas.containsKey(category)) return false;
-
+    public void addTexture(String category, String subAtlas, Texture texture) {
+        primaryAtlas.putIfAbsent(category, new HashMap<>());
         subAtlases.putIfAbsent(category, new HashMap<>());
         subAtlases.get(category).putIfAbsent(subAtlas, new HashMap<>());
         subAtlases.get(category).get(subAtlas).put(texture.getPath(), new Rectangle(0, 0, texture.getWidth(), texture.getHeight()));
-        return true;
     }
-
+    //TODO figure out a way to make this compatible with our mainAtlas setup..
     private void calculatePlacement(Map<String, Rectangle> textureMap) {
         List<Rectangle> sortedTextures = new ArrayList<>(textureMap.values());
         sortedTextures.sort(Comparator.comparingInt(r -> -r.width * r.height)); // Sort by area descending
@@ -94,7 +95,7 @@ public class TextureAtlasMaps {
      * This methods allows us to swap subAtlases, allowing us to only keep textures bound when necessary.
      * @param category name of the texture category
      * @param newSubAtlas the new subAtlas that will be swapped.
-     * @return return method for valid action confirmation.
+     * @return validity check.
      */
     public boolean swapSubAtlas(String category, String newSubAtlas) {
         if (!subAtlases.containsKey(category) || !subAtlases.get(category).containsKey(newSubAtlas)) {
@@ -107,6 +108,12 @@ public class TextureAtlasMaps {
         return true;
     }
 
+    /**
+     * This method is used in our calculatePlacement() method, I'm not sure why we need a separate method. will merge?
+     * @param textureMap
+     * @param texture
+     * @return validity check.
+     */
     private String getTextureKey(Map<String, Rectangle> textureMap, Rectangle texture) {
         for (Map.Entry<String, Rectangle> entry : textureMap.entrySet()) {
             if (entry.getValue().equals(texture)) {
@@ -120,15 +127,6 @@ public class TextureAtlasMaps {
         return primaryAtlas;
     }
 
-    public String getActiveSubAtlas(String category) {
-        if (!subAtlases.containsKey(category)) return null;
-        for (Map.Entry<String, Map<String, Rectangle>> entry : subAtlases.get(category).entrySet()) {
-            if (entry.getValue() == primaryAtlas.get(category)) {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
     /**
     * This method should be used to populate our Texture UV map so we can quickly retrieve locations based on textures instead of having extra parameters for retrieving positions through checking our subatlas maps.
     */
