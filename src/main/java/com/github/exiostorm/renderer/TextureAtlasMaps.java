@@ -1,5 +1,7 @@
 package com.github.exiostorm.renderer;
 
+import lombok.Getter;
+
 import java.awt.Rectangle;
 import java.util.*;
 
@@ -13,11 +15,13 @@ public class TextureAtlasMaps {
     /**
      * value is set inside our calculatePlacement() method, and used by our other methods calculatePrimaryPlacement() and calculateSubPlacement().
      */
+    @Getter
     private Rectangle calculatedSize;
     private Map<String, Map<String, Rectangle>> primaryAtlas; // Category -> Active SubAtlas (Texture Name -> Placement)
     private Map<String, Map<String, Map<String, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture Name -> Placement))
     private Map<String, Rectangle> subAtlasSizes; // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
     private int[] primaryAtlasSize;
+    @Getter
     private Map<String, float[]> textureUV; // Texture Name -> Placement
     private boolean inMemory = false;
 
@@ -31,6 +35,7 @@ public class TextureAtlasMaps {
         this.subAtlasSizes = new HashMap<>();
         this.primaryAtlasSize = new int[2];
         this.textureUV = new HashMap<>();
+        this.calculatedSize = new Rectangle(0,0,0,0);
     }
 
     /**
@@ -46,8 +51,14 @@ public class TextureAtlasMaps {
         subAtlases.get(category).putIfAbsent(subAtlas, new HashMap<>());
         subAtlases.get(category).get(subAtlas).put(texture.getPath(), new Rectangle(0, 0, texture.getWidth(), texture.getHeight()));
     }
-    private void calculatePlacement(Map<String, Rectangle> textureMap) {
-        List<Rectangle> sortedTextures = new ArrayList<>(textureMap.values());
+
+    /**
+     * This is our bin packer, use other methods for our texture Atlas...
+     * @param rectangleMap
+     */
+    //TODO I should probably move this to a different class? is now more useful than just for the texture atlas.
+    public void rectanglePacker(Map<String, Rectangle> rectangleMap) {
+        List<Rectangle> sortedTextures = new ArrayList<>(rectangleMap.values());
         sortedTextures.sort(Comparator.comparingInt(r -> -r.width * r.height)); // Sort by area descending
 
         freeRectangles.clear();
@@ -83,7 +94,7 @@ public class TextureAtlasMaps {
                     freeRectangles.add(new Rectangle(bestRect.x, bestRect.y + bestRect.height,
                             bestRect.width, freeRect.height - bestRect.height));
                 }
-                textureMap.put(getTextureKey(textureMap, texture), bestRect);
+                rectangleMap.put(getTextureKey(rectangleMap, texture), bestRect);
                 calculatedSize.x = bestRect.x;
                 calculatedSize.y = bestRect.y;
                 calculatedSize.width = Math.max(calculatedSize.width, bestRect.x + bestRect.width);
@@ -107,7 +118,7 @@ public class TextureAtlasMaps {
             categoryPositions.put(category, subAtlasSizes.get(primaryAtlas.get(category).keySet().iterator().next()));
         }
 
-        calculatePlacement(categoryPositions);
+        rectanglePacker(categoryPositions);
 
         for (String category : primaryAtlas.keySet()) {
             //TODO this should hopefully be re-positioning the values for our subatlases
@@ -118,8 +129,14 @@ public class TextureAtlasMaps {
             }*/
             //TODO ChatGPT is worried that our primaryAtlas wont reflect changes made to values inside subAtlases. might need to fix later.
             for (Map<String, Rectangle> subAtlas : subAtlases.get(category).values()) {
-                for (Rectangle texture : subAtlas.values()) {
-                    texture.setLocation(texture.x + categoryPositions.get(category).x, texture.y + categoryPositions.get(category).y);
+                for (String textureName : subAtlas.keySet()) {
+                    subAtlas.get(textureName).setLocation(subAtlas.get(textureName).x + categoryPositions.get(category).x, subAtlas.get(textureName).y + categoryPositions.get(category).y);
+                    // This should set our UV coordinates for our textures.
+                    textureUV.put(textureName, new float[]{
+                            (float) subAtlas.get(textureName).x / calculatedSize.width,
+                            (float) subAtlas.get(textureName).y / calculatedSize.height,
+                            (float) (subAtlas.get(textureName).x + subAtlas.get(textureName).width) / calculatedSize.width,
+                            (float) (subAtlas.get(textureName).y + subAtlas.get(textureName).height) / calculatedSize.height});
                 }
             }
         }
@@ -134,7 +151,7 @@ public class TextureAtlasMaps {
         for (String category : subAtlases.keySet()) {
             for (String subAtlasName : subAtlases.get(category).keySet()){
                 //TODO I think this will calculate specifically this section of our subAtlases / by subAtlasName?
-                calculatePlacement(subAtlases.get(category).get(subAtlasName));
+                rectanglePacker(subAtlases.get(category).get(subAtlasName));
                 subAtlasSizes.put(subAtlasName, new Rectangle(calculatedSize));
             }
         }
@@ -180,7 +197,7 @@ public class TextureAtlasMaps {
     /**
     * This method should be used to populate our Texture UV map so we can quickly retrieve locations based on textures instead of having extra parameters for retrieving positions through checking our subatlas maps.
     */
-    public float[] getUV(Texture texture) {
+    private float[] getUV(Texture texture) {
         return null;
     }
 
