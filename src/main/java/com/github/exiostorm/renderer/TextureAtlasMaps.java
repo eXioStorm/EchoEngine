@@ -15,6 +15,7 @@ public class TextureAtlasMaps {
     private Map<String, Rectangle> subAtlasSizes; // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
     private int[] primaryAtlasSize;
     private Map<String, float[]> textureUV;
+    private boolean inMemory = false;
 
     /**
      * initialized all of our mappings.
@@ -93,6 +94,7 @@ public class TextureAtlasMaps {
 
     /**
      * This methods allows us to swap subAtlases, allowing us to only keep textures bound when necessary.
+     * We should use inMemory boolean to swap this region of the atlas in our GPU after this method is called.
      * @param category name of the texture category
      * @param newSubAtlas the new subAtlas that will be swapped.
      * @return validity check.
