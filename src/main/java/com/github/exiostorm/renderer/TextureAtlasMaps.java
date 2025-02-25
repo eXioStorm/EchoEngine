@@ -84,9 +84,23 @@ public class TextureAtlasMaps {
         }
     }
 
+    /*
+    //TODO a lil' confused, we should only have one subAtlas in each category for our primaryAtlas, but I suppose this makes sense?...
+            for (String subAtlas : primaryAtlas.get(category).keySet()) {
+                categorySizes.put(category, subAtlasSizes.get(subAtlas));
+            }
+     */
     public void calculatePrimaryPlacement(){
         //TODO need to iterate through each Category and calculate positions, then calculate each category for overall atlas, the atlas size, and our texture uv positions in our texture/UV map.
-        //calculatePlacement(primaryAtlas);
+        // Category -> Active SubAtlas (Texture Name -> Placement)
+        // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
+        Map<String, Rectangle> categorySizes = new HashMap<>();
+        for (String category : primaryAtlas.keySet()) {
+            categorySizes.put(category, subAtlasSizes.get(primaryAtlas.get(category).keySet().iterator().next()));
+        }
+        calculatePlacement(categorySizes);
+        primaryAtlasSize[0] = 1; //X
+        primaryAtlasSize[1] = 2; //Y
     }
     public void calculateSubPlacement(){
         //TODO need to iterate through each subAtlas and calculate positions and sizes.
