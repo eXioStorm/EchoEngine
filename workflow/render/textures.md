@@ -17,5 +17,7 @@
       * **// Category -> (SubAtlas Name -> (Texture Name -> Placement))**
     * [Primary-Atlas]() - Map<String, Map<String, Rectangle>> primaryAtlas
       *  **// Category -> Active SubAtlas (Texture Name -> Placement)**
+      * This will be used to save our data for what is where so we know how to swap data on the buffer.
+    * [calculatePlacement]() - core method we'll use for our texture packing that will pack our textures. 
 #### Shaders
   * Still learning setting this up, will be super important for things like particles, highlighting, font rendering(changing font color), etc.
