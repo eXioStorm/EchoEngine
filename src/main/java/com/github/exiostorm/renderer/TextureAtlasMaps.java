@@ -54,7 +54,7 @@ public class TextureAtlasMaps {
 
     /**
      * This is our bin packer, use other methods for our texture Atlas...
-     * @param rectangleMap
+     * @param rectangleMap Map<String, Rectangle> for packing Rectangles to an area.
      */
     //TODO I should probably move this to a different class? is now more useful than just for the texture atlas.
     public void rectanglePacker(Map<String, Rectangle> rectangleMap) {
@@ -143,7 +143,8 @@ public class TextureAtlasMaps {
         primaryAtlasSize[0] = calculatedSize.width; //X
         primaryAtlasSize[1] = calculatedSize.height; //Y
     }
-    public void calculateSubPlacement(){
+    //TODO should probably make changes to this method for individual changes? idk...
+    public void calculateSubPlacements(){
         //TODO need to iterate through each subAtlas and calculate positions and sizes.
         // Category -> (SubAtlas Name -> (Texture Name -> Placement))
 
