@@ -232,12 +232,18 @@ public class TextureAtlasMaps {
         if (inMemory) {
             Map<Texture, Rectangle> swappedSubAtlas = primaryAtlas.get(category);
             for (Map.Entry<Texture, Rectangle> entry : swappedSubAtlas.entrySet()) {
+                //float[] rect = toUV(entry.getValue());
                 Rectangle rect = entry.getValue();
                 // Fetch the existing texture from the texture map
                 ByteBuffer textureBuffer = entry.getKey().getByteBuffer((byte) 0);
 
                 if (textureBuffer != null) {
                     glBindTexture(GL_TEXTURE_2D, atlasID);
+                    //TODO probably issues with rect.x/y/width/height. values aren't normalized for UV map.?
+                    // OH. just remembered this counts as a state change for OpenGL, that means we need to have this setup so we can batch these changes.
+                    //TODO//TODO//TODO//TODO
+                    //TODO//TODO//TODO//TODO
+                    //TODO//TODO//TODO//TODO
                     glTexSubImage2D(
                             GL_TEXTURE_2D,  // Target texture type
                             0,              // Mipmap level
@@ -255,7 +261,13 @@ public class TextureAtlasMaps {
         }
         return true;
     }
-
+    private float[] toUV(Rectangle rect) {
+        return new float[]{
+        (float) rect.x / primaryAtlasSize[0],
+        (float) rect.y / primaryAtlasSize[1],
+        (float) (rect.x + rect.width) / primaryAtlasSize[0],
+        (float) (rect.y + rect.height) / primaryAtlasSize[1]};
+    }
     /**
      * This method should run only during our first initialization of each sub-atlas / application setup when a save is absent.
      */
