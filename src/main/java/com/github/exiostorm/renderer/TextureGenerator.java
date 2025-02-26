@@ -6,11 +6,21 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.lwjgl.stb.STBImage.stbi_image_free;
 
 //TODO will rename this later when I come up with a better naming system.
 public class TextureGenerator {
+    static Map<String, Texture> Textures;
+
+    public TextureGenerator() {
+        Textures = new HashMap<>();
+    }
+    public static void addTexture(Texture texture) {
+        Textures.putIfAbsent(texture.getPath(), texture);
+    }
     public static ByteBuffer generateByteBuffer(Texture texture, byte saveFlag) {
         int width = texture.getWidth();
         int height = texture.getHeight();

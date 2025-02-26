@@ -19,17 +19,23 @@ import static org.lwjgl.stb.STBImage.stbi_image_free;
 public class TextureAtlas {
     private static int MAX_ATLAS_WIDTH = 0;
     private static int MAX_ATLAS_HEIGHT = 0;
-    private static int MEMORY_LIMIT = 500 * 1024 * 1024; // 50 MB limit for example
 
     private final Map<Texture, UsageInfo> usageMap = new LinkedHashMap<>();
     private final List<Rectangle> freeSpaces = new ArrayList<>();
     private ByteBuffer atlasData;
     private int textureID;
     private int atlasWidth, atlasHeight;
-    private int memoryUsed = 0;
     private final List<Texture> pendingTextures = new ArrayList<>(); // Textures to be packed
     private boolean finalized = false; // Flag to ensure finalizeAtlas() is called only once
     private boolean needsUpload = false; // Indicates if the atlas needs a GPU upload
+
+    //TODO VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+    // Getting ready to implement atlas management setup?
+    // We need to make it so we can read / write our atlas configuration to/from a file, then we can at least move forward even if our packing algorithm isn't perfect and continue making progress.
+    // We also need something setup to hot reload textures, I think even minecraft lets you refresh textures.
+    private Map<String, Map<String, Rectangle>> primaryAtlas; // Category -> Active SubAtlas (Texture Name -> Placement)
+    private Map<String, Map<String, Map<String, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture Name -> Placement))
+    //TODO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     public TextureAtlas() {
         atlasData = ByteBuffer.allocateDirect(MAX_ATLAS_WIDTH * MAX_ATLAS_HEIGHT * 4)
@@ -140,6 +146,9 @@ public class TextureAtlas {
         atlasWidth = 0;
         atlasHeight = 0;
         //TODO VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+        //TODO VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+        //TODO VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+        // This is where we need our bin packing logic.
         // Try to find a free space for the texture
         for (Texture texture : pendingTextures) {
             int startX = -1, startY = -1;
@@ -179,6 +188,8 @@ public class TextureAtlas {
             // example : usageMap.put(texture, new UsageInfo(startX, startY, 0, false)); note : inMemory is used for managing unused textures, can set it true or false here.
             // but if you set it false you'll need to set it to true after we draw it.
         }
+        //TODO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        //TODO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         //TODO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         // Reset the atlas data buffer
         //TODO fucking GPT, we don't want to set our buffer size until our atlas dimensions have been settled.
@@ -276,23 +287,6 @@ public class TextureAtlas {
         atlasData.rewind();
     }
 
-
-    //TODO weird method, not sure how effective it is..
-    // need to utilize this method effectively. try solving something via map / state changes
-    private void evictTextures(int currentFrame) {
-        Iterator<Map.Entry<Texture, UsageInfo>> iterator = usageMap.entrySet().iterator();
-        while (iterator.hasNext() && memoryUsed > MEMORY_LIMIT) {
-            Map.Entry<Texture, UsageInfo> entry = iterator.next();
-            UsageInfo info = entry.getValue();
-            if (currentFrame - info.lastAccessFrame > 300) {
-                memoryUsed -= entry.getKey().getWidth() * entry.getKey().getHeight() * 4;
-                info.inMemory = false;
-                iterator.remove();
-            }
-        }
-        // No immediate GPU update needed; defer to finalizeAtlas()
-        needsUpload = true;
-    }
 
     private void reloadTexture(Texture texture, UsageInfo info) {
         ByteBuffer textureData = generateByteBuffer(texture, (byte) 0);

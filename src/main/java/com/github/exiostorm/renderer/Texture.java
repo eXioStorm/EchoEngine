@@ -40,11 +40,13 @@ public class Texture {
 
 	public Texture(String path) {
 		this.path = path;
+		//TODO When we load an image it automatically saves a buffered image, it would be useful to delete it like a streamable resource? idk
 		generateBufferedImage(this, true);
 		this.width = this.bufferedImage.getWidth();
 		this.height = this.bufferedImage.getHeight();
 		this.transparencyMap = null;
 		this.byteBuffer = null;
+		TextureGenerator.addTexture(this);
 		//TODO when we first load an image we need to save our width and height, so perhaps in our TextureAtlas we will set bufferedImage to false after we add it there.
 		// this.bufferedImage = null;
 	}
