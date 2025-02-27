@@ -1,11 +1,8 @@
 package com.github.exiostorm.renderer;
 
 import com.github.exiostorm.main.GamePanel;
-import org.joml.sampling.BestCandidateSampling;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.system.MemoryUtil;
 
-import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
@@ -24,11 +21,11 @@ public class BatchRenderer {
     private IntBuffer indexBuffer;
     private int vaoID, vboID, eboID;
 
-    private TextureAtlas atlas;
+    private TextureAtlasOld atlas;
     private Shader defaultShader;
     private List<Quad> quads = new ArrayList<>();
 
-    public BatchRenderer(TextureAtlas atlas, Shader defaultShader) {
+    public BatchRenderer(TextureAtlasOld atlas, Shader defaultShader) {
         //TODO for this.atlas = atlas we're creating a reference to the supplied atlas, so no worries about external modifications not being reflected.
         this.atlas = atlas;
         this.defaultShader = defaultShader;

@@ -1,24 +1,12 @@
 import com.github.exiostorm.audio.JukeBox;
-import com.github.exiostorm.gui.GUIElement;
 import com.github.exiostorm.gui.Button;
 import com.github.exiostorm.main.GamePanel;
 
 import com.github.exiostorm.main.State;
 import com.github.exiostorm.renderer.*;
-import org.joml.Vector3f;
-
-import javax.imageio.ImageIO;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
-import static org.lwjgl.opengl.GL20.glUniform1i;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class MainMenu implements State {
@@ -27,7 +15,7 @@ public class MainMenu implements State {
     Shader exampleShader;
     private Texture testTexture;
     private Texture patrickTexture;
-    TextureAtlas atlas;
+    TextureAtlasOld atlas;
 
 
     private int frameTester = 0;
@@ -179,7 +167,7 @@ public class MainMenu implements State {
         gamePanel.guiElements.add(patrickButton);
     }
     public void test(){
-        atlas = new TextureAtlas();
+        atlas = new TextureAtlasOld();
         long start = System.currentTimeMillis();
         atlas.addTexture(backgroundTexture, 0, (byte) 0);
         System.out.println("Time it took to add first texture to our atlas : "+(System.currentTimeMillis()-start));

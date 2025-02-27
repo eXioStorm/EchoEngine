@@ -3,7 +3,7 @@ package com.github.exiostorm.gui;
 import com.github.exiostorm.renderer.BatchRenderer;
 import com.github.exiostorm.renderer.Shader;
 import com.github.exiostorm.renderer.Texture;
-import com.github.exiostorm.renderer.TextureAtlas;
+import com.github.exiostorm.renderer.TextureAtlasOld;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector2f;
@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 
 public class Button extends GUIElement {
     BatchRenderer renderer;
-    TextureAtlas atlas;
+    TextureAtlasOld atlas;
     @Setter
     boolean useShader = false;
     @Setter
@@ -46,7 +46,7 @@ public class Button extends GUIElement {
         this.texture = texture;
         //TODO these are just temporary while I try to figure out where I'm at
         //List<Texture> textures = List.of(this.texture);
-        atlas = new TextureAtlas();
+        atlas = new TextureAtlasOld();
         renderer = new BatchRenderer(atlas, shader);
     }
 

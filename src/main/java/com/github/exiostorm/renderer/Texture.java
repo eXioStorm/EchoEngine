@@ -47,7 +47,7 @@ public class Texture {
 		this.transparencyMap = null;
 		this.byteBuffer = null;
 		TextureGenerator.addTexture(this);
-		//TODO when we first load an image we need to save our width and height, so perhaps in our TextureAtlas we will set bufferedImage to false after we add it there.
+		//TODO when we first load an image we need to save our width and height, so perhaps in our TextureAtlasOld we will set bufferedImage to false after we add it there.
 		// this.bufferedImage = null;
 	}
 	public BufferedImage getBufferedImage(boolean save) {
