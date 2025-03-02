@@ -7,8 +7,6 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 public class BatchRenderer {
@@ -72,8 +70,9 @@ public class BatchRenderer {
         quads.clear();
 
     }
+    //TODO going to have issues here with having multiple texture atlases...
+    // we could fix this by adding quads to our atlas class instead.
     public void draw(Texture texture, float x, float y, Shader shader, boolean useShader) {
-        //TODO need something here to update our "lastAccessFrame"
         float[] uv = atlas.getUV(texture);
         quads.add(new Quad(x, y, texture.getWidth(), texture.getHeight(), uv, shader, useShader));
     }

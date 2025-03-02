@@ -1,9 +1,10 @@
-package com.github.exiostorm.renderer;
+package com.github.exiostorm.renderer.archive;
 
 import java.awt.image.BufferedImage;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+import com.github.exiostorm.renderer.Shader;
 import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -20,8 +21,6 @@ import com.github.exiostorm.utils.BufferUtils;
 import lombok.Getter;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
 
 public class Texture3 {
 	@Getter

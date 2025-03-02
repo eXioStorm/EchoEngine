@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.*;
 @SuppressWarnings("deprecation")//MultiValueMap was replaced by MultiValuedMap, however I couldn't quickly figure out how to iterate through MultiValuedMap...
 //TODO maybe add a method to merge subAtlases? looking into glyph rendering, and I could see it being useful to pack multiple languages together so we don't have super wide or tall atlases because of different subAtlases for each language.
 // Think I won't do this, instead we'll just add onto our atlas when we need new characters.
@@ -19,6 +19,10 @@ import static org.lwjgl.opengl.GL11.*;
 //TODO I'm wondering if I should add a method to remove textures / fonts based on their use? then we add them dynamically, and remove when they haven't been used for awhile.?
 // if we're adding new characters dynamically as they get used then this probably isn't necessary.
 public class TextureAtlas {
+    /**
+     * Going to use this for having multiple texture atlases.
+     */
+    private List<Quad> quads = new ArrayList<>();
     /**
      * List of free rectangles used for tracking available space in the atlas.
      * This list is updated and used within the rectanglePacker() method
@@ -70,6 +74,7 @@ public class TextureAtlas {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
     //TODO could move this method to the manager? parameter to accept TextureAtlas for the ID n stuff.
+    //TODO Using GL13 we could provide things like GL_TEXTURE0, GL_TEXTURE1, etc. to assign to different slots. could even use a map to be certain what goes where.
     public void initializeGPUAtlas() {
         ByteBuffer atlasBuffer = ByteBuffer.allocateDirect(primaryAtlasSize[0] * primaryAtlasSize[1] * 4).order(ByteOrder.nativeOrder());
         // Fill the buffer with transparent pixels
