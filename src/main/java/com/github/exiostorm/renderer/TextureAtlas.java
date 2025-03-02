@@ -1,7 +1,6 @@
 package com.github.exiostorm.renderer;
 
 import lombok.Getter;
-import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.map.MultiValueMap;
 
 import java.awt.Rectangle;
@@ -53,6 +52,10 @@ public class TextureAtlas {
     private Map<Texture, float[]> textureUV; // Texture Name -> Placement
     //TODO Need to separate management logic so we can manage multiple TextureAtlases. Not certain WHY we'd need multiple, but I suspect it would either have something to do with Fonts, or community content.
     private int atlasID;
+    /**
+     * Use this to set which GPU texture to bind the atlas to. this way we can save multiple textures to the GPU.
+     */
+    private int atlasSlot = GL_TEXTURE_2D;
     private boolean inMemory = false;
 
     /**
@@ -74,14 +77,14 @@ public class TextureAtlas {
      * Might need to remove this? unless we store which GL_TEXTURE0... to use.
      */
     public void bind() {
-        glBindTexture(GL_TEXTURE_2D, atlasID);
+        glBindTexture(atlasSlot, atlasID);
     }
 
     /**
      * Might need to remove this? unless we store which GL_TEXTURE0... to use.
      */
     public void unbind() {
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(atlasSlot, 0);
     }
     //TODO could move this method to the manager? parameter to accept TextureAtlas for the ID n stuff.
     //TODO Using GL13 we could provide things like GL_TEXTURE0, GL_TEXTURE1, etc. to assign to different slots. could even use a map to be certain what goes where.
@@ -114,11 +117,11 @@ public class TextureAtlas {
             }
         }
         atlasBuffer.flip();
-        glBindTexture(GL_TEXTURE_2D, atlasID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, primaryAtlasSize[0], primaryAtlasSize[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, atlasBuffer);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(atlasSlot, atlasID);
+        glTexImage2D(atlasSlot, 0, GL_RGBA, primaryAtlasSize[0], primaryAtlasSize[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, atlasBuffer);
+        glTexParameteri(atlasSlot, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(atlasSlot, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glBindTexture(atlasSlot, 0);
         inMemory = true;
         System.out.println("Atlas finalized and uploaded. Dimensions: " + primaryAtlasSize[0] + "x" + primaryAtlasSize[1]);
     }
@@ -338,15 +341,15 @@ public class TextureAtlas {
                     ByteBuffer textureBuffer = textureEntry.getKey().getByteBuffer((byte) 0);
 
                     if (textureBuffer != null) {
-                        glBindTexture(GL_TEXTURE_2D, atlasID); // Bind once
+                        glBindTexture(atlasSlot, atlasID); // Bind once
                         glTexSubImage2D(
-                                GL_TEXTURE_2D, 0, rect.x, rect.y, rect.width, rect.height,
+                                atlasSlot, 0, rect.x, rect.y, rect.width, rect.height,
                                 GL_RGBA, GL_UNSIGNED_BYTE, textureBuffer
                         );
                     }
                 }
             }
-            glBindTexture(GL_TEXTURE_2D, 0); // Unbind after batch update
+            glBindTexture(atlasSlot, 0); // Unbind after batch update
         }
         swapQueue.clear(); // Clear after processing
         return true;

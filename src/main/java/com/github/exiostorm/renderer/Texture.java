@@ -1,30 +1,25 @@
 package com.github.exiostorm.renderer;
 
-import com.github.exiostorm.utils.BufferUtils;
 import lombok.Getter;
 import lombok.Setter;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import org.json.JSONObject;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.FileInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.HashMap;
-import java.util.Map;
 
-import static com.github.exiostorm.renderer.TextureGenerator.*;
-import static org.lwjgl.opengl.GL11.*;
+import static com.github.exiostorm.renderer.TextureManager.*;
 
 public class Texture {
 	@Getter
     private final String path;
 	@Getter
-    private final int width;
+    private int width;
 	@Getter
-    private final int height;
+    private int height;
 	@Getter
 	@Setter
 	private Shader shader = null;
@@ -40,15 +35,9 @@ public class Texture {
 
 	public Texture(String path) {
 		this.path = path;
-		//TODO When we load an image it automatically saves a buffered image, it would be useful to delete it like a streamable resource? idk
-		generateBufferedImage(this, true);
-		this.width = this.bufferedImage.getWidth();
-		this.height = this.bufferedImage.getHeight();
+		getOrGenerateDimensions(this.width, this.height);
 		this.transparencyMap = null;
 		this.byteBuffer = null;
-		TextureGenerator.addTexture(this);
-		//TODO when we first load an image we need to save our width and height, so perhaps in our TextureAtlasOld we will set bufferedImage to false after we add it there.
-		// this.bufferedImage = null;
 	}
 	public BufferedImage getBufferedImage(boolean save) {
         if (this.bufferedImage == null) {
@@ -67,5 +56,32 @@ public class Texture {
 			return generateByteBuffer(this, saveFlag);
 		}
 		return byteBuffer;
+	}
+	//TODO move this method somewhere else... too many imports for using it here.
+	private void getOrGenerateDimensions(int width, int height) {
+		String jsonPath = this.path.substring(0, this.path.lastIndexOf('.')) + ".json";
+		File jsonFile = new File(jsonPath);
+		if (jsonFile.exists()) {
+			try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
+				StringBuilder jsonContent = new StringBuilder();
+				String line;
+				while ((line = reader.readLine()) != null) {
+					jsonContent.append(line);
+				}
+				JSONObject jsonObject = new JSONObject(jsonContent.toString());
+				this.width = jsonObject.getInt("width");
+				this.height = jsonObject.getInt("height");
+				System.out.println("JSON values read. Width: " + this.width + ", Height: " + this.height);
+			} catch (IOException e) {
+				System.err.println("Error reading JSON file: " + e.getMessage());
+				generateBufferedImage(this, true);
+				this.width = this.bufferedImage.getWidth();
+				this.height = this.bufferedImage.getHeight();
+			}
+		} else {
+			generateBufferedImage(this, true);
+			this.width = this.bufferedImage.getWidth();
+			this.height = this.bufferedImage.getHeight();
+		}
 	}
 }

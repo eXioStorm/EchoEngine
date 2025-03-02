@@ -3,6 +3,7 @@ import com.github.exiostorm.gui.GUIElement;
 import com.github.exiostorm.gui.Button;
 import com.github.exiostorm.main.State;
 import com.github.exiostorm.renderer.Texture;
+import com.github.exiostorm.renderer.TextureManager;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Arrays;
@@ -25,7 +26,7 @@ public class MainMenuInputMapper implements State {
     @Override
     public void init() {
         // Initialization logic for MainMenu, if any
-        mouseTexture = new Texture("src/main/resources/HUD/mouse.png");
+        mouseTexture = TextureManager.addTexture("src/main/resources/HUD/mouse.png");
         // Create a Cursor instance
         cursor = new Cursor(mouseTexture, 32, 32, 14, 28f);
         GLFW.glfwSetInputMode(gamePanel.getWindow().getWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);

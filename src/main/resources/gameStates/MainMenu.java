@@ -10,6 +10,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class MainMenu implements State {
+    TextureManager textureManager = GamePanel.getTextureManager();
     BatchRenderer renderer;
     private Texture backgroundTexture;
     Shader exampleShader;
@@ -113,9 +114,10 @@ public class MainMenu implements State {
         exampleShader.disable();*/
     }
     private void initTextures(){
-        backgroundTexture = new Texture("src/main/resources/Backgrounds/storm2.png"); // Replace with your path
-        testTexture = new Texture("src/main/resources/Backgrounds/test3.png");
-        patrickTexture = new Texture("src/main/resources/HUD/funnybutton.png");
+        //TODO in the future we will have a method somewhere, maybe the TextureManager, to both add Textures, and create TextureAtlas? maybe...
+        backgroundTexture = textureManager.addTexture("src/main/resources/Backgrounds/storm2.png"); // Replace with your path
+        testTexture = textureManager.addTexture("src/main/resources/Backgrounds/test3.png");
+        patrickTexture = textureManager.addTexture("src/main/resources/HUD/funnybutton.png");
     }
     private void initAudio(){
         JukeBox.load("src/main/resources/SFX/menuoption.ogg", "buttons", "menuoption");

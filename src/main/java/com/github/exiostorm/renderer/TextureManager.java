@@ -12,14 +12,16 @@ import java.util.Map;
 import static org.lwjgl.stb.STBImage.stbi_image_free;
 
 //TODO will rename this later when I come up with a better naming system.
-public class TextureGenerator {
+public class TextureManager {
     static Map<String, Texture> Textures;
 
-    public TextureGenerator() {
+    public TextureManager() {
         Textures = new HashMap<>();
     }
-    public static void addTexture(Texture texture) {
+    public static Texture addTexture(String path) {
+        Texture texture = new Texture(path);
         Textures.putIfAbsent(texture.getPath(), texture);
+        return texture;
     }
     public static ByteBuffer generateByteBuffer(Texture texture, byte saveFlag) {
         int width = texture.getWidth();

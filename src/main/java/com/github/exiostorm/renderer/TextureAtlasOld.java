@@ -10,7 +10,7 @@ import java.nio.ByteOrder;
 import java.util.*;
 import java.util.List;
 
-import static com.github.exiostorm.renderer.TextureGenerator.*;
+import static com.github.exiostorm.renderer.TextureManager.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.stb.STBImage.stbi_image_free;
 
