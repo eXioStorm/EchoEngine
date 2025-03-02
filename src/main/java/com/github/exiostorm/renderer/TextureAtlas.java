@@ -29,7 +29,7 @@ public class TextureAtlas {
      * to determine where textures can be placed efficiently.
      */
     private List<Rectangle> freeRectangles;
-    //TODO
+    //TODO This will be moved with our bin packer / REMOVED since we won't need it.
     /**
      * value is set inside our calculatePlacement() method, and used by our other methods calculatePrimaryPlacement() and calculateSubPlacement().
      * When we move our rectanglePacker to another class we should give it a return value so we can set this. if a return value already exists, then perhaps feed it as a parameter.
@@ -37,6 +37,8 @@ public class TextureAtlas {
     @Getter
     private Rectangle calculatedSize;
     //TODO maybe switch these back to using String instead of Texture... idk, might want to fix modularity?
+    // Scratch this idea, this is our TEXTURE atlas, we're getting too obsessive about modularity. we can have this dependency here because of just how intertwined the classes actually are.
+    //TODO Reminder here that we use a normal Map and not a MultiValueMap because in this case we actually only want one subAtlas per category.
     private Map<String, Map<Texture, Rectangle>> primaryAtlas; // Category -> Active SubAtlas (Texture Name -> Placement)
     //TODO early mistake made, had to change this from Map to MultiValueMap after configuring everything else and that broke a lot of things. we need a MultiValueMap for handling categories with multiple entries.
     private MultiValueMap<String, Map<String, Map<Texture, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture Name -> Placement))
@@ -67,9 +69,17 @@ public class TextureAtlas {
         swapQueue = new HashMap<>();
         atlasID = glGenTextures();
     }
+
+    /**
+     * Might need to remove this? unless we store which GL_TEXTURE0... to use.
+     */
     public void bind() {
         glBindTexture(GL_TEXTURE_2D, atlasID);
     }
+
+    /**
+     * Might need to remove this? unless we store which GL_TEXTURE0... to use.
+     */
     public void unbind() {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
@@ -122,17 +132,14 @@ public class TextureAtlas {
     public void addTexture(String category, String subAtlas, Texture texture) {
         primaryAtlas.putIfAbsent(category, new HashMap<>());
 
-        // Directly retrieve or create the subAtlas entry
         Map<String, Map<Texture, Rectangle>> categorySubAtlases = subAtlases.getCollection(category).iterator().next();
         if (categorySubAtlases == null) {
             categorySubAtlases = new HashMap<>();
             subAtlases.put(category, categorySubAtlases);
         }
 
-        // Directly retrieve or create the subAtlas map
         Map<Texture, Rectangle> subAtlasMap = categorySubAtlases.computeIfAbsent(subAtlas, k -> new HashMap<>());
 
-        // Add texture
         subAtlasMap.put(texture, new Rectangle(0, 0, texture.getWidth(), texture.getHeight()));
     }
 
@@ -231,7 +238,6 @@ public class TextureAtlas {
     // Would prefer to do this step during initialization I think?
     public void calculateAllSubPlacements() {
         for (String category : subAtlases.keySet()) {
-            //TODO might have issue with multivaluemap, after "subAtlases.getCollection(category)" add ".iterator().next()"
             for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : subAtlases.getCollection(category)) {
                 for (String subAtlasName : subAtlasEntry.keySet()) {
                     Map<Texture, Rectangle> subAtlas = subAtlasEntry.get(subAtlasName);
@@ -256,8 +262,6 @@ public class TextureAtlas {
 
         Map<Texture, Rectangle> subAtlas = null;
 
-        // Find the correct subAtlas inside the category
-        //TODO might have issue with multivaluemap, after "subAtlases.getCollection(category)" add ".iterator().next()"
         for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : subAtlases.getCollection(category)) {
             if (subAtlasEntry.containsKey(subAtlasName)) {
                 subAtlas = subAtlasEntry.get(subAtlasName);
@@ -279,7 +283,6 @@ public class TextureAtlas {
             textureUV.put(entry.getKey(), toUV(entry.getValue()));
         }
     }
-
 
     public void finalizeAtlasMaps() {
         calculateAllSubPlacements();
@@ -313,7 +316,6 @@ public class TextureAtlas {
 
             // Fetch the subAtlas
             Map<Texture, Rectangle> foundSubAtlas = null;
-            //TODO might have issue with multivaluemap, after "subAtlases.getCollection(category)" add ".iterator().next()"
             for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : subAtlases.getCollection(category)) {
                 if (subAtlasEntry.containsKey(newSubAtlas)) {
                     foundSubAtlas = subAtlasEntry.get(newSubAtlas);
