@@ -11,15 +11,24 @@ import java.util.*;
 
 import static org.lwjgl.opengl.GL11.*;
 @SuppressWarnings("deprecation")//MultiValueMap was replaced by MultiValuedMap, however I couldn't quickly figure out how to iterate through MultiValuedMap...
+//TODO maybe add a method to merge subAtlases? looking into glyph rendering, and I could see it being useful to pack multiple languages together so we don't have super wide or tall atlases because of different subAtlases for each language.
+// Think I won't do this, instead we'll just add onto our atlas when we need new characters.
+//TODO ANOTHER idea for glyph/text rendering is to have a small set of default characters we load, and then dynamically generate new text characters as they get used.(this would work by rendering a default character when unrecognized,
+// and queuing the unrecognized character to be generated to the glyph atlas.)
+//TODO Another issue with our current setup is the usage of Texture objects, because when we use text we don't reference a file on the computer we generate the data for the text.
+//TODO I'm wondering if I should add a method to remove textures / fonts based on their use? then we add them dynamically, and remove when they haven't been used for awhile.?
+// if we're adding new characters dynamically as they get used then this probably isn't necessary.
 public class TextureAtlas {
     /**
      * List of free rectangles used for tracking available space in the atlas.
-     * This list is updated and used within the calculatePlacement() method
+     * This list is updated and used within the rectanglePacker() method
      * to determine where textures can be placed efficiently.
      */
     private List<Rectangle> freeRectangles;
+    //TODO
     /**
      * value is set inside our calculatePlacement() method, and used by our other methods calculatePrimaryPlacement() and calculateSubPlacement().
+     * When we move our rectanglePacker to another class we should give it a return value so we can set this. if a return value already exists, then perhaps feed it as a parameter.
      */
     @Getter
     private Rectangle calculatedSize;
@@ -36,7 +45,7 @@ public class TextureAtlas {
     //Separate from subAtlases map to make coordinate retrieval quick.
     @Getter
     private Map<Texture, float[]> textureUV; // Texture Name -> Placement
-    //To be used later with swapSubAtlas, so we can also update the atlas on the GPU.
+    //TODO Need to separate management logic so we can manage multiple TextureAtlases. Not certain WHY we'd need multiple, but I suspect it would either have something to do with Fonts, or community content.
     private int atlasID;
     private boolean inMemory = false;
 
@@ -45,7 +54,6 @@ public class TextureAtlas {
      */
     public TextureAtlas() {
         this.freeRectangles = new ArrayList<>();
-        //this.subAtlases = new ListValuedMap<String, Map<String, Map<Texture, Rectangle>>>();
         this.subAtlases = new MultiValueMap<>();
         this.primaryAtlas = new HashMap<>();
         this.subAtlasSizes = new HashMap<>();
@@ -61,6 +69,7 @@ public class TextureAtlas {
     public void unbind() {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
+    //TODO could move this method to the manager? parameter to accept TextureAtlas for the ID n stuff.
     public void initializeGPUAtlas() {
         ByteBuffer atlasBuffer = ByteBuffer.allocateDirect(primaryAtlasSize[0] * primaryAtlasSize[1] * 4).order(ByteOrder.nativeOrder());
         // Fill the buffer with transparent pixels
@@ -121,8 +130,6 @@ public class TextureAtlas {
         // Add texture
         subAtlasMap.put(texture, new Rectangle(0, 0, texture.getWidth(), texture.getHeight()));
     }
-
-
 
     /**
      * This is our bin packer, use other methods for our texture Atlas...
@@ -211,7 +218,6 @@ public class TextureAtlas {
                 }
             }
         }
-
         primaryAtlasSize[0] = calculatedSize.width;
         primaryAtlasSize[1] = calculatedSize.height;
     }
