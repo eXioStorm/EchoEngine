@@ -1,4 +1,4 @@
-package com.github.exiostorm.renderer;
+package com.github.exiostorm.graphics;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -10,7 +10,7 @@ import java.nio.ByteOrder;
 import java.util.*;
 import java.util.List;
 
-import static com.github.exiostorm.renderer.TextureManager.*;
+import static com.github.exiostorm.graphics.TextureManager.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.stb.STBImage.stbi_image_free;
 

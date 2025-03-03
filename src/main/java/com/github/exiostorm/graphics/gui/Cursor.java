@@ -1,9 +1,6 @@
-package com.github.exiostorm.gui;
+package com.github.exiostorm.graphics.gui;
 
-import com.github.exiostorm.renderer.Texture;
-import org.lwjgl.opengl.GL11;
-
-import static org.lwjgl.opengl.GL11.*;
+import com.github.exiostorm.graphics.Texture;
 
 public class Cursor {
     private Texture texture;

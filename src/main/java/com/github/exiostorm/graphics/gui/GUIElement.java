@@ -1,4 +1,4 @@
-package com.github.exiostorm.gui;
+package com.github.exiostorm.graphics.gui;
 
 public abstract class GUIElement {
     protected float x, y; // Position and size

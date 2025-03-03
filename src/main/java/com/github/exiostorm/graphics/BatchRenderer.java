@@ -1,4 +1,4 @@
-package com.github.exiostorm.renderer;
+package com.github.exiostorm.graphics;
 
 import com.github.exiostorm.main.GamePanel;
 import org.lwjgl.BufferUtils;

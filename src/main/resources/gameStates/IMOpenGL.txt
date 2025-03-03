@@ -1,9 +1,9 @@
 import com.github.exiostorm.audio.JukeBox;
-import com.github.exiostorm.gui.Button;
-import com.github.exiostorm.gui.GUIElement;
+import com.github.exiostorm.graphics.gui.Button;
+import com.github.exiostorm.graphics.gui.GUIElement;
 import com.github.exiostorm.main.GamePanel;
 import com.github.exiostorm.main.State;
-import com.github.exiostorm.renderer.*;
+import com.github.exiostorm.graphics.*;
 
 import java.util.ArrayList;
 import java.util.List;

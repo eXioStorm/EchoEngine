@@ -1,13 +1,13 @@
 package com.github.exiostorm.main;
 
 import com.github.exiostorm.audio.JukeBox;
-import com.github.exiostorm.gui.GUIElement;
+import com.github.exiostorm.graphics.gui.GUIElement;
 import com.github.exiostorm.input.PlayerInputManager;
 import com.github.exiostorm.input.PlayerInput;
-import com.github.exiostorm.renderer.BatchRenderer;
-import com.github.exiostorm.renderer.Texture;
-import com.github.exiostorm.renderer.TextureManager;
-import com.github.exiostorm.renderer.Window;
+import com.github.exiostorm.graphics.BatchRenderer;
+import com.github.exiostorm.graphics.Texture;
+import com.github.exiostorm.graphics.TextureManager;
+import com.github.exiostorm.graphics.Window;
 import com.github.exiostorm.utils.DynamicFactory;
 import com.github.exiostorm.utils.StateManager;
 import lombok.Getter;
@@ -42,7 +42,6 @@ public class GamePanel {
     private String currentMapper[] = { DefaultMapper, "inputMappers" };
     @Getter
     private Window window;
-    private static TextureManager textureManager;
     public static int WIDTH = 320;
     public static int HEIGHT = 240;
     public static int SCALE = 1;
@@ -101,7 +100,6 @@ public class GamePanel {
 
     private void init() {
         stateManager = new StateManager();
-        textureManager = new TextureManager();
         window = new Window();
         window.setName(Name);
         window.setSize(WIDTH * SCALE, HEIGHT * SCALE);
@@ -157,7 +155,7 @@ public class GamePanel {
         }
     }
     private void setIcon(){
-        Texture icon = textureManager.addTexture(iconPath);
+        Texture icon = TextureManager.addTexture(iconPath);
         System.out.println(icon.getWidth()+"x"+icon.getHeight()+" icon dimensions");
         window.setIcon(icon.getByteBuffer((byte) 0), icon.getWidth(), icon.getHeight());
     }
@@ -198,9 +196,6 @@ public class GamePanel {
         }
         // Clear the list once all methods have been executed
         scheduledAssetLoading.clear();
-    }
-    public static TextureManager getTextureManager(){
-        return textureManager;
     }
     // Getters and Setters for currentState and currentMapper
     public String[] getCurrentState() {

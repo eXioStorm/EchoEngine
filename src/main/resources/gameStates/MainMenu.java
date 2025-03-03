@@ -1,16 +1,15 @@
 import com.github.exiostorm.audio.JukeBox;
-import com.github.exiostorm.gui.Button;
+import com.github.exiostorm.graphics.gui.Button;
 import com.github.exiostorm.main.GamePanel;
 
 import com.github.exiostorm.main.State;
-import com.github.exiostorm.renderer.*;
+import com.github.exiostorm.graphics.*;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class MainMenu implements State {
-    TextureManager textureManager = GamePanel.getTextureManager();
     BatchRenderer renderer;
     private Texture backgroundTexture;
     Shader exampleShader;
@@ -85,7 +84,7 @@ public class MainMenu implements State {
         renderer.draw(testTexture, 10, 10, exampleShader, false);
         renderer.draw(patrickTexture, 200, 140, exampleShader, false);
 
-        //renderer.draw(backgroundTexture, 0, 0, exampleShader, false);
+        //graphics.draw(backgroundTexture, 0, 0, exampleShader, false);
 
         renderer.end();
 
@@ -115,9 +114,9 @@ public class MainMenu implements State {
     }
     private void initTextures(){
         //TODO in the future we will have a method somewhere, maybe the TextureManager, to both add Textures, and create TextureAtlas? maybe...
-        backgroundTexture = textureManager.addTexture("src/main/resources/Backgrounds/storm2.png"); // Replace with your path
-        testTexture = textureManager.addTexture("src/main/resources/Backgrounds/test3.png");
-        patrickTexture = textureManager.addTexture("src/main/resources/HUD/funnybutton.png");
+        backgroundTexture = TextureManager.addTexture("src/main/resources/Backgrounds/storm2.png"); // Replace with your path
+        testTexture = TextureManager.addTexture("src/main/resources/Backgrounds/test3.png");
+        patrickTexture = TextureManager.addTexture("src/main/resources/HUD/funnybutton.png");
     }
     private void initAudio(){
         JukeBox.load("src/main/resources/SFX/menuoption.ogg", "buttons", "menuoption");

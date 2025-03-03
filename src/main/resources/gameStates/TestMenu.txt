@@ -1,8 +1,8 @@
 import com.github.exiostorm.main.GamePanel;
 import com.github.exiostorm.main.State;
 
-import com.github.exiostorm.renderer.TextRenderer;
-import com.github.exiostorm.renderer.Texture;
+import com.github.exiostorm.graphics.TextRenderer;
+import com.github.exiostorm.graphics.Texture;
 
 import static org.lwjgl.opengl.GL11.*;
 //TODO whoops. no logic implemented for changing states to unload assets. buttons still register hovering even when not visible.

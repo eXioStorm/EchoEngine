@@ -1,9 +1,10 @@
-package com.github.exiostorm.renderer;
+package com.github.exiostorm.graphics;
+
+import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
@@ -11,13 +12,9 @@ import java.util.Map;
 
 import static org.lwjgl.stb.STBImage.stbi_image_free;
 
-//TODO will rename this later when I come up with a better naming system.
 public class TextureManager {
-    static Map<String, Texture> Textures;
+    static Map<String, Texture> Textures = new HashMap<>();
 
-    public TextureManager() {
-        Textures = new HashMap<>();
-    }
     public static Texture addTexture(String path) {
         Texture texture = new Texture(path);
         Textures.putIfAbsent(texture.getPath(), texture);
@@ -99,5 +96,41 @@ public class TextureManager {
             texture.setTransparencyMap(transparencyMap);
         }
         return transparencyMap;
+    }
+    public static void getOrGenerateDimensions(Texture texture) {
+        String jsonPath = texture.getPath().substring(0, texture.getPath().lastIndexOf('.')) + ".json";
+        File jsonFile = new File(jsonPath);
+        if (jsonFile.exists()) {
+            System.out.println("FOUND EXISTING DIMENSIONS JSON FILE! : "+jsonPath);
+            try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
+                StringBuilder jsonContent = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonContent.append(line);
+                }
+                JSONObject jsonObject = new JSONObject(jsonContent.toString());
+                texture.setWidth(jsonObject.getInt("width"));
+                texture.setHeight(jsonObject.getInt("height"));
+                System.out.println("JSON values read. Width: " + texture.getWidth() + ", Height: " + texture.getHeight());
+            } catch (IOException e) {
+                System.err.println("Error reading JSON file: " + e.getMessage());
+                generateBufferedImage(texture, true);
+                texture.setWidth(texture.getBufferedImage().getWidth());
+                texture.setHeight(texture.getBufferedImage().getHeight());
+            }
+        } else {
+            generateBufferedImage(texture, true);
+            texture.setWidth(texture.getBufferedImage().getWidth());
+            texture.setHeight(texture.getBufferedImage().getHeight());
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("width", texture.getWidth());
+            jsonObject.put("height", texture.getHeight());
+            try (FileWriter fileWriter = new FileWriter(jsonPath)) {
+                fileWriter.write(jsonObject.toString(4)); // Pretty print with 4-space indentation
+                System.out.println("Dimensions saved to JSON: " + jsonPath);
+            } catch (IOException e) {
+                System.err.println("Error saving dimensions to JSON: " + e.getMessage());
+            }
+        }
     }
 }

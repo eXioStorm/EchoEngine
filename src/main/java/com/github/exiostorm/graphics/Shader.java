@@ -1,14 +1,12 @@
-package com.github.exiostorm.renderer;
+package com.github.exiostorm.graphics;
 import static org.lwjgl.opengl.GL20.*;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import com.github.exiostorm.utils.ShaderUtils;
 import lombok.Getter;
-import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;

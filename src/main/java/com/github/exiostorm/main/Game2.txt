@@ -6,8 +6,8 @@ import org.lwjgl.opengl.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
-import com.github.exiostorm.renderer.Texture;
-import com.github.exiostorm.renderer.Window;
+import com.github.exiostorm.graphics.Texture;
+import com.github.exiostorm.graphics.Window;
 //Summary: was trying to use OpenGL, but that may take too long.
 public class Game2 {
 	Window window;

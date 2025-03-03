@@ -1,18 +1,14 @@
-package com.github.exiostorm.renderer;
+package com.github.exiostorm.graphics;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.GL_FALSE;
-import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 
 public class Window {
 	private long window;

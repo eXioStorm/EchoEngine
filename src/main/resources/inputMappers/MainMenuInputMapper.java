@@ -1,9 +1,9 @@
-import com.github.exiostorm.gui.Cursor;
-import com.github.exiostorm.gui.GUIElement;
-import com.github.exiostorm.gui.Button;
+import com.github.exiostorm.graphics.gui.Cursor;
+import com.github.exiostorm.graphics.gui.GUIElement;
+import com.github.exiostorm.graphics.gui.Button;
 import com.github.exiostorm.main.State;
-import com.github.exiostorm.renderer.Texture;
-import com.github.exiostorm.renderer.TextureManager;
+import com.github.exiostorm.graphics.Texture;
+import com.github.exiostorm.graphics.TextureManager;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Arrays;

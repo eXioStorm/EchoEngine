@@ -1,8 +1,6 @@
-package com.github.exiostorm.renderer;
+package com.github.exiostorm.graphics;
 
 import lombok.Getter;
-
-import java.util.Arrays;
 
 import static org.lwjgl.opengl.GL11.glDrawElements;
 import static org.lwjgl.opengl.GL15.*;

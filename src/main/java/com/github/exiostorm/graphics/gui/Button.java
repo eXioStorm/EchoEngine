@@ -1,9 +1,9 @@
-package com.github.exiostorm.gui;
+package com.github.exiostorm.graphics.gui;
 
-import com.github.exiostorm.renderer.BatchRenderer;
-import com.github.exiostorm.renderer.Shader;
-import com.github.exiostorm.renderer.Texture;
-import com.github.exiostorm.renderer.TextureAtlasOld;
+import com.github.exiostorm.graphics.BatchRenderer;
+import com.github.exiostorm.graphics.Shader;
+import com.github.exiostorm.graphics.Texture;
+import com.github.exiostorm.graphics.TextureAtlasOld;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector2f;

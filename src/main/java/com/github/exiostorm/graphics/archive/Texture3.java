@@ -1,10 +1,10 @@
-package com.github.exiostorm.renderer.archive;
+package com.github.exiostorm.graphics.archive;
 
 import java.awt.image.BufferedImage;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import com.github.exiostorm.renderer.Shader;
+import com.github.exiostorm.graphics.Shader;
 import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
