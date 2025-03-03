@@ -1,13 +1,9 @@
 package com.github.exiostorm.graphics;
 
-import lombok.Getter;
 import org.apache.commons.collections4.map.MultiValueMap;
 
 import java.awt.Rectangle;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.*;
-import com.github.exiostorm.utils.MathTools;
 
 import static org.lwjgl.opengl.GL30.*;
 @SuppressWarnings("deprecation")//MultiValueMap was replaced by MultiValuedMap, however I couldn't quickly figure out how to iterate through MultiValuedMap...
@@ -30,14 +26,12 @@ public class TextureAtlas {
     private Map<String, Map<Texture, Rectangle>> primaryAtlas; // Category -> Active SubAtlas (Texture Name -> Placement)
     private int width;
     private int height;
-    //TODO early mistake made, had to change this from Map to MultiValueMap after configuring everything else and that broke a lot of things. we need a MultiValueMap for handling categories with multiple entries.
     private MultiValueMap<String, Map<String, Map<Texture, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture Name -> Placement))
-    //Separate from subAtlases map to avoid anymore complexity than we already have.
     private Map<String, Rectangle> subAtlasSizes; // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
-    // Queue for batching subAtlas swaps
     private Map<String, String> swapQueue;
-    //Separate from subAtlases map to make coordinate retrieval quick.
-
+    //TODO this may be redundant because of our Rectangles in subAtlases
+    //TODO this may be redundant because of our Rectangles in subAtlases
+    //TODO this may be redundant because of our Rectangles in subAtlases
     private Map<Texture, float[]> textureUV; // Texture Name -> Placement
     //TODO Need to separate management logic so we can manage multiple TextureAtlases. Not certain WHY we'd need multiple, but I suspect it would either have something to do with Fonts, or community content.
     private int atlasID;

@@ -1,4 +1,4 @@
-package com.github.exiostorm.graphics;
+package com.github.exiostorm.graphics.archive.twoaxis;
 
 import lombok.Getter;
 

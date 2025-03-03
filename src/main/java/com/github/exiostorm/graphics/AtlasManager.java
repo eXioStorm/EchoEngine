@@ -11,6 +11,8 @@ import java.util.Map;
 import static org.lwjgl.opengl.GL11.*;
 
 public class AtlasManager {
+
+
     public static TextureAtlas createAtlasFromJson(String jsonPath) {
         //TODO need to implement logic to create a new atlas from a json file.
         return new TextureAtlas();

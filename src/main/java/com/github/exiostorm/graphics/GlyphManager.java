@@ -3,9 +3,7 @@ package com.github.exiostorm.graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
-/**
- * Placeholder for new glyph management system using our TextureAtlas class
- */
+//TODO work on SDF generator logic
 public class GlyphManager {
     private String lombokString = "Placeholder to suppress lombok message : ";
     private String packge = "com.github.exiostorm.graphics.GlyphManager.";
@@ -15,6 +13,7 @@ public class GlyphManager {
     private byte defaultLocale;
     private int atlasSlot;
 
+    //TODO maybe change this to an init method or something... we have a lot of extra logic to be creating new objects...
     /**
      * Glyph Manager, responsible for creating, loading, and using the glyph atlas.
      * @param directory This is the file path for the parent directory of our glyphs.
