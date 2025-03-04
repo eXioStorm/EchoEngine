@@ -158,7 +158,8 @@ public class AtlasManager {
                                 subAtlas.get(textureName).x + categoryPositions.get(category).x,
                                 subAtlas.get(textureName).y + categoryPositions.get(category).y
                         );
-                        atlas.getTextureUV().put(textureName, toUV(atlas, subAtlas.get(textureName)));
+                        //TODO check if this is redundant
+                        //atlas.getTextureUV().put(textureName, toUV(atlas, subAtlas.get(textureName)));
                     }
                 }
             }
@@ -182,10 +183,13 @@ public class AtlasManager {
                     atlas.getSubAtlasSizes().put(subAtlasName, new Rectangle(
                             MathTools.rectanglePacker2D(subAtlas)
                     ));
+                    /*
                     // Update UV mapping for all textures in the subAtlas
                     for (Map.Entry<Texture, Rectangle> entry : subAtlas.entrySet()) {
+                        //TODO check if this is redundant
                         atlas.getTextureUV().put(entry.getKey(), toUV(atlas, entry.getValue()));
                     }
+                    */
                 }
             }
         }
@@ -215,11 +219,13 @@ public class AtlasManager {
         atlas.getSubAtlasSizes().put(subAtlasName, new Rectangle(
                 MathTools.rectanglePacker2D(subAtlas)
         ));
-
+        /*
         // Update UV mapping for all textures in the subAtlas
         for (Map.Entry<Texture, Rectangle> entry : subAtlas.entrySet()) {
+            //TODO check if this is redundant
             atlas.getTextureUV().put(entry.getKey(), toUV(atlas, entry.getValue()));
         }
+        */
     }
 
     /**

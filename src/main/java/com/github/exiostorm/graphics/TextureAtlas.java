@@ -32,7 +32,7 @@ public class TextureAtlas {
     //TODO this may be redundant because of our Rectangles in subAtlases
     //TODO this may be redundant because of our Rectangles in subAtlases
     //TODO this may be redundant because of our Rectangles in subAtlases
-    private Map<Texture, float[]> textureUV; // Texture Name -> Placement
+    //private Map<Texture, float[]> textureUV; // Texture Name -> Placement
     //TODO Need to separate management logic so we can manage multiple TextureAtlases. Not certain WHY we'd need multiple, but I suspect it would either have something to do with Fonts, or community content.
     private int atlasID;
     /**
@@ -54,7 +54,7 @@ public class TextureAtlas {
         this.subAtlases = new MultiValueMap<>();
         this.primaryAtlas = new HashMap<>();
         this.subAtlasSizes = new HashMap<>();
-        this.textureUV = new HashMap<>();
+        //this.textureUV = new HashMap<>();
         swapQueue = new HashMap<>();
         atlasID = glGenTextures();
     }
@@ -108,8 +108,9 @@ public class TextureAtlas {
     public int getAtlasID() {
         return this.atlasID;
     }
-
+    /* to delete later~
     public Map<Texture, float[]> getTextureUV() {
         return this.textureUV;
     }
+     */
 }
