@@ -53,7 +53,6 @@ public class GlyphManager {
             // return addGlyphToAtlas(unicode, glyphTexture);
         }
         //TODO
-        //TODO
         return new BufferedImage(0,0,0);
     }
 
