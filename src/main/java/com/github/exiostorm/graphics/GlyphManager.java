@@ -3,6 +3,7 @@ package com.github.exiostorm.graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
+//TODO fuck. we also need new logic for a new atlas because of sizing restrictions. our atlas will need re-sized when new glyphs are added.
 //TODO work on SDF generator logic
 public class GlyphManager {
     private String lombokString = "Placeholder to suppress lombok message : ";
@@ -11,7 +12,8 @@ public class GlyphManager {
     private String parentDirectory;
     private TextureAtlas glyphAtlas;
     private byte defaultLocale;
-    //TODO need a default font
+    //TODO need a default font Map/List
+    //TODO need a List / enum List of unicode characters to be loaded categorized by language
     private int atlasSlot;
 
     //TODO maybe change this to an init method or something... we have a lot of extra logic to be creating new objects...
