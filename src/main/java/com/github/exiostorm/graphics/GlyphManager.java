@@ -11,6 +11,7 @@ public class GlyphManager {
     private String parentDirectory;
     private TextureAtlas glyphAtlas;
     private byte defaultLocale;
+    //TODO need a default font
     private int atlasSlot;
 
     //TODO maybe change this to an init method or something... we have a lot of extra logic to be creating new objects...
@@ -52,8 +53,6 @@ public class GlyphManager {
             //TODO need our method to add the glyph to our atlas.
             // return addGlyphToAtlas(unicode, glyphTexture);
         }
-        //TODO
-        //TODO
         //TODO
         return new BufferedImage(0,0,0);
     }
