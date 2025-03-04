@@ -52,6 +52,7 @@ public class GlyphManager {
             //TODO need our method to add the glyph to our atlas.
             // return addGlyphToAtlas(unicode, glyphTexture);
         }
+        //TODO
         return new BufferedImage(0,0,0);
     }
 
