@@ -5,17 +5,18 @@ import java.util.List;
 import java.util.ArrayList;
 
 public enum Glyphs {
-    ENGLISH(createFullEnglishUnicodeList());
+    //TODO not sure I like creating a new method for each language...
+    ENGLISH(englishKeyboard());
 
     public final List<Integer> unicode;
     Glyphs(List<Integer> unicode) {
         this.unicode = unicode;
     }
-    private static List<Integer> createFullEnglishUnicodeList() {
-        List<Integer> unicodeList = new ArrayList<>();
+
+    private static List<Integer> englishKeyboard() {
 
         // Standard keyboard symbols
-        unicodeList.addAll(Arrays.asList(
+        List<Integer> unicodeList = new ArrayList<>(Arrays.asList(
                 0x00A7, //TODO § Section sign (move this to primary logic as it's going to be used universally)
                 0x0060, // Backtick `
                 0x0031, // One 1
@@ -59,7 +60,8 @@ public enum Glyphs {
                 0x0022, // Double Quote "
                 0x003C, // Less Than <
                 0x003E, // Greater Than >
-                0x003F  // Question ?
+                0x003F, // Question ?
+                0x00A3  // Pound £
         ));
 
         // Lowercase letters

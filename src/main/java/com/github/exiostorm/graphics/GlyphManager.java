@@ -1,32 +1,39 @@
 package com.github.exiostorm.graphics;
 
+//import sun.util.locale.BaseLocale;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
-//TODO fuck. we also need new logic for a new atlas because of sizing restrictions. our atlas will need re-sized when new glyphs are added.
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+
+//TODO fuck. we also need new logic for a new atlas because of sizing restrictions. our atlas will need re-sized and re-uploaded when new glyphs are added.
 //TODO work on SDF generator logic
 public class GlyphManager {
     private String lombokString = "Placeholder to suppress lombok message : ";
     private String packge = "com.github.exiostorm.graphics.GlyphManager.";
 
-    private String parentDirectory;
-    private TextureAtlas glyphAtlas;
-    private byte defaultLocale;
-    //TODO need a default font Map/List
-    //TODO need a List / enum List of unicode characters to be loaded categorized by language
-    private int atlasSlot;
 
-    //TODO maybe change this to an init method or something... we have a lot of extra logic to be creating new objects...
-    /**
-     * Glyph Manager, responsible for creating, loading, and using the glyph atlas.
-     * @param directory This is the file path for the parent directory of our glyphs.
-     * @param locale This will set our default locale, which will be used to pick our default atlas to be used.
-     */
+
+    private String parentDirectory = "";
+    private byte defaultLocale = 15;/*BaseLocale.US*/
+    private int atlasSlot = GL_TEXTURE_2D;
+    private TextureAtlas glyphAtlas;
+
+
+
+    //TODO [1] need a default font Map/List
+    private List<String> fonts = new ArrayList<>();
+    //TODO [1] need a List / enum List of unicode characters to be loaded categorized by language
+
+    /* removed since getters/setters make it redundant.
     public GlyphManager(String directory, int textureSlot, byte locale) {
         this.parentDirectory = directory;
         this.defaultLocale = locale;
         this.atlasSlot = textureSlot;
-    }
+    }*/
 
     /**
      * Was thinking of putting the logic for this inside of "public GlyphManager", however it's probably useful to allow us to create our managers separately
@@ -47,8 +54,8 @@ public class GlyphManager {
      */
     public BufferedImage createGlyph(int unicode, String font) {
         // Check if glyph file exists on disk
-        //TODO need to change where it uses defaultLocale so we use the proper language for the unicode
-        // Locale.getAvailableLocales()[defaultLocale].getLanguage()
+        /** need to change where it uses defaultLocale so we use the proper language for the unicode
+         Locale.getAvailableLocales()[defaultLocale].getLanguage() **/
         File glyphFile = new File("glyphs/fonts/" + font + "/" + getLanguageOfChar(unicode) + "/" + unicode + ".png");
         if (glyphFile.exists()) {
             Texture glyphTexture = new Texture(glyphFile.getPath());
@@ -111,5 +118,16 @@ public class GlyphManager {
         if (parentDirectory != null) { System.out.println(lombokString + packge + "setParentDirectory()"); }
         parentDirectory = path;
     }
-
+    /****/
+    public List<String> getFonts() {
+        if (parentDirectory != null) { System.out.println(lombokString + packge + "getFonts()"); }
+        return fonts;
+    }
+    public void setFonts(List<String> fonts) {
+        if (parentDirectory != null) { System.out.println(lombokString + packge + "setFonts()"); }
+        this.fonts = fonts;
+    }
+    public void addFont(String fonts) { this.fonts.add(fonts); }
+    public void removeFont(String fonts) { this.fonts.add(fonts); }
+    /**/
 }
