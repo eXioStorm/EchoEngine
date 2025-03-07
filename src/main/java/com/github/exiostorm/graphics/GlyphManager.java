@@ -15,12 +15,14 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 public class GlyphManager {
     private String lombokString = "Placeholder to suppress lombok message : ";
     private String packge = "com.github.exiostorm.graphics.GlyphManager.";
+    private String glyphs = "glyphs";
 
 
 
     private String parentDirectory = "";
     private byte defaultLocale = 15;/*BaseLocale.US*/
     private int atlasSlot = GL_TEXTURE_2D;
+    //TODO [0] need to set something up to detect OS and load a font file from the OS directory.
     private List<String> fonts = new ArrayList<>(Arrays.asList("Calligraserif"));
     private int numGlyphs = 0;
 
@@ -59,13 +61,12 @@ public class GlyphManager {
         File glyphFile = new File("glyphs/fonts/" + font + "/" + getLanguageOfChar(unicode) + "/" + unicode + ".png");
         if (glyphFile.exists()) {
             Texture glyphTexture = new Texture(glyphFile.getPath());
-            //TODO need our method to add the glyph to our atlas.
-            //TODO [0] might be a huge issue with how it's categorized...?
-            // unicode will have multiple values because different fonts, fonts will have multiple values because of unicodes... I'm doing something wrong?
-            // Might not have setup my TextureAtlas to allow me to enter multiple textures? wtf am I missing
-            //AtlasManager.addToAtlas(glyphAtlas, String.valueOf(++numGlyphs), font+"_"+unicode, glyphTexture);
-            AtlasManager.addToAtlas(glyphAtlas, font, String.valueOf(unicode), glyphTexture);
-            // return addGlyphToAtlas(unicode, glyphTexture);
+            // The category and subAtlas are the same so that our bin packer packs them all equally so our atlas doesn't become misshapen.
+            AtlasManager.addToAtlas(glyphAtlas, glyphs, glyphs, glyphTexture);
+        } else {
+            //TODO [0] need logic to generate the glyph
+            //STBTTBakedChar.Buffer charData = STBTTBakedChar.malloc(96??); // ASCII printable characters??
+            //STBTruetype.stbtt_BakeFontBitmap(fontBuffer, 32, bitmap, textureSize, textureSize, 32, charData);
         }
         //TODO [0]
         return new BufferedImage(0,0,0);

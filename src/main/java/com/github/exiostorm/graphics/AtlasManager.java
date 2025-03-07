@@ -18,7 +18,7 @@ public class AtlasManager {
         return new TextureAtlas();
     }
     /**
-     * This is our method for adding textures, all textures belong to a subAtlas.
+     * This is our method for adding textures to both primary, and sub atlas.
      * @param category Category this texture belongs to.
      * @param subAtlas SubAtlas this texture belongs to.
      * @param texture The texture itself.
