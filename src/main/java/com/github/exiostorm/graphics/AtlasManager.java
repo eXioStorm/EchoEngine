@@ -23,7 +23,7 @@ public class AtlasManager {
      * @param subAtlas SubAtlas this texture belongs to.
      * @param texture The texture itself.
      */
-    public static void addToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture){
+    public static void addToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture) {
         atlas.getPrimaryAtlas().putIfAbsent(category, new HashMap<>());
 
         Map<String, Map<Texture, Rectangle>> categorySubAtlases = atlas.getSubAtlases().getCollection(category).iterator().next();

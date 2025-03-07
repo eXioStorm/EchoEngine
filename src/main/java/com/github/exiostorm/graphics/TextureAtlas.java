@@ -22,15 +22,13 @@ public class TextureAtlas {
     private List<Quad> quads = new ArrayList<>();
     //TODO maybe switch these back to using String instead of Texture... idk, might want to fix modularity?
     // Scratch this idea, this is our TEXTURE atlas, we're getting too obsessive about modularity. we can have this dependency here because of just how intertwined the classes actually are.
-    //TODO Reminder here that we use a normal Map and not a MultiValueMap because in this case we actually only want one subAtlas per category.
+    //TODO Reminder here that we use a normal Map and not a MultiValueMap because in this case we actually only want one subAtlas per category.?
     private Map<String, Map<Texture, Rectangle>> primaryAtlas; // Category -> Active SubAtlas (Texture Name -> Placement)
     private int width;
     private int height;
     private MultiValueMap<String, Map<String, Map<Texture, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture Name -> Placement))
     private Map<String, Rectangle> subAtlasSizes; // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
     private Map<String, String> swapQueue;
-    //TODO this may be redundant because of our Rectangles in subAtlases
-    //TODO this may be redundant because of our Rectangles in subAtlases
     //TODO this may be redundant because of our Rectangles in subAtlases
     //private Map<Texture, float[]> textureUV; // Texture Name -> Placement
     //TODO Need to separate management logic so we can manage multiple TextureAtlases. Not certain WHY we'd need multiple, but I suspect it would either have something to do with Fonts, or community content.
@@ -65,6 +63,10 @@ public class TextureAtlas {
         glBindTexture(this.atlasSlot, 0);
     }
 
+    //TODO might delete this
+    public void addToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture) {
+        AtlasManager.addToAtlas(atlas, category, subAtlas, texture);
+    }
     public Map<String, Map<Texture, Rectangle>> getPrimaryAtlas(){
         return this.primaryAtlas;
     }

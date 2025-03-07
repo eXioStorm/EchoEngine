@@ -22,8 +22,9 @@ public class GlyphManager {
     private byte defaultLocale = 15;/*BaseLocale.US*/
     private int atlasSlot = GL_TEXTURE_2D;
     private List<String> fonts = new ArrayList<>(Arrays.asList("Calligraserif"));
+    private int numGlyphs = 0;
 
-    private TextureAtlas glyphAtlas;
+    private TextureAtlas glyphAtlas = new TextureAtlas();
 
     //TODO [1] need a List / enum List of unicode characters to be loaded categorized by language
 
@@ -59,6 +60,11 @@ public class GlyphManager {
         if (glyphFile.exists()) {
             Texture glyphTexture = new Texture(glyphFile.getPath());
             //TODO need our method to add the glyph to our atlas.
+            //TODO [0] might be a huge issue with how it's categorized...?
+            // unicode will have multiple values because different fonts, fonts will have multiple values because of unicodes... I'm doing something wrong?
+            // Might not have setup my TextureAtlas to allow me to enter multiple textures? wtf am I missing
+            //AtlasManager.addToAtlas(glyphAtlas, String.valueOf(++numGlyphs), font+"_"+unicode, glyphTexture);
+            AtlasManager.addToAtlas(glyphAtlas, font, String.valueOf(unicode), glyphTexture);
             // return addGlyphToAtlas(unicode, glyphTexture);
         }
         //TODO [0]
