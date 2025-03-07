@@ -5,6 +5,7 @@ package com.github.exiostorm.graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
@@ -20,12 +21,10 @@ public class GlyphManager {
     private String parentDirectory = "";
     private byte defaultLocale = 15;/*BaseLocale.US*/
     private int atlasSlot = GL_TEXTURE_2D;
+    private List<String> fonts = new ArrayList<>(Arrays.asList("Calligraserif"));
+
     private TextureAtlas glyphAtlas;
 
-
-
-    //TODO [1] need a default font Map/List
-    private List<String> fonts = new ArrayList<>();
     //TODO [1] need a List / enum List of unicode characters to be loaded categorized by language
 
     /* removed since getters/setters make it redundant.
@@ -62,7 +61,7 @@ public class GlyphManager {
             //TODO need our method to add the glyph to our atlas.
             // return addGlyphToAtlas(unicode, glyphTexture);
         }
-        //TODO
+        //TODO [0]
         return new BufferedImage(0,0,0);
     }
 
