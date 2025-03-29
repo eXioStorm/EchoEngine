@@ -28,7 +28,11 @@ public class Texture {
 	private String lombokString = "Placeholder to suppress lombok message : ";
 	private String packge = "com.github.exiostorm.graphics.Texture.";
 
-	public Texture(String path) {
+	/**
+	 * Set as package private, so we force the use of TextureManager. Do not use directly.
+	 * @param path path of the image file.
+	 */
+	Texture(String path) {
 		this.path = path;
 		this.transparencyMap = null;
 		this.byteBuffer = null;

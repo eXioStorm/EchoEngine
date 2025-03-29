@@ -13,17 +13,34 @@ import static org.lwjgl.opengl.GL11.*;
 public class AtlasManager {
 
 
-    public static TextureAtlas createAtlasFromJson(String jsonPath) {
-        //TODO need to implement logic to create a new atlas from a json file.
-        return new TextureAtlas();
+    public static TextureAtlas createAtlasFromFile(String path) {
+        TextureAtlas existingAtlas = new TextureAtlas();
+        //TODO [0] need to implement logic to load pre-made atlas from file.
+        //TODO read the json provided for all the next values. will need something to iterate for all textures within the json.
+        int placeholder = 0;
+        existingAtlas.setWidth(placeholder);
+        existingAtlas.setHeight(placeholder);
+        AtlasManager.addToAtlas(existingAtlas, "", "", TextureManager.addTexture(""), 0, 0);
+        return existingAtlas;
     }
+    //TODO VV
+    // make core method to reduce reused logic
     /**
-     * This is our method for adding textures to both primary, and sub atlas.
+     * This is our method for adding textures to both primary, and sub atlas. placement will be calculated later.
+     * @param atlas Atlas to add to.
      * @param category Category this texture belongs to.
      * @param subAtlas SubAtlas this texture belongs to.
      * @param texture The texture itself.
      */
     public static void addToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture) {
+        addToAtlas(atlas, category, subAtlas, texture, 0, 0);
+    }
+    /**
+     * Method for manual atlas texture placement.
+     * @param x texture x coordinate
+     * @param y texture y coordinate
+     */
+    public static void addToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture, int x, int y) {
         atlas.getPrimaryAtlas().putIfAbsent(category, new HashMap<>());
 
         Map<String, Map<Texture, Rectangle>> categorySubAtlases = atlas.getSubAtlases().getCollection(category).iterator().next();
@@ -34,8 +51,9 @@ public class AtlasManager {
 
         Map<Texture, Rectangle> subAtlasMap = categorySubAtlases.computeIfAbsent(subAtlas, k -> new HashMap<>());
 
-        subAtlasMap.put(texture, new Rectangle(0, 0, texture.getWidth(), texture.getHeight()));
+        subAtlasMap.put(texture, new Rectangle(x, y, texture.getWidth(), texture.getHeight()));
     }
+    //TODO ^^
     /**
      * This method allows us to swap subAtlases, allowing us to only keep textures bound when necessary.
      * @param category name of the texture category

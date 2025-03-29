@@ -2,29 +2,47 @@ package com.github.exiostorm.graphics;
 
 //import sun.util.locale.BaseLocale;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.github.exiostorm.utils.BufferUtils;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.util.msdfgen.*;
+import org.lwjgl.system.MemoryStack;
+
+import javax.naming.Context;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 
 //TODO fuck. we also need new logic for a new atlas because of sizing restrictions. our atlas will need re-sized and re-uploaded when new glyphs are added.
+// Should have something to toggle the ability to generate new glyphs so that people can prevent performance hits. then new glyphs will just render with a default character.
 //TODO work on SDF generator logic
 public class GlyphManager {
     private String lombokString = "Placeholder to suppress lombok message : ";
     private String packge = "com.github.exiostorm.graphics.GlyphManager.";
     private String glyphs = "glyphs";
+    private String GLYPH_DIR = "glyphs/fonts/";
 
-
+    private static final int DEFAULT_RESOLUTION = 64;
+    private static final double DEFAULT_RANGE = 4.0;
+    private static final double DEFAULT_ANGLE_THRESHOLD = Math.PI / 3.0; // 60 degrees
 
     private String parentDirectory = "";
     private byte defaultLocale = 15;/*BaseLocale.US*/
     private int atlasSlot = GL_TEXTURE_2D;
     //TODO [0] need to set something up to detect OS and load a font file from the OS directory.
     private List<String> fonts = new ArrayList<>(Arrays.asList("Calligraserif"));
-    private int numGlyphs = 0;
 
     private TextureAtlas glyphAtlas = new TextureAtlas();
 
@@ -54,22 +72,54 @@ public class GlyphManager {
      * During checking for our glyphs we use this method if our glyph is not found already on disk.
      * @param unicode the unicode to be saved... Might need to change this to a BufferedImage? won't know until I have more logic created.
      */
-    public BufferedImage createGlyph(int unicode, String font) {
+    public void getGlyph(int unicode, String font) {
         // Check if glyph file exists on disk
         /** need to change where it uses defaultLocale so we use the proper language for the unicode
          Locale.getAvailableLocales()[defaultLocale].getLanguage() **/
-        File glyphFile = new File("glyphs/fonts/" + font + "/" + getLanguageOfChar(unicode) + "/" + unicode + ".png");
-        if (glyphFile.exists()) {
-            Texture glyphTexture = new Texture(glyphFile.getPath());
-            // The category and subAtlas are the same so that our bin packer packs them all equally so our atlas doesn't become misshapen.
-            AtlasManager.addToAtlas(glyphAtlas, glyphs, glyphs, glyphTexture);
-        } else {
+        File glyphFile = new File(GLYPH_DIR + font + "/" + getLanguageOfChar(unicode) + "/" + unicode + ".png");
+        if (!glyphFile.exists()) {
             //TODO [0] need logic to generate the glyph
             //STBTTBakedChar.Buffer charData = STBTTBakedChar.malloc(96??); // ASCII printable characters??
             //STBTruetype.stbtt_BakeFontBitmap(fontBuffer, 32, bitmap, textureSize, textureSize, 32, charData);
+            TextureManager.addTexture(createGlyph(unicode, font, glyphFile));
+
         }
-        //TODO [0]
-        return new BufferedImage(0,0,0);
+        Texture glyphTexture = TextureManager.addTexture(glyphFile.getPath());
+        // The category and subAtlas are the same so that our bin packer packs them all equally so our atlas doesn't become misshapen.
+        AtlasManager.addToAtlas(glyphAtlas, glyphs, glyphs, glyphTexture);
+    }
+    //TODO 2025-03-28
+    //TODO this is the last thing we were working on, and we need the logic for generating our glyphs. for this we were porting MSDFGen from C++ to Java so we can generate our glyphs DURING runtime.
+    // When porting MSDFGen we created our own class MSDFGenExt to replicate LWJGL's own MSDFGenExt class that's lacking the features we need to actually generate glyphs with.
+    // "Our" MSDFGenExt has math logic for the generation of glyphs, things like contour, color, direction, point, etc. I have no understanding of how it works.
+    //TODO Previously we were using ChatGpt trying to generate the glyphs and it was trying to use C++ references that we didn't have any identical references for in Java, currently we have no reference for actually generating anything and
+    // we left off porting the C++ code to Java. We need to confirm we've ported the code we need and then generate our code / references with our new ported code.
+    public String createGlyph(int unicode, String font, File file) {
+        //TODO [0] need to generate the glyph, save it to our directory, and then create a new texture.[New Texture is created on line 84 with TextureManager.addTexture(createGlyph())]
+        //TODO [0] might need to set it up to batch process our glyphs as we'll be using multiple glyphs from any one ttf font file.
+        // Load the TTF font into a ByteBuffer
+
+        return "null";
+    }
+    /**
+     * Loads a TTF font file into a direct ByteBuffer.
+     *
+     * @param fontFile The TTF font file.
+     * @return A ByteBuffer containing the font data.
+     */
+    private static ByteBuffer loadFontFile(File fontFile) {
+        try {
+            byte[] data = new byte[(int) fontFile.length()];
+            try (FileInputStream fis = new FileInputStream(fontFile)) {
+                fis.read(data);
+            }
+            ByteBuffer buffer = ByteBuffer.allocateDirect(data.length).order(ByteOrder.nativeOrder());
+            buffer.put(data);
+            buffer.flip();
+            return buffer;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load font file: " + fontFile.getAbsolutePath(), e);
+        }
     }
 
 

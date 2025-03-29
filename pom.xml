@@ -134,6 +134,10 @@
         </dependency>
         <dependency>
             <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-msdfgen</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
             <artifactId>lwjgl-nfd</artifactId>
         </dependency>
         <dependency>
@@ -195,6 +199,11 @@
         <dependency>
             <groupId>org.lwjgl</groupId>
             <artifactId>lwjgl-hwloc</artifactId>
+            <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-msdfgen</artifactId>
             <classifier>${lwjgl.natives}</classifier>
         </dependency>
         <dependency>

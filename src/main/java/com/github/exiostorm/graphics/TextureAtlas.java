@@ -23,10 +23,19 @@ public class TextureAtlas {
     //TODO maybe switch these back to using String instead of Texture... idk, might want to fix modularity?
     // Scratch this idea, this is our TEXTURE atlas, we're getting too obsessive about modularity. we can have this dependency here because of just how intertwined the classes actually are.
     //TODO Reminder here that we use a normal Map and not a MultiValueMap because in this case we actually only want one subAtlas per category.?
-    private Map<String, Map<Texture, Rectangle>> primaryAtlas; // Category -> Active SubAtlas (Texture Name -> Placement)
+    // I think I have this setup improperly... we only one one key-value pair for the category, but we still need multiple textures themselves for containing the subatlas... will need to look at more code
+    // maybe not, our json stuff is getting us confused. the primaryAtlas should just be directing us to the correct subAtlas that contains the actual information for the textures. maybe need to fix that so our primaryAtlas
+    // does not use Texture within the map.
+    private Map<String, Map<Texture, Rectangle>> primaryAtlas; // Category -> Active SubAtlas (Texture -> Placement)
+    //TODO should be :
+    // Map<String, MultiValueMap<String, Map<Texture, Rectangle>>> primaryAtlas; // Category  -> Active SubAtlas -> (Texture -> Placement) //"()" indicates multiple entries
     private int width;
     private int height;
-    private MultiValueMap<String, Map<String, Map<Texture, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture Name -> Placement))
+    private MultiValueMap<String, Map<String, Map<Texture, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture -> Placement))
+    //TODO should be :
+    // MultiValueMap<String, MultiValueMap<String, Map<Texture, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture -> Placement)) // multiple subAtlas, and then multiple textures.
+
+    //TODO is this redundant??
     private Map<String, Rectangle> subAtlasSizes; // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
     private Map<String, String> swapQueue;
     //TODO this may be redundant because of our Rectangles in subAtlases

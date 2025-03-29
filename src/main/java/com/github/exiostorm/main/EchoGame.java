@@ -20,6 +20,7 @@ public class EchoGame {
         gamePanel.setInputMappersDirectory("src/main/resources/inputMappers/");
         gamePanel.setDefaultState("MainMenu");
         gamePanel.setDefaultInputMapper("MainMenuInputMapper");
+        //TODO
         gamePanel.scheduleAssets(() -> TextRenderer.loadFontsFromDirectory("src/main/resources/Fonts"));
         TextRenderer.setDefaultFont("arial");
     }

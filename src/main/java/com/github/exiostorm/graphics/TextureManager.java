@@ -97,6 +97,7 @@ public class TextureManager {
         }
         return transparencyMap;
     }
+    //TODO maybe have another class handle the json logic so we can reduce imports used in this class? maybe not cause then we'd need our own import..
     public static void getOrGenerateDimensions(Texture texture) {
         String jsonPath = texture.getPath().substring(0, texture.getPath().lastIndexOf('.')) + ".json";
         File jsonFile = new File(jsonPath);
