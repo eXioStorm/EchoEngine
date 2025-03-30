@@ -11,6 +11,7 @@ public class MathTools {
      * This is our bin packer, use other methods for our texture Atlas...
      * @param rectangleMap Map<String, Rectangle> for packing Rectangles to an area.
      */
+    //TODO [0] need to change this to multivaluemap to allow multiple textures per grouping.
     public static <K> Rectangle rectanglePacker2D(Map<K, Rectangle> rectangleMap) {
         List<Map.Entry<K, Rectangle>> sortedTextures = new ArrayList<>(rectangleMap.entrySet());
         List<Rectangle> freeRectangles = new ArrayList<>();

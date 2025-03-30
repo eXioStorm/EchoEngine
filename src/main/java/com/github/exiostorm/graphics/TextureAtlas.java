@@ -28,12 +28,18 @@ public class TextureAtlas {
     // does not use Texture within the map.
     private Map<String, Map<Texture, Rectangle>> primaryAtlas; // Category -> Active SubAtlas (Texture -> Placement)
     //TODO should be :
-    // Map<String, MultiValueMap<String, Map<Texture, Rectangle>>> primaryAtlas; // Category  -> Active SubAtlas -> (Texture -> Placement) //"()" indicates multiple entries
+    private Map<String, String> newPrimaryAtlas; // Category  -> Active SubAtlas
+    //TODO Looking at our bin packer it seems we need to convert our setup so that primaryAtlas does not use Texture but contains the subAtlas only? and all of our position data is purely saved to the subAtlases while primaryAtlas purely
+    // describes the used subAtlas.? will need to make changes to ;
+    // AtlasManager : addToAtlas(), saveAtlasToGPU(), calculateAtlasPrimaryPlacement(),
     private int width;
     private int height;
+    //TODO [0] absolutely had this done wrong... this won't do at all. currently setup as one subAtlas name to one Texture. definitely not how I intended for it to work. we need multiple textures for each subAtlas.(they act like categories?)
+    // before changing anything though, make sure we're right about this assessment.. I think so because of 1:1 category:subatlas in primaryAtlas. update: I think I'm certain here.
     private MultiValueMap<String, Map<String, Map<Texture, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture -> Placement))
     //TODO should be :
-    // MultiValueMap<String, MultiValueMap<String, Map<Texture, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture -> Placement)) // multiple subAtlas, and then multiple textures.
+    private MultiValueMap<String, MultiValueMap<String, Map<Texture, Rectangle>>> newSubAtlases; // Category -> (SubAtlas Name -> (Texture -> Placement)) // multiple subAtlas, and then multiple textures. //"()" indicates multiple entries
+    // Because of this change we'll need to change our bin packer.
 
     //TODO is this redundant??
     private Map<String, Rectangle> subAtlasSizes; // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
@@ -60,6 +66,10 @@ public class TextureAtlas {
     public TextureAtlas() {
         this.subAtlases = new MultiValueMap<>();
         this.primaryAtlas = new HashMap<>();
+
+        this.newPrimaryAtlas = new HashMap<>();
+        this.newSubAtlases = new MultiValueMap<>();
+
         this.subAtlasSizes = new HashMap<>();
         //this.textureUV = new HashMap<>();
         swapQueue = new HashMap<>();
@@ -76,12 +86,22 @@ public class TextureAtlas {
     public void addToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture) {
         AtlasManager.addToAtlas(atlas, category, subAtlas, texture);
     }
+
+    public MultiValueMap<String, MultiValueMap<String, Map<Texture, Rectangle>>> getNewSubAtlases(){
+        return this.newSubAtlases;
+    }
+
+    public Map<String, String> getNewPrimaryAtlas(){
+        return this.newPrimaryAtlas;
+    }
+
     public Map<String, Map<Texture, Rectangle>> getPrimaryAtlas(){
         return this.primaryAtlas;
     }
     public MultiValueMap<String, Map<String, Map<Texture, Rectangle>>> getSubAtlases(){
         return this.subAtlases;
     }
+
     Map<String, Rectangle> getSubAtlasSizes() {
         return this.subAtlasSizes;
     }
