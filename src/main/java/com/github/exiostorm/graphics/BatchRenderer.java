@@ -19,11 +19,11 @@ public class BatchRenderer {
     private IntBuffer indexBuffer;
     private int vaoID, vboID, eboID;
 
-    private TextureAtlasOld atlas;
+    private TextureAtlas atlas;
     private Shader defaultShader;
     private List<Quad> quads = new ArrayList<>();
 
-    public BatchRenderer(TextureAtlasOld atlas, Shader defaultShader) {
+    public BatchRenderer(TextureAtlas atlas, Shader defaultShader) {
         //TODO for this.atlas = atlas we're creating a reference to the supplied atlas, so no worries about external modifications not being reflected.
         this.atlas = atlas;
         this.defaultShader = defaultShader;
@@ -73,7 +73,8 @@ public class BatchRenderer {
     //TODO going to have issues here with having multiple texture atlases...
     // we could fix this by adding quads to our atlas class instead.
     public void draw(Texture texture, float x, float y, Shader shader, boolean useShader) {
-        float[] uv = atlas.getUV(texture);
+        //TODO [0] need to figure out new atlas setup how to get converted coordinates for this part here
+        float[] uv = AtlasManager.getUV(atlas, texture);
         quads.add(new Quad(x, y, texture.getWidth(), texture.getHeight(), uv, shader, useShader));
     }
 

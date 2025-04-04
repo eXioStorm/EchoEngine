@@ -1,30 +1,254 @@
 package com.github.exiostorm.graphics;
 
 import com.github.exiostorm.utils.MathTools;
-import org.apache.commons.collections4.map.MultiValueMap;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
+import org.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import javax.imageio.ImageIO;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import static org.lwjgl.opengl.GL11.*;
 
 public class AtlasManager {
+    static Map<String, TextureAtlas> atlases = new HashMap<>();
 
-
-    public static TextureAtlas createAtlasFromFile(String path) {
+    public static TextureAtlas newAtlas(String path) {
+        TextureAtlas atlas = new TextureAtlas();
+        atlases.putIfAbsent(path, atlas);
+        return atlas;
+    }
+    /**
+     * Creates a TextureAtlas object from a JSON file.
+     * @param path The path to the JSON file
+     * @return The reconstructed TextureAtlas
+     * @throws JSONException If there's an error parsing the JSON
+     * @throws IOException If there's an error reading the file
+     */
+    public static TextureAtlas createAtlasFromFile(String path) throws JSONException, IOException {
         TextureAtlas existingAtlas = new TextureAtlas();
-        //TODO [0] need to implement logic to load pre-made atlas from file.
-        //TODO read the json provided for all the next values. will need something to iterate for all textures within the json.
-        int placeholder = 0;
-        existingAtlas.setWidth(placeholder);
-        existingAtlas.setHeight(placeholder);
-        AtlasManager.addToAtlas(existingAtlas, "", "", TextureManager.addTexture(""), 0, 0);
+
+        // Read the JSON file
+        String jsonContent = new String(Files.readAllBytes(Paths.get(path)));
+        JSONObject jsonObject = new JSONObject(jsonContent);
+
+        // Load primary atlas
+        JSONObject primaryAtlasJson = jsonObject.getJSONObject("primaryAtlas");
+        Map<String, String> primaryAtlas = new HashMap<>();
+        Iterator<String> primaryKeys = primaryAtlasJson.keys();
+        while (primaryKeys.hasNext()) {
+            String key = primaryKeys.next();
+            primaryAtlas.put(key, primaryAtlasJson.getString(key));
+        }
+        existingAtlas.setNewPrimaryAtlas(primaryAtlas);
+
+        // Load width, height, and atlasSlot
+        existingAtlas.setWidth(jsonObject.getInt("width"));
+        existingAtlas.setHeight(jsonObject.getInt("height"));
+        existingAtlas.setAtlasSlot(jsonObject.getInt("atlasSlot"));
+
+        // Load subAtlasSizes
+        JSONObject subAtlasSizesJson = jsonObject.getJSONObject("subAtlasSizes");
+        Map<String, Rectangle> subAtlasSizes = new HashMap<>();
+        Iterator<String> sizeKeys = subAtlasSizesJson.keys();
+        while (sizeKeys.hasNext()) {
+            String key = sizeKeys.next();
+            JSONObject rectJson = subAtlasSizesJson.getJSONObject(key);
+            Rectangle rect = new Rectangle(
+                    rectJson.getInt("x"),
+                    rectJson.getInt("y"),
+                    rectJson.getInt("width"),
+                    rectJson.getInt("height")
+            );
+            subAtlasSizes.put(key, rect);
+        }
+        existingAtlas.setSubAtlasSizes(subAtlasSizes);
+
+        // Load texturePositions first
+        JSONObject texturePositionsJson = jsonObject.getJSONObject("texturePositions");
+        Map<Texture, Rectangle> texturePositions = new HashMap<>();
+        Map<String, Rectangle> pathToRectMap = new HashMap<>(); // Helper map for lookups
+
+        Iterator<String> textureKeys = texturePositionsJson.keys();
+        while (textureKeys.hasNext()) {
+            String texturePath = textureKeys.next();
+            JSONObject rectJson = texturePositionsJson.getJSONObject(texturePath);
+
+            Rectangle rect = new Rectangle(
+                    rectJson.getInt("x"),
+                    rectJson.getInt("y"),
+                    rectJson.getInt("width"),
+                    rectJson.getInt("height")
+            );
+
+            // Create texture from path
+            Texture texture = TextureManager.addTexture(texturePath);
+
+            // Store in the texture positions map
+            texturePositions.put(texture, rect);
+
+            // Also store in our helper map for quick lookups
+            pathToRectMap.put(texturePath, rect);
+        }
+        existingAtlas.setTexturePositions(texturePositions);
+
+        // Now load subAtlases, using references to the already created textures and rectangles
+        JSONObject subAtlasesJson = jsonObject.getJSONObject("subAtlases");
+        MultiValuedMap<String, MultiValuedMap<String, Map<Texture, Rectangle>>> subAtlases = new ArrayListValuedHashMap<>();
+
+        Iterator<String> mainKeys = subAtlasesJson.keys();
+        while (mainKeys.hasNext()) {
+            String mainKey = mainKeys.next();
+            JSONArray subAtlasArray = subAtlasesJson.getJSONArray(mainKey);
+
+            for (int i = 0; i < subAtlasArray.length(); i++) {
+                JSONObject subMapJson = subAtlasArray.getJSONObject(i);
+                MultiValuedMap<String, Map<Texture, Rectangle>> subMap = new ArrayListValuedHashMap<>();
+
+                Iterator<String> subKeys = subMapJson.keys();
+                while (subKeys.hasNext()) {
+                    String subKey = subKeys.next();
+                    JSONArray textureArray = subMapJson.getJSONArray(subKey);
+
+                    for (int j = 0; j < textureArray.length(); j++) {
+                        JSONObject textureMapJson = textureArray.getJSONObject(j);
+                        Map<Texture, Rectangle> textureMap = new HashMap<>();
+
+                        String texturePath = textureMapJson.getString("texturePath");
+
+                        // Get the texture and rectangle from our already loaded data
+                        Texture texture = TextureManager.addTexture(texturePath);
+                        Rectangle rect = pathToRectMap.get(texturePath);
+
+                        textureMap.put(texture, rect);
+                        subMap.put(subKey, textureMap);
+                    }
+                }
+
+                subAtlases.put(mainKey, subMap);
+            }
+        }
+        existingAtlas.setNewSubAtlases(subAtlases);
+        atlases.putIfAbsent(path, existingAtlas);
         return existingAtlas;
     }
+
+    /**
+     * Saves the atlas data to a JSON file.
+     * @param filePath The path where the JSON file will be saved
+     * @throws JSONException If there's an error creating the JSON
+     * @throws IOException If there's an error writing to the file
+     */
+    public static void saveToJson(TextureAtlas atlas, String filePath) throws JSONException, IOException {
+        // Create the main JSON object
+        JSONObject jsonObject = new JSONObject();
+
+        // Add primary atlas
+        JSONObject primaryAtlasJson = new JSONObject();
+        for (Map.Entry<String, String> entry : atlas.getNewPrimaryAtlas().entrySet()) {
+            primaryAtlasJson.put(entry.getKey(), entry.getValue());
+        }
+        jsonObject.put("primaryAtlas", primaryAtlasJson);
+
+        // Add width, height, and atlas slot
+        jsonObject.put("width", atlas.getWidth());
+        jsonObject.put("height", atlas.getHeight());
+        jsonObject.put("atlasSlot", atlas.getAtlasSlot());
+
+        // Add subAtlasSizes
+        JSONObject subAtlasSizesJson = new JSONObject();
+        for (Map.Entry<String, Rectangle> entry : atlas.getSubAtlasSizes().entrySet()) {
+            String key = entry.getKey();
+            Rectangle rect = entry.getValue();
+
+            JSONObject rectJson = new JSONObject();
+            rectJson.put("x", rect.x);
+            rectJson.put("y", rect.y);
+            rectJson.put("width", rect.width);
+            rectJson.put("height", rect.height);
+
+            subAtlasSizesJson.put(key, rectJson);
+        }
+        jsonObject.put("subAtlasSizes", subAtlasSizesJson);
+
+        // First, save all texture positions
+        JSONObject texturePositionsJson = new JSONObject();
+        for (Map.Entry<Texture, Rectangle> entry : atlas.getTexturePositions().entrySet()) {
+            Texture texture = entry.getKey();
+            Rectangle rectangle = entry.getValue();
+
+            JSONObject rectJson = new JSONObject();
+            rectJson.put("x", rectangle.x);
+            rectJson.put("y", rectangle.y);
+            rectJson.put("width", rectangle.width);
+            rectJson.put("height", rectangle.height);
+
+            texturePositionsJson.put(texture.getPath(), rectJson);
+        }
+        jsonObject.put("texturePositions", texturePositionsJson);
+
+        // Now process subAtlases with references to texturePositions instead of duplicating the data
+        JSONObject subAtlasesJson = new JSONObject();
+
+        for (String mainKey : atlas.getNewSubAtlases().keySet()) {
+            JSONArray subAtlasArray = new JSONArray();
+
+            Collection<MultiValuedMap<String, Map<Texture, Rectangle>>> mainValues = atlas.getNewSubAtlases().get(mainKey);
+            if (mainValues != null) {
+                for (MultiValuedMap<String, Map<Texture, Rectangle>> subMap : mainValues) {
+                    JSONObject subMapJson = new JSONObject();
+
+                    for (String subKey : subMap.keySet()) {
+                        JSONArray textureArray = new JSONArray();
+
+                        Collection<Map<Texture, Rectangle>> subValues = subMap.get(subKey);
+                        if (subValues != null) {
+                            for (Map<Texture, Rectangle> textureMap : subValues) {
+                                JSONObject textureMapJson = new JSONObject();
+
+                                for (Map.Entry<Texture, Rectangle> entry : textureMap.entrySet()) {
+                                    Texture texture = entry.getKey();
+
+                                    // Only store the path reference, not the full Rectangle data again
+                                    textureMapJson.put("texturePath", texture.getPath());
+                                }
+
+                                textureArray.put(textureMapJson);
+                            }
+                        }
+
+                        subMapJson.put(subKey, textureArray);
+                    }
+
+                    subAtlasArray.put(subMapJson);
+                }
+            }
+
+            subAtlasesJson.put(mainKey, subAtlasArray);
+        }
+
+        jsonObject.put("subAtlases", subAtlasesJson);
+
+        // Write to file
+        try (FileWriter fileWriter = new FileWriter(filePath)) {
+            fileWriter.write(jsonObject.toString(2)); // The '2' parameter adds indentation for readability
+        }
+        atlases.put(filePath, atlas);
+    }
+
     //TODO VV
     // make core method to reduce reused logic
     /**
@@ -34,6 +258,7 @@ public class AtlasManager {
      * @param subAtlas SubAtlas this texture belongs to.
      * @param texture The texture itself.
      */
+    @Deprecated
     public static void addToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture) {
         addToAtlas(atlas, category, subAtlas, texture, 0, 0);
     }
@@ -42,10 +267,11 @@ public class AtlasManager {
      * @param x texture x coordinate
      * @param y texture y coordinate
      */
+    @Deprecated
     public static void addToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture, int x, int y) {
         atlas.getPrimaryAtlas().putIfAbsent(category, new HashMap<>());
 
-        Map<String, Map<Texture, Rectangle>> categorySubAtlases = atlas.getSubAtlases().getCollection(category).iterator().next();
+        Map<String, Map<Texture, Rectangle>> categorySubAtlases = atlas.getSubAtlases().get(category).iterator().next();
         if (categorySubAtlases == null) {
             categorySubAtlases = new HashMap<>();
             atlas.getSubAtlases().put(category, categorySubAtlases);
@@ -56,51 +282,45 @@ public class AtlasManager {
         subAtlasMap.put(texture, new Rectangle(x, y, texture.getWidth(), texture.getHeight()));
     }
     //TODO ^^
-    public static void newAddToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture, int x, int y) {
-        // Initialize the primary atlas entry for this category if it doesn't exist
-        atlas.getNewPrimaryAtlas().putIfAbsent(category, subAtlas);
-
-        // Check if the category exists in subAtlases
-        if (!atlas.getNewSubAtlases().containsKey(category)) {
-            // Create a new MultiValueMap for this category
-            MultiValueMap<String, Map<Texture, Rectangle>> newCategoryMap = new MultiValueMap<>();
-            atlas.getNewSubAtlases().put(category, newCategoryMap);
-        }
-
-        // Get the collection of MultiValueMaps for this category
-        Collection<MultiValueMap<String, Map<Texture, Rectangle>>> categoryMaps = atlas.getNewSubAtlases().getCollection(category);
-
-        // Try to find an existing MultiValueMap that contains the desired subAtlas
-        MultiValueMap<String, Map<Texture, Rectangle>> targetMap = null;
-        for (MultiValueMap<String, Map<Texture, Rectangle>> map : categoryMaps) {
-            if (map.containsKey(subAtlas)) {
-                targetMap = map;
-                break;
-            }
-        }
-
-        // If no existing map contains this subAtlas, create a new one
-        if (targetMap == null) {
-            targetMap = new MultiValueMap<>();
-            atlas.getNewSubAtlases().put(category, targetMap);
-        }
-
-        // Get or create the collection of texture maps for this subAtlas
-        Collection<Map<Texture, Rectangle>> textureMaps = targetMap.getCollection(subAtlas);
-        Map<Texture, Rectangle> textureMap;
-
-        if (textureMaps.isEmpty()) {
-            // Create a new map for textures
-            textureMap = new HashMap<>();
-            targetMap.put(subAtlas, textureMap);
-        } else {
-            // Use the first map in the collection
-            textureMap = textureMaps.iterator().next();
-        }
-
-        // Add the texture to the map
-        textureMap.put(texture, new Rectangle(x, y, texture.getWidth(), texture.getHeight()));
+    public static void newAddToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture) {
+        newAddToAtlas(atlas, category, subAtlas, texture, 0, 0);
     }
+    public static void newAddToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture, int x, int y) {
+        //TODO [0] WE NEED TO ADD TO PRIMARY ATLAS IF CATEGORY DOES NOT EXIST?
+        // Ensure the category exists in newPrimaryAtlas
+        if (!atlas.getNewPrimaryAtlas().containsKey(category)) {
+            atlas.getNewPrimaryAtlas().put(category, subAtlas); // Store the first texture path for this category
+        }
+
+        // Ensure the category exists in newSubAtlases
+        MultiValuedMap<String, Map<Texture, Rectangle>> subAtlasEntry;
+        Collection<MultiValuedMap<String, Map<Texture, Rectangle>>> subAtlasCollections = atlas.getNewSubAtlases().get(category);
+
+        if (subAtlasCollections == null || subAtlasCollections.isEmpty()) {
+            subAtlasEntry = new ArrayListValuedHashMap<>();
+            atlas.getNewSubAtlases().put(category, subAtlasEntry);
+        } else {
+            subAtlasEntry = subAtlasCollections.iterator().next(); // Get first entry (assuming one per category)
+        }
+
+        // Retrieve or create the subAtlas map
+        Map<Texture, Rectangle> subAtlasMap = null;
+        for (Map<Texture, Rectangle> existingMap : subAtlasEntry.get(subAtlas)) {
+            subAtlasMap = existingMap;
+            break;
+        }
+
+        if (subAtlasMap == null) {
+            subAtlasMap = new HashMap<>();
+            subAtlasEntry.put(subAtlas, subAtlasMap);
+        }
+
+        // Add the new texture rectangle
+        Rectangle rect = new Rectangle(x, y, texture.getWidth(), texture.getHeight());
+        subAtlasMap.put(texture, rect);
+        atlas.getTexturePositions().put(texture, rect); // Store in direct lookup map
+    }
+
     public void newAtlasSwapQueue(TextureAtlas atlas, String category, String newSubAtlas) {
         if (!atlas.getNewPrimaryAtlas().containsKey(category)) {
             System.err.println("Invalid swap request: " + category + " -> " + newSubAtlas);
@@ -113,6 +333,7 @@ public class AtlasManager {
      * @param category name of the texture category
      * @param newSubAtlas the new subAtlas that will be swapped.
      */
+    @Deprecated
     public void atlasSwapQueue(TextureAtlas atlas, String category, String newSubAtlas) {
         if (!atlas.getPrimaryAtlas().containsKey(category)) {
             System.err.println("Invalid swap request: " + category + " -> " + newSubAtlas);
@@ -130,11 +351,11 @@ public class AtlasManager {
 
             // Find the specified subAtlas in the new structure
             Map<Texture, Rectangle> foundSubAtlas = null;
-            for (MultiValueMap<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getNewSubAtlases().getCollection(category)) {
+            for (MultiValuedMap<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getNewSubAtlases().get(category)) {
                 if (subAtlasEntry.containsKey(newSubAtlas)) {
-                    // Fix: Use proper method to get the value from MultiValueMap
+                    // Fix: Use proper method to get the value from MultiValuedMap
                     // This assumes that get() returns a Map<Texture, Rectangle>
-                    foundSubAtlas = subAtlasEntry.getCollection(newSubAtlas).iterator().next();
+                    foundSubAtlas = subAtlasEntry.get(newSubAtlas).iterator().next();
                     break;
                 }
             }
@@ -156,10 +377,10 @@ public class AtlasManager {
 
                 // Find the actual texture map for the new primary atlas key
                 Map<Texture, Rectangle> swappedSubAtlas = null;
-                for (MultiValueMap<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getNewSubAtlases().getCollection(category)) {
+                for (MultiValuedMap<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getNewSubAtlases().get(category)) {
                     if (subAtlasEntry.containsKey(subAtlasKey)) {
-                        // Fix: Use proper method to get the value from MultiValueMap
-                        swappedSubAtlas = subAtlasEntry.getCollection(subAtlasKey).iterator().next();
+                        // Fix: Use proper method to get the value from MultiValuedMap
+                        swappedSubAtlas = subAtlasEntry.get(subAtlasKey).iterator().next();
                         break;
                     }
                 }
@@ -188,6 +409,7 @@ public class AtlasManager {
      * This method processes the queue made from our swapQueue method.
      * @return validity check
      */
+    @Deprecated
     public boolean atlasSwapBatch(TextureAtlas atlas) {
         if (atlas.getSwapQueue().isEmpty()) {
             return false;
@@ -199,7 +421,7 @@ public class AtlasManager {
 
             // Fetch the subAtlas
             Map<Texture, Rectangle> foundSubAtlas = null;
-            for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getSubAtlases().getCollection(category)) {
+            for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getSubAtlases().get(category)) {
                 if (subAtlasEntry.containsKey(newSubAtlas)) {
                     foundSubAtlas = subAtlasEntry.get(newSubAtlas);
                     break;
@@ -234,7 +456,7 @@ public class AtlasManager {
         atlas.getSwapQueue().clear(); // Clear after processing
         return true;
     }
-    public void newSaveAtlasToGPU(TextureAtlas atlas) {
+    public static void newSaveAtlasToGPU(TextureAtlas atlas) {
         ByteBuffer atlasBuffer = ByteBuffer.allocateDirect(atlas.getWidth() * atlas.getHeight() * 4).order(ByteOrder.nativeOrder());
 
         // Initialize the buffer with zeros (transparent background)
@@ -242,23 +464,21 @@ public class AtlasManager {
             atlasBuffer.put((byte) 0);
         }
 
+        // Create a BufferedImage to visualize the atlas
+        BufferedImage atlasImage = new BufferedImage(atlas.getWidth(), atlas.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
         // Iterate over all categories in the primary atlas
         for (String category : atlas.getNewPrimaryAtlas().keySet()) {
             if (!atlas.getNewSubAtlases().containsKey(category)) continue;
 
             // Retrieve all subAtlas collections for the given category
-            for (MultiValueMap<String, Map<Texture, Rectangle>> subAtlasMap : atlas.getNewSubAtlases().getCollection(category)) {
-                // Iterate through each key in the subAtlasMap
+            for (MultiValuedMap<String, Map<Texture, Rectangle>> subAtlasMap : atlas.getNewSubAtlases().get(category)) {
                 for (String subAtlasKey : subAtlasMap.keySet()) {
-                    // Get the collection of maps for this key
-                    Collection<Map<Texture, Rectangle>> mapCollection = subAtlasMap.getCollection(subAtlasKey);
-
-                    // Process each map in the collection
-                    for (Map<Texture, Rectangle> subAtlas : mapCollection) {
-                        // Now, safely iterate over subAtlas entries with proper typing
+                    for (Map<Texture, Rectangle> subAtlas : subAtlasMap.get(subAtlasKey)) {
                         for (Map.Entry<Texture, Rectangle> entry : subAtlas.entrySet()) {
+                            Texture texture = entry.getKey();
                             Rectangle rect = entry.getValue();
-                            ByteBuffer textureBuffer = entry.getKey().getByteBuffer((byte) 0);
+                            ByteBuffer textureBuffer = texture.getByteBuffer((byte) 0);
 
                             if (textureBuffer != null) {
                                 for (int row = 0; row < rect.height; row++) {
@@ -266,10 +486,19 @@ public class AtlasManager {
                                         int atlasIndex = ((rect.y + row) * atlas.getWidth() + (rect.x + col)) * 4;
                                         int textureIndex = (row * rect.width + col) * 4;
 
-                                        atlasBuffer.put(atlasIndex, textureBuffer.get(textureIndex));
-                                        atlasBuffer.put(atlasIndex + 1, textureBuffer.get(textureIndex + 1));
-                                        atlasBuffer.put(atlasIndex + 2, textureBuffer.get(textureIndex + 2));
-                                        atlasBuffer.put(atlasIndex + 3, textureBuffer.get(textureIndex + 3));
+                                        byte r = textureBuffer.get(textureIndex);
+                                        byte g = textureBuffer.get(textureIndex + 1);
+                                        byte b = textureBuffer.get(textureIndex + 2);
+                                        byte a = textureBuffer.get(textureIndex + 3);
+
+                                        atlasBuffer.put(atlasIndex, r);
+                                        atlasBuffer.put(atlasIndex + 1, g);
+                                        atlasBuffer.put(atlasIndex + 2, b);
+                                        atlasBuffer.put(atlasIndex + 3, a);
+
+                                        // Save pixels to BufferedImage for visualization
+                                        int argb = ((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
+                                        atlasImage.setRGB(rect.x + col, rect.y + row, argb);
                                     }
                                 }
                             }
@@ -287,11 +516,20 @@ public class AtlasManager {
         glTexParameteri(atlas.getAtlasSlot(), GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glBindTexture(atlas.getAtlasSlot(), 0);
 
+        // Save debug image
+        String debugPath = "src/main/resources/tests/atlas.png";
+        try {
+            ImageIO.write(atlasImage, "PNG", new File(debugPath));
+            System.out.println("Atlas saved as PNG to: " + debugPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         // Mark atlas as loaded in memory
         atlas.setInMemory(true);
         System.out.println("Atlas finalized and uploaded. Dimensions: " + atlas.getWidth() + "x" + atlas.getHeight());
     }
-
+    @Deprecated
     public void saveAtlasToGPU(TextureAtlas atlas) {
         ByteBuffer atlasBuffer = ByteBuffer.allocateDirect(atlas.getWidth() * atlas.getHeight() * 4).order(ByteOrder.nativeOrder());
         // Fill the buffer with transparent pixels
@@ -329,13 +567,13 @@ public class AtlasManager {
         atlas.setInMemory(true);
         System.out.println("Atlas finalized and uploaded. Dimensions: " + atlas.getWidth() + "x" + atlas.getHeight());
     }
-    //TODO should move this to the TextureManager
+    @Deprecated
     private void calculateAtlasPrimaryPlacement(TextureAtlas atlas) {
         Map<String, Rectangle> categoryPositions = new HashMap<>();
 
         for (String category : atlas.getPrimaryAtlas().keySet()) {
-            //TODO might have issue with multivaluemap, after "subAtlases.getCollection(category)" add ".iterator().next()"
-            for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getSubAtlases().getCollection(category)) {
+            //TODO might have issue with MultiValuedMap, after "subAtlases.getCollection(category)" add ".iterator().next()"
+            for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getSubAtlases().get(category)) {
                 String subAtlasName = subAtlasEntry.keySet().iterator().next();
                 categoryPositions.put(category, atlas.getSubAtlasSizes().get(subAtlasName));
             }
@@ -344,8 +582,8 @@ public class AtlasManager {
         Rectangle temp = new Rectangle(MathTools.rectanglePacker2D(categoryPositions));
 
         for (String category : atlas.getPrimaryAtlas().keySet()) {
-            //TODO might have issue with multivaluemap, after "subAtlases.getCollection(category)" add ".iterator().next()"
-            for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getSubAtlases().getCollection(category)) {
+            //TODO might have issue with MultiValuedMap, after "subAtlases.getCollection(category)" add ".iterator().next()"
+            for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getSubAtlases().get(category)) {
                 for (Map<Texture, Rectangle> subAtlas : subAtlasEntry.values()) {
                     for (Texture textureName : subAtlas.keySet()) {
                         subAtlas.get(textureName).setLocation(
@@ -365,55 +603,41 @@ public class AtlasManager {
     }
 
     //TODO [0] had to use AI to generate new methods, not certain if they work.
-    private void newCalculateAtlasPrimaryPlacement(TextureAtlas atlas) {
-        Map<String, Rectangle> categoryPositions = new HashMap<>();
+    private static void newCalculateAtlasPrimaryPlacement(TextureAtlas atlas) {
+        // We only want to pack the active subAtlases (those in newPrimaryAtlas)
+        MultiValuedMap<String, Map<Texture, Rectangle>> activeSubAtlases = new ArrayListValuedHashMap<>();
 
-        // Iterate over primaryAtlas categories
-        for (String category : atlas.getPrimaryAtlas().keySet()) {
-            // Retrieve the MultiValueMap of subAtlases
-            Collection<MultiValueMap<String, Map<Texture, Rectangle>>> subAtlasCollections = atlas.getNewSubAtlases().getCollection(category);
+        // Collect only the active subAtlases based on newPrimaryAtlas mapping
+        for (String category : atlas.getNewPrimaryAtlas().keySet()) {
+            String activeSubAtlasName = atlas.getNewPrimaryAtlas().get(category);
+            Collection<MultiValuedMap<String, Map<Texture, Rectangle>>> subAtlasCollections = atlas.getNewSubAtlases().get(category);
 
-            for (MultiValueMap<String, Map<Texture, Rectangle>> subAtlasEntry : subAtlasCollections) {
-                for (String subAtlasName : subAtlasEntry.keySet()) {
-                    categoryPositions.put(category, atlas.getSubAtlasSizes().get(subAtlasName));
+            for (MultiValuedMap<String, Map<Texture, Rectangle>> subAtlasCollection : subAtlasCollections) {
+                if (subAtlasCollection.containsKey(activeSubAtlasName)) {
+                    // Add only the active subAtlas to our packing collection
+                    activeSubAtlases.putAll(activeSubAtlasName, subAtlasCollection.get(activeSubAtlasName));
                 }
             }
         }
 
-        // Compute packed atlas size
-        Rectangle temp = new Rectangle(MathTools.rectanglePacker2D(categoryPositions));
+        // Now pack only the active subAtlases
+        Rectangle packedSize = MathTools.rectanglePacker2D(activeSubAtlases);
 
-        // Update subAtlas texture positions based on category offsets
-        for (String category : atlas.getPrimaryAtlas().keySet()) {
-            Collection<MultiValueMap<String, Map<Texture, Rectangle>>> subAtlasCollections = atlas.getNewSubAtlases().getCollection(category);
+        // Set the final atlas dimensions
+        atlas.setWidth(packedSize.width);
+        atlas.setHeight(packedSize.height);
 
-            for (MultiValueMap<String, Map<Texture, Rectangle>> subAtlasEntry : subAtlasCollections) {
-                for (String subAtlasName : subAtlasEntry.keySet()) {
-                    MultiValueMap<String, Map<Texture, Rectangle>> innerMap = subAtlasEntry;
-
-                    for (Map<Texture, Rectangle> subAtlas : innerMap.getCollection(subAtlasName)) {
-                        for (Texture texture : subAtlas.keySet()) {
-                            Rectangle rect = subAtlas.get(texture);
-                            Rectangle offset = categoryPositions.get(category);
-
-                            rect.setLocation(rect.x + offset.x, rect.y + offset.y);
-                        }
-                    }
-                }
-            }
-        }
-        // Update atlas dimensions
-        atlas.setWidth(temp.width);
-        atlas.setHeight(temp.height);
+        // No need to translate by packedSize.x and packedSize.y as the rectanglePacker2D
+        // already positions the rectangles correctly
     }
-
 
 
     //TODO should probably make changes to this method for individual changes? idk...
     // Would prefer to do this step during initialization I think?
+    @Deprecated
     public void calculateAtlasAllSubPlacements(TextureAtlas atlas) {
         for (String category : atlas.getSubAtlases().keySet()) {
-            for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getSubAtlases().getCollection(category)) {
+            for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getSubAtlases().get(category)) {
                 for (String subAtlasName : subAtlasEntry.keySet()) {
                     Map<Texture, Rectangle> subAtlas = subAtlasEntry.get(subAtlasName);
                     //TODO moved method call inside of our put() since we have a return value now.
@@ -432,61 +656,52 @@ public class AtlasManager {
         }
     }
     //TODO [0] had to use AI to generate new methods, not certain if they work.
-    public void newCalculateAtlasAllSubPlacements(TextureAtlas atlas) {
+    public static void newCalculateAtlasAllSubPlacements(TextureAtlas atlas) {
+        // Process each subAtlas separately
         for (String category : atlas.getNewSubAtlases().keySet()) {
-            // Retrieve all sub-atlas collections for the given category
-            Collection<MultiValueMap<String, Map<Texture, Rectangle>>> subAtlasCollections = atlas.getNewSubAtlases().getCollection(category);
+            Collection<MultiValuedMap<String, Map<Texture, Rectangle>>> subAtlasCollections = atlas.getNewSubAtlases().get(category);
 
-            for (MultiValueMap<String, Map<Texture, Rectangle>> subAtlasCollection : subAtlasCollections) {
+            for (MultiValuedMap<String, Map<Texture, Rectangle>> subAtlasCollection : subAtlasCollections) {
                 for (String subAtlasName : subAtlasCollection.keySet()) {
-                    // Merge all maps into a single map for processing
-                    Map<Texture, Rectangle> mergedSubAtlas = new HashMap<>();
+                    // Create a temporary MultiValuedMap containing only this subAtlas
+                    MultiValuedMap<String, Map<Texture, Rectangle>> singleSubAtlas = new ArrayListValuedHashMap<>();
+                    singleSubAtlas.putAll(subAtlasName, subAtlasCollection.get(subAtlasName));
 
-                    for (Map<Texture, Rectangle> subAtlas : subAtlasCollection.getCollection(subAtlasName)) {
-                        mergedSubAtlas.putAll(subAtlas);
-                    }
+                    // Pack just this subAtlas
+                    Rectangle packedSize = MathTools.rectanglePacker2D(singleSubAtlas);
 
-                    // Compute packed rectangle and store it in subAtlasSizes
-                    atlas.getSubAtlasSizes().put(subAtlasName, new Rectangle(
-                            MathTools.rectanglePacker2D(mergedSubAtlas)
-                    ));
+                    // Store the computed size
+                    atlas.getSubAtlasSizes().put(subAtlasName, packedSize);
                 }
             }
         }
     }
 
+
     public void newCalculateAtlasSubPlacement(TextureAtlas atlas, String category, String subAtlasName) {
-        if (!atlas.getSubAtlases().containsKey(category)) {
+        if (!atlas.getNewSubAtlases().containsKey(category)) {
             System.err.println("Category '" + category + "' not found.");
             return;
         }
 
-        Map<Texture, Rectangle> subAtlas = null;
+        // Retrieve all sub-atlas collections for the given category
+        Collection<MultiValuedMap<String, Map<Texture, Rectangle>>> subAtlasCollections = atlas.getNewSubAtlases().get(category);
 
-        // Retrieve collection of MultiValueMaps for the category
-        Collection<MultiValueMap<String, Map<Texture, Rectangle>>> subAtlasCollections = atlas.getNewSubAtlases().getCollection(category);
-
-        for (MultiValueMap<String, Map<Texture, Rectangle>> subAtlasEntry : subAtlasCollections) {
+        for (MultiValuedMap<String, Map<Texture, Rectangle>> subAtlasEntry : subAtlasCollections) {
             if (subAtlasEntry.containsKey(subAtlasName)) {
-                for (Map<Texture, Rectangle> subAtlasMap : subAtlasEntry.getCollection(subAtlasName)) {
-                    subAtlas = subAtlasMap;
-                    break;
-                }
+                // Directly compute packed size using rectanglePacker2D
+                Rectangle packedSize = MathTools.rectanglePacker2D(subAtlasEntry);
+
+                // Store computed packed size
+                atlas.getSubAtlasSizes().put(subAtlasName, packedSize);
+                return;
             }
-            if (subAtlas != null) break;
         }
 
-        if (subAtlas == null) {
-            System.err.println("SubAtlas '" + subAtlasName + "' not found in category '" + category + "'.");
-            return;
-        }
-
-        // Calculate and store packed size for the given subAtlas
-        atlas.getSubAtlasSizes().put(subAtlasName, new Rectangle(
-                MathTools.rectanglePacker2D(subAtlas)
-        ));
+        System.err.println("SubAtlas '" + subAtlasName + "' not found in category '" + category + "'.");
     }
 
+    @Deprecated
     public void calculateAtlasSubPlacement(TextureAtlas atlas, String category, String subAtlasName) {
         if (!atlas.getSubAtlases().containsKey(category)) {
             System.err.println("Category '" + category + "' not found.");
@@ -495,7 +710,7 @@ public class AtlasManager {
 
         Map<Texture, Rectangle> subAtlas = null;
 
-        for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getSubAtlases().getCollection(category)) {
+        for (Map<String, Map<Texture, Rectangle>> subAtlasEntry : atlas.getSubAtlases().get(category)) {
             if (subAtlasEntry.containsKey(subAtlasName)) {
                 subAtlas = subAtlasEntry.get(subAtlasName);
                 break;
@@ -533,10 +748,27 @@ public class AtlasManager {
     public void loadAtlasConfiguration() {
         // Implement deserialization logic here
     }
+    @Deprecated
     public void finalizeAtlasMaps(TextureAtlas atlas) {
         calculateAtlasAllSubPlacements(atlas);
         calculateAtlasPrimaryPlacement(atlas);
     }
+    public static void newFinalizeAtlasMaps(TextureAtlas atlas) {
+        newCalculateAtlasAllSubPlacements(atlas);
+        newCalculateAtlasPrimaryPlacement(atlas);
+    }
+    public static float[] getUV(TextureAtlas atlas, Texture texture) {
+        Rectangle rect = atlas.getTexturePositions().get(texture);
+        if (rect == null) return null; // Texture not found
+
+        return new float[]{
+                (float) rect.x / atlas.getWidth(),
+                (float) rect.y / atlas.getHeight(),
+                (float) (rect.x + rect.width) / atlas.getWidth(),
+                (float) (rect.y + rect.height) / atlas.getHeight()
+        };
+    }
+    @Deprecated
     private float[] toUV(TextureAtlas atlas, Rectangle rect) {
         return new float[]{
                 (float) rect.x / atlas.getWidth(),

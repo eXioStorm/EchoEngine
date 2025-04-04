@@ -14,29 +14,20 @@ import java.util.function.Consumer;
 public class Button extends GUIElement {
     BatchRenderer renderer;
     TextureAtlasOld atlas;
-    @Setter
+
     boolean useShader = false;
-    @Setter
     private Shader shader = null;
-    @Getter
     private Texture texture;
     private static final float EPSILON = 1e-6f;
-    @Getter
     private double[] mousePosition = {0,0};
-    @Getter
     private boolean hovered = false;
-    @Getter
     private boolean clicked = false;
     // Set hover action
-    @Setter
     private Consumer<Button> onHoverAction;
     // Set hover action
-    @Setter
     private Consumer<Button> unHoverAction;
     // Set click action
-    @Setter
     private Consumer<Button> onClickAction;
-    @Setter
     private Consumer<Button> onDragAction;
 
     public Button(float x, float y, Texture texture) {
@@ -47,7 +38,8 @@ public class Button extends GUIElement {
         //TODO these are just temporary while I try to figure out where I'm at
         //List<Texture> textures = List.of(this.texture);
         atlas = new TextureAtlasOld();
-        renderer = new BatchRenderer(atlas, shader);
+        //TODO [0]
+        //renderer = new BatchRenderer(atlas, shader);
     }
 
     @Override
@@ -141,5 +133,43 @@ public class Button extends GUIElement {
         if (onClickAction != null) {
             onClickAction.accept(this);
         }
+    }
+    public Texture getTexture() {
+        return texture;
+    }
+
+    public double[] getMousePosition() {
+        return mousePosition;
+    }
+
+    public boolean isHovered() {
+        return hovered;
+    }
+
+    public boolean isClicked() {
+        return clicked;
+    }
+    public void setUseShader(boolean useShader) {
+        this.useShader = useShader;
+    }
+
+    public void setShader(Shader shader) {
+        this.shader = shader;
+    }
+
+    public void setOnHoverAction(Consumer<Button> onHoverAction) {
+        this.onHoverAction = onHoverAction;
+    }
+
+    public void setUnHoverAction(Consumer<Button> unHoverAction) {
+        this.unHoverAction = unHoverAction;
+    }
+
+    public void setOnClickAction(Consumer<Button> onClickAction) {
+        this.onClickAction = onClickAction;
+    }
+
+    public void setOnDragAction(Consumer<Button> onDragAction) {
+        this.onDragAction = onDragAction;
     }
 }

@@ -42,9 +42,10 @@ public class GlyphManager {
     private byte defaultLocale = 15;/*BaseLocale.US*/
     private int atlasSlot = GL_TEXTURE_2D;
     //TODO [0] need to set something up to detect OS and load a font file from the OS directory.
+    // Actually, probably create our own ttf and load it with our application?
     private List<String> fonts = new ArrayList<>(Arrays.asList("Calligraserif"));
 
-    private TextureAtlas glyphAtlas = new TextureAtlas();
+    private TextureAtlas glyphAtlas = AtlasManager.newAtlas(GLYPH_DIR);
 
     //TODO [1] need a List / enum List of unicode characters to be loaded categorized by language
 

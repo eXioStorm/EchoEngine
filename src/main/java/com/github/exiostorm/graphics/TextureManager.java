@@ -16,9 +16,13 @@ public class TextureManager {
     static Map<String, Texture> Textures = new HashMap<>();
 
     public static Texture addTexture(String path) {
-        Texture texture = new Texture(path);
-        Textures.putIfAbsent(texture.getPath(), texture);
-        return texture;
+        if (!Textures.containsKey(path)) {
+            Texture texture = new Texture(path);
+            Textures.putIfAbsent(texture.getPath(), texture);
+            return texture;
+        } else {
+            return Textures.get(path);
+        }
     }
     public static ByteBuffer generateByteBuffer(Texture texture, byte saveFlag) {
         int width = texture.getWidth();

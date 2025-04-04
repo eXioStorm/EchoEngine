@@ -40,14 +40,12 @@ public class GamePanel {
     private String inputmappersDirectory = null;
     private String currentState[] = { DefaultState, "gameStates" };
     private String currentMapper[] = { DefaultMapper, "inputMappers" };
-    @Getter
     private Window window;
     public static int WIDTH = 320;
     public static int HEIGHT = 240;
     public static int SCALE = 1;
     public static int FPS = 30;
     private long targetTime = 1000; //don't know if we still need this, will do homework on what targetTime is.
-    @Getter
     private float deltaTime;
     public StateManager<State> stateManager;
     public PlayerInputManager playerInputManager = new PlayerInputManager();
@@ -206,5 +204,12 @@ public class GamePanel {
     }
     public String getCurrentMapper(String stateType) {
         return currentMapper[0];
+    }
+    public Window getWindow() {
+        return window;
+    }
+
+    public float getDeltaTime() {
+        return deltaTime;
     }
 }

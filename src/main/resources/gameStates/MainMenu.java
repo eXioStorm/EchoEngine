@@ -5,7 +5,11 @@ import com.github.exiostorm.main.GamePanel;
 import com.github.exiostorm.main.State;
 import com.github.exiostorm.graphics.*;
 
+import java.io.File;
+import java.io.IOException;
+
 import static com.github.exiostorm.main.EchoGame.gamePanel;
+import static java.lang.Thread.sleep;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
@@ -16,6 +20,7 @@ public class MainMenu implements State {
     private Texture testTexture;
     private Texture patrickTexture;
     TextureAtlasOld atlas;
+    TextureAtlas atlas1;
 
 
     private int frameTester = 0;
@@ -28,7 +33,11 @@ public class MainMenu implements State {
         //TODO something here to select UIHandler? <- huh?
         initTextures();//TODO
         initShaders();
-        test();
+        try {
+            createAtlas("src/main/resources/tests/atlas.json");
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         //initInterfaces();
 
 
@@ -183,6 +192,33 @@ public class MainMenu implements State {
         //testTexture.setBufferedImage(null);
         //patrickTexture.setBufferedImage(null);
         //backgroundTexture.setBufferedImage(null);
-        renderer = new BatchRenderer(atlas, exampleShader);
+        //renderer = new BatchRenderer(atlas, exampleShader);
+    }
+    public void createAtlas(String path) throws InterruptedException {
+        long start = System.currentTimeMillis();
+        File jsonFile = new File(path);
+        if (!jsonFile.exists()) {
+            atlas1 = AtlasManager.newAtlas(path);
+            //TODO[0] not understanding category / subAtlas causes weird visual bugs
+            // New problem is when having multiple categories. multiple subAtlases works fine, but as soon as there's more than one category it breaks.
+            AtlasManager.newAddToAtlas(atlas1, "test1", "test1", backgroundTexture);
+            AtlasManager.newAddToAtlas(atlas1, "test2", "test2", testTexture);
+            AtlasManager.newAddToAtlas(atlas1, "test3", "test3", patrickTexture);
+            AtlasManager.newFinalizeAtlasMaps(atlas1);
+            try {
+                AtlasManager.saveToJson(atlas1, path);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            System.out.println("LOADING ATLAS FROM FILE!");
+            try {
+                atlas1 = AtlasManager.createAtlasFromFile(path);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        AtlasManager.newSaveAtlasToGPU(atlas1);
+        renderer = new BatchRenderer(atlas1, exampleShader);
     }
 }

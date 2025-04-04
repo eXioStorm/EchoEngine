@@ -9,21 +9,12 @@ import java.nio.ByteBuffer;
 import static com.github.exiostorm.graphics.TextureManager.*;
 
 public class Texture {
-	@Getter
     private final String path;
     private int width;
     private int height;
-	@Getter
-	@Setter
 	private Shader shader = null;
-	@Getter
-	@Setter
 	private boolean[] transparencyMap;
-	@Getter
-	@Setter
 	private ByteBuffer byteBuffer;
-	@Getter
-	@Setter
 	private BufferedImage bufferedImage;
 	private String lombokString = "Placeholder to suppress lombok message : ";
 	private String packge = "com.github.exiostorm.graphics.Texture.";
@@ -72,5 +63,35 @@ public class Texture {
 	public void setHeight(int height) {
 		if (this.height < 0) { System.out.println(lombokString + packge + "setHeight()"); }
 		this.height = height;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public Shader getShader() {
+		return shader;
+	}
+
+	public void setShader(Shader shader) {
+		this.shader = shader;
+	}
+	public boolean[] getTransparencyMap(){
+		return this.transparencyMap;
+	}
+	public void setTransparencyMap(boolean[] transparencyMap){
+		this.transparencyMap = transparencyMap;
+	}
+	public ByteBuffer getByteBuffer(){
+		return this.byteBuffer;
+	}
+	public void setByteBuffer(ByteBuffer byteBuffer){
+		this.byteBuffer = byteBuffer;
+	}
+	public BufferedImage getBufferedImage(){
+		return this.bufferedImage;
+	}
+	public void setBufferedImage(BufferedImage bufferedImage){
+		this.bufferedImage = bufferedImage;
 	}
 }

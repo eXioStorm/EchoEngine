@@ -16,9 +16,7 @@ public class Shader {
 	public static final int TCOORD_ATTRIB = 1;
 	
 	public static Shader shader;
-	
 	private boolean enabled = false;
-	@Getter
 	private final int ID;
 	FloatBuffer buffer = null;
 	private Map<String, Integer> locationCache = new HashMap<String, Integer>();
@@ -79,5 +77,8 @@ public class Shader {
 	public void disable() {
 		glUseProgram(0);
 		enabled = false;
+	}
+	public int getID() {
+		return ID;
 	}
 }

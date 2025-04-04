@@ -1,6 +1,8 @@
 package com.github.exiostorm.graphics;
 
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.map.MultiValueMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 
 import java.awt.Rectangle;
 import java.util.*;
@@ -36,11 +38,11 @@ public class TextureAtlas {
     private int height;
     //TODO [0] absolutely had this done wrong... this won't do at all. currently setup as one subAtlas name to one Texture. definitely not how I intended for it to work. we need multiple textures for each subAtlas.(they act like categories?)
     // before changing anything though, make sure we're right about this assessment.. I think so because of 1:1 category:subatlas in primaryAtlas. update: I think I'm certain here.
-    private MultiValueMap<String, Map<String, Map<Texture, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture -> Placement))
+    private MultiValuedMap<String, Map<String, Map<Texture, Rectangle>>> subAtlases; // Category -> (SubAtlas Name -> (Texture -> Placement))
     //TODO should be :
-    private MultiValueMap<String, MultiValueMap<String, Map<Texture, Rectangle>>> newSubAtlases; // Category -> (SubAtlas Name -> (Texture -> Placement)) // multiple subAtlas, and then multiple textures. //"()" indicates multiple entries
+    private MultiValuedMap<String, MultiValuedMap<String, Map<Texture, Rectangle>>> newSubAtlases; // Category -> (SubAtlas Name -> (Texture -> Placement)) // multiple subAtlas, and then multiple textures. //"()" indicates multiple entries
     // Because of this change we'll need to change our bin packer.
-
+    private Map<Texture, Rectangle> texturePositions;
     //TODO is this redundant??
     private Map<String, Rectangle> subAtlasSizes; // SubAtlas Name -> [Used x, Used y, Used Width, Used Height]
     private Map<String, String> swapQueue;
@@ -64,12 +66,13 @@ public class TextureAtlas {
      * initialized all of our mappings.
      */
     public TextureAtlas() {
-        this.subAtlases = new MultiValueMap<>();
+        this.subAtlases = new ArrayListValuedHashMap<>();
         this.primaryAtlas = new HashMap<>();
 
         this.newPrimaryAtlas = new HashMap<>();
-        this.newSubAtlases = new MultiValueMap<>();
+        this.newSubAtlases = new ArrayListValuedHashMap<>();
 
+        this.texturePositions = new HashMap<>();
         this.subAtlasSizes = new HashMap<>();
         //this.textureUV = new HashMap<>();
         swapQueue = new HashMap<>();
@@ -87,23 +90,32 @@ public class TextureAtlas {
         AtlasManager.addToAtlas(atlas, category, subAtlas, texture);
     }
 
-    public MultiValueMap<String, MultiValueMap<String, Map<Texture, Rectangle>>> getNewSubAtlases(){
+    public MultiValuedMap<String, MultiValuedMap<String, Map<Texture, Rectangle>>> getNewSubAtlases(){
         return this.newSubAtlases;
+    }
+    public void setNewSubAtlases(MultiValuedMap<String, MultiValuedMap<String, Map<Texture, Rectangle>>> newSubAtlases){
+        this.newSubAtlases = newSubAtlases;
     }
 
     public Map<String, String> getNewPrimaryAtlas(){
         return this.newPrimaryAtlas;
     }
+    public void setNewPrimaryAtlas(Map<String, String> primaryAtlas){
+        this.newPrimaryAtlas = primaryAtlas;
+    }
 
     public Map<String, Map<Texture, Rectangle>> getPrimaryAtlas(){
         return this.primaryAtlas;
     }
-    public MultiValueMap<String, Map<String, Map<Texture, Rectangle>>> getSubAtlases(){
+    public MultiValuedMap<String, Map<String, Map<Texture, Rectangle>>> getSubAtlases(){
         return this.subAtlases;
     }
 
-    Map<String, Rectangle> getSubAtlasSizes() {
+    public Map<String, Rectangle> getSubAtlasSizes() {
         return this.subAtlasSizes;
+    }
+    public void setSubAtlasSizes(Map<String, Rectangle> subAtlasSizes) {
+        this.subAtlasSizes = subAtlasSizes;
     }
     public int getWidth() {
         return width;
@@ -135,9 +147,19 @@ public class TextureAtlas {
     public int getAtlasSlot() {
         return this.atlasSlot;
     }
+    public void setAtlasSlot(int atlasSlot){
+        this.atlasSlot = atlasSlot;
+    }
 
     public int getAtlasID() {
         return this.atlasID;
+    }
+    public Map<Texture, Rectangle> getTexturePositions() {
+        return texturePositions;
+    }
+
+    public void setTexturePositions(Map<Texture, Rectangle> texturePositions) {
+        this.texturePositions = texturePositions;
     }
     /* to delete later~
     public Map<Texture, float[]> getTextureUV() {

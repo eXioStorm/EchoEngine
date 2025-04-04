@@ -28,11 +28,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Objects;
-//import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.map.MultiValueMap;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL10;
@@ -42,7 +42,7 @@ import org.lwjgl.openal.ALCCapabilities;
 import org.lwjgl.stb.STBVorbisInfo;
 
 
-@SuppressWarnings("deprecation")//MultiValueMap was replaced by MultiValuedMap, however I couldn't quickly figure out how to iterate through MultiValuedMap...
+//@SuppressWarnings("deprecation")//MultiValueMap was replaced by MultiValuedMap, however I couldn't quickly figure out how to iterate through MultiValuedMap...
 //TODO Put another dime in the jukebox baby easter egg console log when playing background music with the streaming function we haven't added yet.
 // also love how the xylophone sounds in AOT soundtracks.
 public class JukeBox {
@@ -64,8 +64,12 @@ public class JukeBox {
 	private static HashMap<String, Integer> pauseState;//used to memorize which sounds are paused
 	private static HashMap<String, Integer> sources;//used to store all created sources
 	private static HashMap<Integer, String> secruos;//inverted sources to fetch the key String...
-	private static MultiValueMap<String, Integer> categories;//used to assign sources to a category. one category string which is the key, and all sources in that category get paired with that key.
-	private static MultiValueMap<String, Integer> instances;//used to keep duplicate sounds cleaned up (needed to allow them to overlap)
+	//TODO [0]
+	//private static MultiValueMap<String, Integer> categories;//used to assign sources to a category. one category string which is the key, and all sources in that category get paired with that key.
+	private static MultiValuedMap<String, Integer> categories;//used to assign sources to a category. one category string which is the key, and all sources in that category get paired with that key.
+	//TODO [0]
+	//private static MultiValueMap<String, Integer> instances;//used to keep duplicate sounds cleaned up (needed to allow them to overlap)
+	private static MultiValuedMap<String, Integer> instances;//used to keep duplicate sounds cleaned up (needed to allow them to overlap)
 	private static HashMap<String, Integer> buffers;//stores buffers to the reference keys
 	private static HashMap<Integer, Long> soundTime;//used to memorize when sources should expire.
 	private static HashMap<String, Integer> soundClean;//used to memorize values to remove after the cleaner runs.
@@ -139,10 +143,14 @@ public class JukeBox {
 		sources = new HashMap<String, Integer>();//sets up the sources HashMap to be ready for use
 		secruos = new HashMap<Integer, String>();
 		soundClean = new HashMap<String, Integer>();
-		categories = new MultiValueMap<String, Integer>();//sets up the categories MultiValueMap to be ready for use
+		//TODO [0]
+		//categories = new MultiValueMap<String, Integer>();//sets up the categories MultiValueMap to be ready for use
+		categories = new ArrayListValuedHashMap<>();//sets up the categories MultiValueMap to be ready for use
 		buffers = new HashMap<String, Integer>();//sets up the buffers HashMap to be ready for use
 		soundKeys = new HashMap<String, String>();//sets up the soundKeys HashMap to be ready for use
-		instances = new MultiValueMap<String, Integer>();//sets up the instances MultiValueMap to be ready for use
+		//TODO [0]
+		//instances = new MultiValueMap<String, Integer>();//sets up the instances MultiValueMap to be ready for use
+		instances = new ArrayListValuedHashMap<>();//sets up the instances MultiValueMap to be ready for use
 		soundTime = new HashMap<Integer, Long>();//sets up the soundTime HashMap to be ready for use
 		initialized = true;//indicates that the Init() method has been run.
 		//^^^^^^^^^^^^^
@@ -324,7 +332,7 @@ public static void play(String reference, String category, int id, boolean overl
 				}
 			sources.put(reference + id + t, sourceData);
 			secruos.put(sourceData, reference + id + t);
-			categories.put(category, reference + id + t);
+			categories.put(category, sources.get(reference) + id + t);
 			//System.out.println(nextClean + ": nextClean");
 			//System.out.println(System.currentTimeMillis() + ": current time");
 			if(expiration < nextClean || nextClean == 1L) {
@@ -447,9 +455,8 @@ public static void loop(String reference, boolean isLooping) {
 public static void pause(String reference, boolean isCategory) {
 	if (playCheck(reference)){
 	if (isCategory) {
-		Iterator<Integer> itr = categories.iterator(reference);
-		while (itr.hasNext()) {
-			alSourcePause(itr.next());
+		for (Integer source : categories.get(reference)) {
+			alSourcePause(source);
 			
 		}
   }else {
@@ -511,9 +518,8 @@ public static void resumeAll() {
 public static void volume(String reference, float number, boolean isCategory) {
 	if (playCheck(reference)){
 		if (isCategory) {
-			Iterator<Integer> itr = categories.iterator(reference);
-			while (itr.hasNext()) {
-				alSourcef(itr.next(), AL_GAIN, number);
+			for (Integer source : categories.get(reference)) {
+				alSourcef(source, AL_GAIN, number);
 				}
 			}else {
 				alSourcef(sources.get(reference), AL_GAIN, number);
@@ -531,9 +537,8 @@ public static void volume(String reference, float number, boolean isCategory) {
 public static void stop(String reference, boolean isCategory) {
 	if (playCheck(reference)){
 		if (isCategory) {
-			Iterator<Integer> itr = categories.iterator(reference);
-			while (itr.hasNext()) {
-				alSourceStop(itr.next());
+			for (Integer source : categories.get(reference)) {
+				alSourceStop(source);
 				checkALError();
 				}
 			}else {
@@ -602,17 +607,16 @@ public static void masterVolume(float x) {
 public static void delete(String reference, boolean isCategory) {
 	if (playCheck(reference)){
 		if (isCategory) {
-			Iterator<Integer> itr = categories.iterator(reference);
-			while (itr.hasNext()) {
+			for (Integer source : new ArrayList<>(categories.get(reference))) {
 				//itr.next() gives the value in categories(being the source value)
-				alSourceStop(itr.next());
+				alSourceStop(source);
 				//hopefully this removes the buffer by checking for the key in sources that contains the value from the iterator
-				buffers.remove(buffers.containsKey(sources.containsValue(itr.next())));
-				sources.remove(sources.containsValue(itr.next()));
-				alDeleteSources(sources.get(itr.next()));
-				alDeleteBuffers(buffers.get(itr.next()));
+				buffers.values().remove(source);
+				sources.values().remove(source);
+				alDeleteSources(source);
+				alDeleteBuffers(source);
 				}
-			}else {
+			} else {
 				alSourceStop(sources.get(reference));
 				categories.removeMapping(reference,(sources.get(reference)));
 				buffers.remove(reference);
@@ -620,7 +624,7 @@ public static void delete(String reference, boolean isCategory) {
 				alDeleteSources(sources.get(reference));
 				alDeleteBuffers(buffers.get(reference));
 				}
-		}else {
+		} else {
 			playCheck(reference);
 			}
 	}
