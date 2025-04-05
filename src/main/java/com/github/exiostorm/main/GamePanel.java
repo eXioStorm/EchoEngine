@@ -1,13 +1,10 @@
 package com.github.exiostorm.main;
 
 import com.github.exiostorm.audio.JukeBox;
+import com.github.exiostorm.graphics.*;
 import com.github.exiostorm.graphics.gui.GUIElement;
 import com.github.exiostorm.input.PlayerInputManager;
 import com.github.exiostorm.input.PlayerInput;
-import com.github.exiostorm.graphics.BatchRenderer;
-import com.github.exiostorm.graphics.Texture;
-import com.github.exiostorm.graphics.TextureManager;
-import com.github.exiostorm.graphics.Window;
 import com.github.exiostorm.utils.DynamicFactory;
 import com.github.exiostorm.utils.StateManager;
 import lombok.Getter;
@@ -22,6 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
@@ -30,7 +28,12 @@ import static org.lwjgl.opengl.GL11.*;
 //TODO will rename this from GamePanel to just Panel, or ProgramPanel, etc. don't need to directly tie it to only "gaming".
 public class GamePanel {
     private ExecutorService executorService;
-    public static BatchRenderer renderer;
+    private TextureAtlas atlas;
+    private String atlasPath = "src/main/resources/atlas/atlas.json";
+    private Shader shader;
+    private String shaderVertexPath = "src/main/resources/shaders/vertex.glsl";
+    private String shaderFragmentPath = "src/main/resources/shaders/fragment.glsl";
+    private BatchRenderer renderer;
     private static final int NUM_THREADS = Runtime.getRuntime().availableProcessors();
     private String Name = "Application";
     private String DefaultState = "MainMenu";
@@ -41,8 +44,8 @@ public class GamePanel {
     private String currentState[] = { DefaultState, "gameStates" };
     private String currentMapper[] = { DefaultMapper, "inputMappers" };
     private Window window;
-    public static int WIDTH = 320;
-    public static int HEIGHT = 240;
+    public int WIDTH = 320;
+    public int HEIGHT = 240;
     public static int SCALE = 1;
     public static int FPS = 30;
     private long targetTime = 1000; //don't know if we still need this, will do homework on what targetTime is.
@@ -53,7 +56,8 @@ public class GamePanel {
     private List<Runnable> scheduledAssetLoading = new ArrayList<>();
     public Map<String, State> gameStates = new HashMap<>();
     public Map<String, State> inputMappers = new HashMap<>();
-    public static List<GUIElement> guiElements = new ArrayList<>();
+    //TODO[0] perhaps setup our atlas / renderer here somewhere? need it moved out of button class...
+    public List<GUIElement> guiElements = new ArrayList<>();
     public GamePanel() {
         GLFWErrorCallback.createPrint(System.err).set();
         if (!glfwInit()) {
@@ -118,14 +122,18 @@ public class GamePanel {
         runScheduledAssets();
         // Print OpenGL version for debugging purposes
         System.out.println("OpenGL: " + glGetString(GL_VERSION));
+        //TODO new code 2025/04/05
+        shader = new Shader(shaderVertexPath, shaderFragmentPath);
+        atlas = AtlasManager.newAtlas(atlasPath);
+        renderer = new BatchRenderer(atlas, shader);
 
         // Load game states from assets directory (compiled or uncompiled)
         stateManager.loadStates(stateDirectory, gameStates, DynamicFactory.fromClass(State.class));
         stateManager.loadStates(inputmappersDirectory, inputMappers, DynamicFactory.fromClass(State.class));
 
         // Set initial state (e.g., MainMenu)
-        currentState[0] = stateManager.setState(DefaultState, gameStates, currentState);
         currentMapper[0] = stateManager.setState(DefaultMapper, inputMappers, currentMapper);
+        currentState[0] = stateManager.setState(DefaultState, gameStates, currentState);
     }
 
     public void update() {
@@ -135,8 +143,30 @@ public class GamePanel {
     }
 
     private void render() {
+        // Set up orthographic projection for 2D rendering
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, gamePanel.WIDTH, gamePanel.HEIGHT, 0, -1, 1); // 2D orthographic projection
+        glMatrixMode(GL_MODELVIEW);
+        // Clear the screen
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // draw everything on plane 0?
+        glDisable(GL_DEPTH_TEST);
+        // Enable textures
+        glEnable(GL_TEXTURE_2D);
+        // Enable blending for transparent text rendering
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        renderer.begin();
         stateManager.render(gameStates, currentState);
         stateManager.render(inputMappers, currentMapper);
+        renderer.end();
+        // Disable blending after text rendering
+        glDisable(GL_BLEND);
+        // something with plane 0 / 3d rendering
+        glEnable(GL_DEPTH_TEST);
+        // Disable textures when done
+        glDisable(GL_TEXTURE_2D);
     }
 
     private void shutdown() {
@@ -211,5 +241,40 @@ public class GamePanel {
 
     public float getDeltaTime() {
         return deltaTime;
+    }
+    public String getAtlasPath() {
+        return atlasPath;
+    }
+
+    public void setAtlasPath(String atlasPath) {
+        this.atlasPath = atlasPath;
+    }
+
+    public String getShaderVertexPath() {
+        return shaderVertexPath;
+    }
+
+    public void setShaderVertexPath(String shaderVertexPath) {
+        this.shaderVertexPath = shaderVertexPath;
+    }
+
+    public String getShaderFragmentPath() {
+        return shaderFragmentPath;
+    }
+
+    public void setShaderFragmentPath(String shaderFragmentPath) {
+        this.shaderFragmentPath = shaderFragmentPath;
+    }
+
+    public BatchRenderer getRenderer() {
+        return renderer;
+    }
+
+    public Shader getShader() {
+        return shader;
+    }
+
+    public TextureAtlas getAtlas() {
+        return atlas;
     }
 }

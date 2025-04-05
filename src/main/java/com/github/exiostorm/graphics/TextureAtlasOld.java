@@ -122,7 +122,7 @@ public class TextureAtlasOld {
 
         // Optionally store additional data (transparency map, etc.)
         if ((saveFlags & 1) != 0) {
-            generateTransparencyMap(texture, true);
+            //generateTransparencyMap(texture, true);
         }
         if ((saveFlags & 2) != 0) {
             generateBufferedImage(texture, true);

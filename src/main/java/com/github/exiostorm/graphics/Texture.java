@@ -37,7 +37,7 @@ public class Texture {
     }
 	public boolean[] getTransparencyMap(boolean save) {
         if (this.transparencyMap == null) {
-            return generateTransparencyMap(this, save);
+            return getOrGenerateTransparencyMap(this, save);
         }
         return this.transparencyMap;
     }

@@ -1,5 +1,6 @@
 package com.github.exiostorm.graphics;
 
+import com.github.exiostorm.main.EchoGame;
 import com.github.exiostorm.main.GamePanel;
 import org.lwjgl.BufferUtils;
 
@@ -10,6 +11,8 @@ import java.util.*;
 import static org.lwjgl.opengl.GL30.*;
 
 public class BatchRenderer {
+    //TODO [0] temporary...
+    GamePanel gamePanel = EchoGame.gamePanel;
     private static final int MAX_QUADS = 1000;
     private static final int VERTEX_SIZE = 9; // x, y, z, u, v, r, g, b, a
     private static final int VERTEX_COUNT = MAX_QUADS * 4;
@@ -111,7 +114,7 @@ public class BatchRenderer {
         // Populate vertex buffer with quad data
         FloatBuffer data = BufferUtils.createFloatBuffer(quads.size() * 4 * VERTEX_SIZE);
         for (Quad quad : quads) {
-            quad.fillBuffer(data, GamePanel.WIDTH, GamePanel.HEIGHT);
+            quad.fillBuffer(data, gamePanel.WIDTH, gamePanel.HEIGHT);
         }
         data.flip(); // Prepare the buffer for reading
 

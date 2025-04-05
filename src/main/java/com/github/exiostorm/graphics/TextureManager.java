@@ -1,5 +1,6 @@
 package com.github.exiostorm.graphics;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
@@ -9,8 +10,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.lwjgl.stb.STBImage.stbi_image_free;
 
 public class TextureManager {
     static Map<String, Texture> Textures = new HashMap<>();
@@ -88,54 +87,178 @@ public class TextureManager {
         if (texture.getTransparencyMap() != null) {
             return texture.getTransparencyMap();
         }
+
         int width = texture.getWidth();
         int height = texture.getHeight();
-        ByteBuffer textureData = generateByteBuffer(texture, (byte) 0);
+
+        // Generate buffer without saving to avoid circular reference
+        BufferedImage image = generateBufferedImage(texture, false);
+
+        // Extract pixel data directly
+        int[] pixels = new int[width * height];
+        image.getRGB(0, 0, width, height, pixels, 0, width);
+
         boolean[] transparencyMap = new boolean[width * height];
         for (int i = 0; i < width * height; i++) {
-            int alpha = textureData.get(i * 4 + 3) & 0xFF; // Extract alpha
+            int alpha = (pixels[i] >> 24) & 0xFF; // Extract alpha
             transparencyMap[i] = alpha == 0; // Fully transparent
         }
+
         if (save) {
             texture.setTransparencyMap(transparencyMap);
+            // Save to JSON without causing a circular reference
+            saveTransparencyMapToJson(texture, transparencyMap);
         }
+
         return transparencyMap;
     }
-    //TODO maybe have another class handle the json logic so we can reduce imports used in this class? maybe not cause then we'd need our own import..
-    public static void getOrGenerateDimensions(Texture texture) {
-        String jsonPath = texture.getPath().substring(0, texture.getPath().lastIndexOf('.')) + ".json";
+
+    public static boolean[] getOrGenerateTransparencyMap(Texture texture, boolean save) {
+        // Check if transparency map is already generated
+        if (texture.getTransparencyMap() != null) {
+            return texture.getTransparencyMap();
+        }
+
+        String jsonPath = getJsonPath(texture);
         File jsonFile = new File(jsonPath);
+
+        // Try loading from JSON first
         if (jsonFile.exists()) {
-            System.out.println("FOUND EXISTING DIMENSIONS JSON FILE! : "+jsonPath);
-            try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
-                StringBuilder jsonContent = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    jsonContent.append(line);
+            boolean[] loadedMap = loadTransparencyMapFromJson(texture);
+            if (loadedMap != null) {
+                if (save) {
+                    texture.setTransparencyMap(loadedMap);
                 }
-                JSONObject jsonObject = new JSONObject(jsonContent.toString());
-                texture.setWidth(jsonObject.getInt("width"));
-                texture.setHeight(jsonObject.getInt("height"));
-                System.out.println("JSON values read. Width: " + texture.getWidth() + ", Height: " + texture.getHeight());
-            } catch (IOException e) {
-                System.err.println("Error reading JSON file: " + e.getMessage());
-                generateBufferedImage(texture, true);
-                texture.setWidth(texture.getBufferedImage().getWidth());
-                texture.setHeight(texture.getBufferedImage().getHeight());
+                return loadedMap;
             }
+        }
+
+        // If we reach here, we need to generate the map
+        return generateTransparencyMap(texture, save);
+    }
+
+    private static String getJsonPath(Texture texture) {
+        return texture.getPath().substring(0, texture.getPath().lastIndexOf('.')) + ".json";
+    }
+    //TODO [0] bug here, our transparency map is saving as all opaque for some reason.
+    // This method is now separate to avoid the circular reference
+    public static void saveTextureData(Texture texture) {
+        // Only save if we don't already have the transparency map
+        if (texture.getTransparencyMap() == null) {
+            boolean[] transparencyMap = generateTransparencyMap(texture, true);
+            // The map is already saved by generateTransparencyMap
         } else {
-            generateBufferedImage(texture, true);
-            texture.setWidth(texture.getBufferedImage().getWidth());
-            texture.setHeight(texture.getBufferedImage().getHeight());
+            // Just save what we already have
+            saveTransparencyMapToJson(texture, texture.getTransparencyMap());
+        }
+    }
+
+    public static void getOrGenerateDimensions(Texture texture) {
+        String jsonPath = getJsonPath(texture);
+        File jsonFile = new File(jsonPath);
+
+        if (jsonFile.exists()) {
+            // Only load dimensions from JSON
+            loadDimensionsFromJson(texture, jsonFile);
+        } else {
+            // Generate and save only dimensions
+            BufferedImage image = generateBufferedImage(texture, true);
+            texture.setWidth(image.getWidth());
+            texture.setHeight(image.getHeight());
+
+            // Save dimensions without causing circular reference
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("width", texture.getWidth());
             jsonObject.put("height", texture.getHeight());
+
             try (FileWriter fileWriter = new FileWriter(jsonPath)) {
-                fileWriter.write(jsonObject.toString(4)); // Pretty print with 4-space indentation
-                System.out.println("Dimensions saved to JSON: " + jsonPath);
+                fileWriter.write(jsonObject.toString(0));
             } catch (IOException e) {
                 System.err.println("Error saving dimensions to JSON: " + e.getMessage());
             }
         }
     }
+    private static void loadDimensionsFromJson(Texture texture, File jsonFile) {
+        System.out.println("FOUND EXISTING DIMENSIONS JSON FILE! : " + jsonFile.getPath());
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
+            StringBuilder jsonContent = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonContent.append(line);
+            }
+
+            JSONObject jsonObject = new JSONObject(jsonContent.toString());
+
+            // Only load dimensions
+            texture.setWidth(jsonObject.getInt("width"));
+            texture.setHeight(jsonObject.getInt("height"));
+            System.out.println("JSON values read. Width: " + texture.getWidth() + ", Height: " + texture.getHeight());
+        } catch (IOException e) {
+            System.err.println("Error reading JSON file: " + e.getMessage());
+            BufferedImage image = generateBufferedImage(texture, true);
+            texture.setWidth(image.getWidth());
+            texture.setHeight(image.getHeight());
+        }
+    }
+    private static boolean[] loadTransparencyMapFromJson(Texture texture) {
+        String jsonPath = getJsonPath(texture);
+        File jsonFile = new File(jsonPath);
+
+        if (!jsonFile.exists()) {
+            return null;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
+            StringBuilder jsonContent = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonContent.append(line);
+            }
+
+            JSONObject jsonObject = new JSONObject(jsonContent.toString());
+
+            // Only try to load transparency map
+            if (jsonObject.has("transparencyMap")) {
+                JSONArray transparencyArray = jsonObject.getJSONArray("transparencyMap");
+                boolean[] transparencyMap = new boolean[transparencyArray.length()];
+
+                for (int i = 0; i < transparencyArray.length(); i++) {
+                    transparencyMap[i] = transparencyArray.getInt(i) == 1;
+                }
+
+                System.out.println("Loaded transparency map from JSON with " + transparencyMap.length + " entries");
+                return transparencyMap;
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading transparency map from JSON: " + e.getMessage());
+        }
+        return null;
+    }
+    // Fixed method to avoid circular dependency
+    private static void saveTransparencyMapToJson(Texture texture, boolean[] transparencyMap) {
+        String jsonPath = getJsonPath(texture);
+        JSONObject jsonObject = new JSONObject();
+
+        // Save dimensions
+        jsonObject.put("width", texture.getWidth());
+        jsonObject.put("height", texture.getHeight());
+
+        // Save transparency map
+        if (transparencyMap != null) {
+            JSONArray transparencyArray = new JSONArray();
+            for (boolean isTransparent : transparencyMap) {
+                transparencyArray.put(isTransparent ? 1 : 0);
+            }
+            jsonObject.put("transparencyMap", transparencyArray);
+        }
+
+        try (FileWriter fileWriter = new FileWriter(jsonPath)) {
+            fileWriter.write(jsonObject.toString(0));
+            System.out.println("Transparency map saved to JSON: " + jsonPath);
+        } catch (IOException e) {
+            System.err.println("Error saving transparency map to JSON: " + e.getMessage());
+        }
+    }
+
 }

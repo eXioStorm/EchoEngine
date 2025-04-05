@@ -29,8 +29,8 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 // Should have something to toggle the ability to generate new glyphs so that people can prevent performance hits. then new glyphs will just render with a default character.
 //TODO work on SDF generator logic
 public class GlyphManager {
-    private String lombokString = "Placeholder to suppress lombok message : ";
-    private String packge = "com.github.exiostorm.graphics.GlyphManager.";
+    //private String lombokString = "Placeholder to suppress lombok message : ";
+    //private String packge = "com.github.exiostorm.graphics.GlyphManager.";
     private String glyphs = "glyphs";
     private String GLYPH_DIR = "glyphs/fonts/";
 
@@ -144,44 +144,34 @@ public class GlyphManager {
     }
     //TODO Getters / Setters V
     public int getAtlasSlot() {
-        if (atlasSlot < 0) { System.out.println(lombokString + packge + "getAtlasSlot()"); }
         return atlasSlot;
     }
     public void setAtlasSlot(int textureSlot) {
-        if (atlasSlot < 0) { System.out.println(lombokString + packge + "setAtlasSlot()"); }
         atlasSlot = textureSlot;
     }
     public byte getDefaultLocale() {
-        if (glyphAtlas != null) { System.out.println(lombokString + packge + "getDefaultLocale()"); }
         return defaultLocale;
     }
     public void setDefaultLocale(byte locale) {
-        if (glyphAtlas != null) { System.out.println(lombokString + packge + "setDefaultLocale()"); }
         defaultLocale = locale;
     }
     public TextureAtlas getGlyphAtlas() {
-        if (glyphAtlas != null) { System.out.println(lombokString + packge + "getGlyphAtlas()"); }
         return glyphAtlas;
     }
     public void setGlyphAtlas(TextureAtlas atlas) {
-        if (glyphAtlas != null) { System.out.println(lombokString + packge + "setGlyphAtlas()"); }
         glyphAtlas = atlas;
     }
     public String getParentDirectory() {
-        if (parentDirectory != null) { System.out.println(lombokString + packge + "getParentDirectory()"); }
         return parentDirectory;
     }
     public void setParentDirectory(String path) {
-        if (parentDirectory != null) { System.out.println(lombokString + packge + "setParentDirectory()"); }
         parentDirectory = path;
     }
     /****/
     public List<String> getFonts() {
-        if (parentDirectory != null) { System.out.println(lombokString + packge + "getFonts()"); }
         return fonts;
     }
     public void setFonts(List<String> fonts) {
-        if (parentDirectory != null) { System.out.println(lombokString + packge + "setFonts()"); }
         this.fonts = fonts;
     }
     public void addFont(String fonts) { this.fonts.add(fonts); }

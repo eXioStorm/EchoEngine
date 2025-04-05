@@ -3,22 +3,27 @@ package com.github.exiostorm.graphics.gui;
 import com.github.exiostorm.graphics.BatchRenderer;
 import com.github.exiostorm.graphics.Shader;
 import com.github.exiostorm.graphics.Texture;
-import com.github.exiostorm.graphics.TextureAtlasOld;
+import com.github.exiostorm.graphics.TextureAtlas;
+import com.github.exiostorm.main.EchoGame;
+import com.github.exiostorm.main.GamePanel;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector2f;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class Button extends GUIElement {
-    BatchRenderer renderer;
-    TextureAtlasOld atlas;
+    private GamePanel gamePanel = EchoGame.gamePanel;
+    BatchRenderer renderer = gamePanel.getRenderer();
+    Shader shader = gamePanel.getShader();
+    TextureAtlas atlas = gamePanel.getAtlas();
 
     boolean useShader = false;
-    private Shader shader = null;
     private Texture texture;
     private static final float EPSILON = 1e-6f;
+    //TODO [0] this is why it always says 0x0 when we click
     private double[] mousePosition = {0,0};
     private boolean hovered = false;
     private boolean clicked = false;
@@ -37,8 +42,8 @@ public class Button extends GUIElement {
         this.texture = texture;
         //TODO these are just temporary while I try to figure out where I'm at
         //List<Texture> textures = List.of(this.texture);
-        atlas = new TextureAtlasOld();
-        //TODO [0]
+        //atlas = new TextureAtlas();
+        //TODO [0] I think... instead of creating a new renderer and atlas here we should have something setup to reuse / pass through our existing renderer and atlas. we might need a GUI handler? idk
         //renderer = new BatchRenderer(atlas, shader);
     }
 
@@ -76,7 +81,7 @@ public class Button extends GUIElement {
         int pixelIndex = pixelY * texture.getWidth() + pixelX;
 
         // Consider the pixel under the mouse as valid if alpha > 0 (non-transparent)
-        return texture.getTransparencyMap(true)[pixelIndex];
+        return !texture.getTransparencyMap(true)[pixelIndex];
     }
 
     private boolean isPointInPolygon(float x, float y, List<Vector2f> vertices) {

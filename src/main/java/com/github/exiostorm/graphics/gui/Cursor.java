@@ -2,45 +2,53 @@ package com.github.exiostorm.graphics.gui;
 
 import com.github.exiostorm.graphics.Texture;
 
-public class Cursor {
-    private Texture texture;
-    private int frameWidth;
-    private int frameHeight;
-    private int frameCount;
-    private float currentFrame;
-    private float frameRate;
+import java.util.List;
 
-    public Cursor(Texture texture, int frameWidth, int frameHeight, int frameCount, float frameRate) {
-        this.texture = texture;
-        this.frameWidth = frameWidth;
-        this.frameHeight = frameHeight;
-        this.frameCount = frameCount;
-        this.frameRate = frameRate;
+import static com.github.exiostorm.main.EchoGame.gamePanel;
+
+public class Cursor {
+    private List<Texture> textures;
+    public int currentFrame;
+    private float minFrameTime;
+    private float frameTime;
+    private float accumulator;
+    private boolean isBehindSchedule;
+
+    public Cursor(List<Texture> textures, float frameTime) {
+        this.textures = textures;
+        this.currentFrame = 0;
+        this.minFrameTime = 0.002f;
+        this.accumulator = 0.0005f;
+        this.frameTime = frameTime;
     }
 
     public void update(float deltaTime) {
-        currentFrame += deltaTime * frameRate;
-        if (currentFrame >= frameCount) {
-            currentFrame -= frameCount;
+        if (textures.isEmpty()) return;
+
+        // Cap extremely large delta times to prevent huge jumps
+        float cappedDelta = Math.min(deltaTime, frameTime * 2);
+
+        accumulator += cappedDelta;
+
+        // Check if we're behind schedule
+        isBehindSchedule = accumulator > frameTime * 1.5f;
+
+        // Only advance if we've reached at least the minimum frame time
+        if (accumulator >= minFrameTime) {
+            // Only advance one frame at a time for smoother animations
+            currentFrame = (currentFrame + 1) % textures.size();
+
+            // If we're behind schedule, reduce accumulator by just the minimum
+            // to catch up faster, otherwise use the standard frameTime
+            if (isBehindSchedule) {
+                accumulator -= minFrameTime;
+            } else {
+                accumulator -= frameTime;
+            }
         }
     }
 
     public void render(float x, float y) {
-        /*
-        int frameIndex = (int) currentFrame;
-        float textureX = (frameIndex * frameWidth) / (float) texture.getWidth();
-        float textureY = 0f;
-        float textureWidth = frameWidth / (float) texture.getWidth();
-        float textureHeight = frameHeight / (float) texture.getHeight();
-
-        texture.bind();
-        glBegin(GL_QUADS);
-        glTexCoord2f(textureX, textureY); glVertex2f(x, y);
-        glTexCoord2f(textureX + textureWidth, textureY); glVertex2f(x + frameWidth, y);
-        glTexCoord2f(textureX + textureWidth, textureY + textureHeight); glVertex2f(x + frameWidth, y + frameHeight);
-        glTexCoord2f(textureX, textureY + textureHeight); glVertex2f(x, y + frameHeight);
-        glEnd();
-        texture.unbind();
-        */
+        gamePanel.getRenderer().draw(textures.get(currentFrame), x, y, gamePanel.getShader(),false);
     }
 }

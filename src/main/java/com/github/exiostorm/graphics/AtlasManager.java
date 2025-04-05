@@ -282,12 +282,15 @@ public class AtlasManager {
         subAtlasMap.put(texture, new Rectangle(x, y, texture.getWidth(), texture.getHeight()));
     }
     //TODO ^^
-    public static void newAddToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture) {
-        newAddToAtlas(atlas, category, subAtlas, texture, 0, 0);
+    public static boolean newAddToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture) {
+        return newAddToAtlas(atlas, category, subAtlas, texture, 0, 0);
     }
-    public static void newAddToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture, int x, int y) {
-        //TODO [0] WE NEED TO ADD TO PRIMARY ATLAS IF CATEGORY DOES NOT EXIST?
-        // Ensure the category exists in newPrimaryAtlas
+    public static boolean newAddToAtlas(TextureAtlas atlas, String category, String subAtlas, Texture texture, int x, int y) {
+        // Check if this texture is already mapped - exit early if it is
+        if (atlas.getTexturePositions().containsKey(texture)) {
+            return true; // Texture already exists in the atlas
+        }
+
         if (!atlas.getNewPrimaryAtlas().containsKey(category)) {
             atlas.getNewPrimaryAtlas().put(category, subAtlas); // Store the first texture path for this category
         }
@@ -319,6 +322,7 @@ public class AtlasManager {
         Rectangle rect = new Rectangle(x, y, texture.getWidth(), texture.getHeight());
         subAtlasMap.put(texture, rect);
         atlas.getTexturePositions().put(texture, rect); // Store in direct lookup map
+        return false;
     }
 
     public void newAtlasSwapQueue(TextureAtlas atlas, String category, String newSubAtlas) {

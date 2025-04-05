@@ -1,3 +1,4 @@
+import com.github.exiostorm.graphics.AtlasManager;
 import com.github.exiostorm.graphics.gui.Cursor;
 import com.github.exiostorm.graphics.gui.GUIElement;
 import com.github.exiostorm.graphics.gui.Button;
@@ -6,10 +7,7 @@ import com.github.exiostorm.graphics.Texture;
 import com.github.exiostorm.graphics.TextureManager;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR;
@@ -20,16 +18,23 @@ public class MainMenuInputMapper implements State {
     Map<Integer, List<Integer>> allPlayerInputs;
     double[] mousePosition = {0,0}; //This is just used for tracking where the mouse has been.
     List<Integer> pressedKeys;
-    private Texture mouseTexture;
-    Cursor cursor;
+    private List<Texture> mouseTextures;
+
+    static Cursor cursor;
 
     @Override
     public void init() {
         // Initialization logic for MainMenu, if any
-        mouseTexture = TextureManager.addTexture("src/main/resources/HUD/mouse.png");
+        mouseTextures = new ArrayList<>();
+        for (int i = 1; i<16;) {
+            mouseTextures.add(TextureManager.addTexture("src/main/resources/HUD/mouse/mouse_" + i +".png"));
+            AtlasManager.newAddToAtlas(gamePanel.getAtlas(), "general", "general", mouseTextures.get(i-1));
+            i++;
+        }
         // Create a Cursor instance
-        cursor = new Cursor(mouseTexture, 32, 32, 14, 28f);
-        GLFW.glfwSetInputMode(gamePanel.getWindow().getWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        cursor = new Cursor(mouseTextures, 0.001f);
+        //TODO [1] 2025/04/05 need to implement logic for handling animations / frames for textures, we still need the logic for rendering the cursor
+        //GLFW.glfwSetInputMode(gamePanel.getWindow().getWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         System.out.println("MainMenuInputMapper initialized.");
     }
 
@@ -41,16 +46,12 @@ public class MainMenuInputMapper implements State {
     }
     @Override
     public void render() {
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
         cursor.render((float)getMouse()[0],(float)getMouse()[1]);
-        glDisable(GL_BLEND);
-        glDisable(GL_TEXTURE_2D);
     }
     private double[] getMouse(){
         return gamePanel.playerInputManager.getPlayer(0).getMousePosition();
     }
-    private void checkMouseMoved(){
+    private void checkMouseMoved() {
         if (!Arrays.equals(getMouse(), mousePosition)) {
             //JukeBox.play("menuoption", "effect", 1, true);
             /*System.out.println("Mouse position changed from :  X:" + mousePosition[0] + ", Y:" + mousePosition[1] +
@@ -109,5 +110,9 @@ public class MainMenuInputMapper implements State {
                 // You can add more player-specific logic here based on the key and player
             }
         }
+    }
+
+    public static Cursor getCursor() {
+        return cursor;
     }
 }

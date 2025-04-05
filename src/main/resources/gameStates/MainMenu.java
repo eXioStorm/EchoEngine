@@ -1,5 +1,7 @@
 import com.github.exiostorm.audio.JukeBox;
 import com.github.exiostorm.graphics.gui.Button;
+import com.github.exiostorm.graphics.gui.GUIElement;
+import com.github.exiostorm.main.EchoGame;
 import com.github.exiostorm.main.GamePanel;
 
 import com.github.exiostorm.main.State;
@@ -7,6 +9,7 @@ import com.github.exiostorm.graphics.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static java.lang.Thread.sleep;
@@ -14,14 +17,14 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class MainMenu implements State {
-    BatchRenderer renderer;
     private Texture backgroundTexture;
-    Shader exampleShader;
     private Texture testTexture;
     private Texture patrickTexture;
-    TextureAtlasOld atlas;
-    TextureAtlas atlas1;
-
+    //TODO [0] need logic that passes the gamePanel from EchoGame when states are created so we can have easier reference to it that's independent from referencing EchoGame.
+    BatchRenderer renderer = gamePanel.getRenderer();
+    Shader exampleShader = gamePanel.getShader();
+    TextureAtlas atlas1 = gamePanel.getAtlas();
+    List<GUIElement> guiElements = gamePanel.guiElements;
 
     private int frameTester = 0;
 
@@ -32,14 +35,10 @@ public class MainMenu implements State {
         initAudio();
         //TODO something here to select UIHandler? <- huh?
         initTextures();//TODO
-        initShaders();
-        try {
-            createAtlas("src/main/resources/tests/atlas.json");
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        //initInterfaces();
-
+        //initShaders();
+        //new 2025/04/05
+        initInterfaces();
+        panelAtlas();
 
     }
 
@@ -51,20 +50,7 @@ public class MainMenu implements State {
     @Override
     public void render() {
 
-        // Set up orthographic projection for 2D rendering
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(0, GamePanel.WIDTH, GamePanel.HEIGHT, 0, -1, 1); // 2D orthographic projection
-        glMatrixMode(GL_MODELVIEW);
-        // Clear the screen
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // draw everything on plane 0?
-        glDisable(GL_DEPTH_TEST);
-        // Enable textures
-        glEnable(GL_TEXTURE_2D);
-        // Enable blending for transparent text rendering
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
         /*
         backgroundTexture.drawImmediate(0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight());
@@ -83,19 +69,19 @@ public class MainMenu implements State {
         TextRenderer.renderText("Default font test!",0.0f * GamePanel.WIDTH, 0.4f * GamePanel.HEIGHT, 0.5f);
          */
 
-        renderer.begin();
-        /*
-        for (GUIElement element : guiElements) {
-            element.render();
-        }*/
+        //renderer.begin();
 
         renderer.draw(backgroundTexture, 0, 0, exampleShader, false);
-        renderer.draw(testTexture, 10, 10, exampleShader, false);
-        renderer.draw(patrickTexture, 200, 140, exampleShader, false);
+        //renderer.draw(testTexture, 10, 10, exampleShader, false);
+        //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
+
+        for (GUIElement element : guiElements) {
+            element.render();
+        }
 
         //graphics.draw(backgroundTexture, 0, 0, exampleShader, false);
 
-        renderer.end();
+        //renderer.end();
 
 
         //exampleShader.enable();
@@ -103,12 +89,7 @@ public class MainMenu implements State {
         //exampleShader.disable();
 
 
-        // Disable blending after text rendering
-        glDisable(GL_BLEND);
-        // something with plane 0 / 3d rendering
-        glEnable(GL_DEPTH_TEST);
-        // Disable textures when done
-        glDisable(GL_TEXTURE_2D);
+
     }
     private void initShaders() {
         exampleShader = new Shader("src/main/resources/Shaders/test_vertex.glsl", "src/main/resources/Shaders/test_fragment.glsl");
@@ -133,7 +114,7 @@ public class MainMenu implements State {
     }
     private void initInterfaces(){
         // Create the button and add it to the GUI elements
-        Button squareButton = new Button(GamePanel.WIDTH-testTexture.getWidth(), (float) (GamePanel.HEIGHT - testTexture.getHeight()) / 2, testTexture);
+        Button squareButton = new Button(gamePanel.WIDTH-testTexture.getWidth(), (float) (gamePanel.HEIGHT - testTexture.getHeight()) / 2, testTexture);
         squareButton.getTexture().setShader(exampleShader);
         squareButton.setOnHoverAction(button -> {
             if (!squareButton.isHovered()) {
@@ -153,8 +134,8 @@ public class MainMenu implements State {
             JukeBox.play("menuselect", "effect", 1, false);
             System.out.println("Clicked button : " + button+", at : "+squareButton.getMousePosition()[0]+"x"+squareButton.getMousePosition()[1]);
         });
-        gamePanel.guiElements.add(squareButton);
-        Button patrickButton = new Button((float) (GamePanel.WIDTH - patrickTexture.getHeight()) / 3, (float) (GamePanel.HEIGHT - patrickTexture.getHeight()) / 2, patrickTexture);
+        guiElements.add(squareButton);
+        Button patrickButton = new Button((float) (gamePanel.WIDTH - patrickTexture.getHeight()) / 3, (float) (gamePanel.HEIGHT - patrickTexture.getHeight()) / 2, patrickTexture);
         patrickButton.getTexture().setShader(exampleShader);
         patrickButton.setOnHoverAction(button -> {
             if (!patrickButton.isHovered()) {
@@ -172,35 +153,29 @@ public class MainMenu implements State {
         });
         patrickButton.setOnClickAction(button -> {
             JukeBox.play("menuselect", "effect", 1, false);
+            if (MainMenuInputMapper.getCursor().currentFrame < 14) {
+                MainMenuInputMapper.getCursor().currentFrame++;
+            } else {
+                MainMenuInputMapper.getCursor().currentFrame = 0;
+            }
             System.out.println("Clicked button : " + button+", at : "+patrickButton.getMousePosition()[0]+"x"+patrickButton.getMousePosition()[1]);
         });
-        gamePanel.guiElements.add(patrickButton);
+        guiElements.add(patrickButton);
     }
-    public void test(){
-        atlas = new TextureAtlasOld();
-        long start = System.currentTimeMillis();
-        atlas.addTexture(backgroundTexture, 0, (byte) 0);
-        System.out.println("Time it took to add first texture to our atlas : "+(System.currentTimeMillis()-start));
-        atlas.addTexture(testTexture, 0, (byte) 0);
-        System.out.println("Time it took to add second texture to our atlas : "+(System.currentTimeMillis()-start));
-        atlas.addTexture(patrickTexture, 0, (byte) 0);
-        System.out.println("Time it took to add third texture to our atlas : "+(System.currentTimeMillis()-start));
-
-        atlas.finalizeAtlas();
-        System.out.println("Time it took to finalize our atlas : "+(System.currentTimeMillis()-start));
-        //TODO somehow check if these affect used memory(they'd have to, but double check.)
-        //testTexture.setBufferedImage(null);
-        //patrickTexture.setBufferedImage(null);
-        //backgroundTexture.setBufferedImage(null);
-        //renderer = new BatchRenderer(atlas, exampleShader);
+    public void panelAtlas(){
+        //TODO [0] bad logic here, need to fix.
+        boolean recalculateAtlases = AtlasManager.newAddToAtlas(atlas1, "general", "general", backgroundTexture) ||
+                AtlasManager.newAddToAtlas(atlas1, "general", "general", testTexture) ||
+                AtlasManager.newAddToAtlas(atlas1, "general", "general", patrickTexture);
+        if (!recalculateAtlases) AtlasManager.newFinalizeAtlasMaps(atlas1);
+        //TODO [0] can have logic to check if we need to reupload.
+        AtlasManager.newSaveAtlasToGPU(atlas1);
     }
     public void createAtlas(String path) throws InterruptedException {
         long start = System.currentTimeMillis();
         File jsonFile = new File(path);
         if (!jsonFile.exists()) {
             atlas1 = AtlasManager.newAtlas(path);
-            //TODO[0] not understanding category / subAtlas causes weird visual bugs
-            // New problem is when having multiple categories. multiple subAtlases works fine, but as soon as there's more than one category it breaks.
             AtlasManager.newAddToAtlas(atlas1, "test1", "test1", backgroundTexture);
             AtlasManager.newAddToAtlas(atlas1, "test2", "test2", testTexture);
             AtlasManager.newAddToAtlas(atlas1, "test3", "test3", patrickTexture);
