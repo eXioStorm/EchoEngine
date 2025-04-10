@@ -1,10 +1,14 @@
 #version 330 core
-in vec2 TexCoord;              // Texture coordinates from vertex shader
-out vec4 color;                // Final fragment color
-
-uniform sampler2D textureSampler; // Texture sampler
-
-void main() {
-    color = texture(textureSampler, TexCoord); // Sample texture
-    //color = vec4(1.0, 0.0, 0.0, 1.0); // Red solid color
-}
+in vec2 TexCoord;
+in vec4 VertexColor;
+out vec4 FragColor;
+uniform sampler2D textureSampler;
+uniform float brightness = 1.0;
+uniform vec3 colorTint = vec3(1.0, 1.0, 1.0);
+void main()
+    {
+    vec4 texColor = texture(textureSampler, TexCoord) * VertexColor;
+    // Apply brightness and color tint
+    vec3 finalColor = texColor.rgb * brightness * colorTint;
+    FragColor = vec4(finalColor, texColor.a);
+    }

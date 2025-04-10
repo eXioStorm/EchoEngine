@@ -1,8 +1,6 @@
 import com.github.exiostorm.audio.JukeBox;
 import com.github.exiostorm.graphics.gui.Button;
 import com.github.exiostorm.graphics.gui.GUIElement;
-import com.github.exiostorm.main.EchoGame;
-import com.github.exiostorm.main.GamePanel;
 
 import com.github.exiostorm.main.State;
 import com.github.exiostorm.graphics.*;
@@ -10,10 +8,10 @@ import com.github.exiostorm.graphics.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static java.lang.Thread.sleep;
-import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class MainMenu implements State {
@@ -71,7 +69,7 @@ public class MainMenu implements State {
 
         //renderer.begin();
 
-        renderer.draw(backgroundTexture, 0, 0, exampleShader, false);
+        renderer.draw(backgroundTexture, 0, 0, exampleShader, null);
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
         //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
 
@@ -119,20 +117,21 @@ public class MainMenu implements State {
         squareButton.setOnHoverAction(button -> {
             if (!squareButton.isHovered()) {
                 JukeBox.play("menuoption", "effect", 1, true);
-                squareButton.setUseShader(true);
+                squareButton.setShaderModifier(shader -> shader.setUniform("brightness", 0.5f));
                 System.out.println("Hovering over button: " + button);
             }
         });
         squareButton.setUnHoverAction(button -> {
             if (squareButton.isHovered()) {
                 JukeBox.play("menuoption", "effect", 1, true);
-                squareButton.setUseShader(false);
+                squareButton.setShaderModifier(shader -> shader.setUniform("brightness", 1.0f));
                 System.out.println("Stopped hovering over button: " + button);
             }
         });
         squareButton.setOnClickAction(button -> {
             JukeBox.play("menuselect", "effect", 1, false);
-            System.out.println("Clicked button : " + button+", at : "+squareButton.getMousePosition()[0]+"x"+squareButton.getMousePosition()[1]);
+            //exampleShader.setUniform("brightness", (float)Math.random());
+            System.out.println("Clicked button : " + button +", at : "+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0]+"x"+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
         });
         guiElements.add(squareButton);
         Button patrickButton = new Button((float) (gamePanel.WIDTH - patrickTexture.getHeight()) / 3, (float) (gamePanel.HEIGHT - patrickTexture.getHeight()) / 2, patrickTexture);
@@ -140,46 +139,41 @@ public class MainMenu implements State {
         patrickButton.setOnHoverAction(button -> {
             if (!patrickButton.isHovered()) {
                 JukeBox.play("menuoption", "effect", 1, true);
-                patrickButton.setUseShader(true);
+                patrickButton.setShaderModifier(shader -> shader.setUniform("brightness", 0.5f));
                 System.out.println("Hovering over button: " + button);
             }
         });
         patrickButton.setUnHoverAction(button -> {
             if (patrickButton.isHovered()) {
                 JukeBox.play("menuoption", "effect", 1, true);
-                patrickButton.setUseShader(false);
+                patrickButton.setShaderModifier(shader -> shader.setUniform("brightness", 1.0f));
                 System.out.println("Stopped hovering over button: " + button);
             }
         });
         patrickButton.setOnClickAction(button -> {
             JukeBox.play("menuselect", "effect", 1, false);
-            if (MainMenuInputMapper.getCursor().currentFrame < 14) {
-                MainMenuInputMapper.getCursor().currentFrame++;
-            } else {
-                MainMenuInputMapper.getCursor().currentFrame = 0;
-            }
-            System.out.println("Clicked button : " + button+", at : "+patrickButton.getMousePosition()[0]+"x"+patrickButton.getMousePosition()[1]);
+            System.out.println("Clicked button : " + button +", at : "+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0]+"x"+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
         });
         guiElements.add(patrickButton);
     }
     public void panelAtlas(){
         //TODO [0] bad logic here, need to fix.
-        boolean recalculateAtlases = AtlasManager.newAddToAtlas(atlas1, "general", "general", backgroundTexture) ||
-                AtlasManager.newAddToAtlas(atlas1, "general", "general", testTexture) ||
-                AtlasManager.newAddToAtlas(atlas1, "general", "general", patrickTexture);
-        if (!recalculateAtlases) AtlasManager.newFinalizeAtlasMaps(atlas1);
+        boolean recalculateAtlases = AtlasManager.addToAtlas(atlas1, "general", "general", backgroundTexture) ||
+                AtlasManager.addToAtlas(atlas1, "general", "general", testTexture) ||
+                AtlasManager.addToAtlas(atlas1, "general", "general", patrickTexture);
+        if (!recalculateAtlases) AtlasManager.finalizeAtlasMaps(atlas1);
         //TODO [0] can have logic to check if we need to reupload.
-        AtlasManager.newSaveAtlasToGPU(atlas1);
+        AtlasManager.saveAtlasToGPU(atlas1);
     }
     public void createAtlas(String path) throws InterruptedException {
         long start = System.currentTimeMillis();
         File jsonFile = new File(path);
         if (!jsonFile.exists()) {
             atlas1 = AtlasManager.newAtlas(path);
-            AtlasManager.newAddToAtlas(atlas1, "test1", "test1", backgroundTexture);
-            AtlasManager.newAddToAtlas(atlas1, "test2", "test2", testTexture);
-            AtlasManager.newAddToAtlas(atlas1, "test3", "test3", patrickTexture);
-            AtlasManager.newFinalizeAtlasMaps(atlas1);
+            AtlasManager.addToAtlas(atlas1, "test1", "test1", backgroundTexture);
+            AtlasManager.addToAtlas(atlas1, "test2", "test2", testTexture);
+            AtlasManager.addToAtlas(atlas1, "test3", "test3", patrickTexture);
+            AtlasManager.finalizeAtlasMaps(atlas1);
             try {
                 AtlasManager.saveToJson(atlas1, path);
             } catch (IOException e) {
@@ -193,7 +187,7 @@ public class MainMenu implements State {
                 throw new RuntimeException(e);
             }
         }
-        AtlasManager.newSaveAtlasToGPU(atlas1);
+        AtlasManager.saveAtlasToGPU(atlas1);
         renderer = new BatchRenderer(atlas1, exampleShader);
     }
 }

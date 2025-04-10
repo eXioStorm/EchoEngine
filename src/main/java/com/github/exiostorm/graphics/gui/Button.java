@@ -14,13 +14,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static com.github.exiostorm.main.EchoGame.gamePanel;
+
 public class Button extends GUIElement {
-    private GamePanel gamePanel = EchoGame.gamePanel;
     BatchRenderer renderer = gamePanel.getRenderer();
     Shader shader = gamePanel.getShader();
     TextureAtlas atlas = gamePanel.getAtlas();
 
-    boolean useShader = false;
+    Consumer<Shader> shaderModifier;
     private Texture texture;
     private static final float EPSILON = 1e-6f;
     //TODO [0] this is why it always says 0x0 when we click
@@ -55,9 +56,8 @@ public class Button extends GUIElement {
     @Override
     public void render() {
         if (!visible) return;
-        //TODO might be an issue here because of other class dependency... probably no other way.
-        //texture.drawImmediate(x, y, texture.getWidth(), texture.getHeight(), this.useShader);
-        renderer.draw(texture, x, y, shader, this.useShader);
+        //TODO [0] need to re-implement logic for shader behavior so we can highlight our buttons / do other rendering modifications.
+        renderer.draw(texture, x, y, shader, shaderModifier);
     }
 
 
@@ -154,8 +154,8 @@ public class Button extends GUIElement {
     public boolean isClicked() {
         return clicked;
     }
-    public void setUseShader(boolean useShader) {
-        this.useShader = useShader;
+    public void setShaderModifier(Consumer<Shader> shaderModifier) {
+        this.shaderModifier = shaderModifier;
     }
 
     public void setShader(Shader shader) {

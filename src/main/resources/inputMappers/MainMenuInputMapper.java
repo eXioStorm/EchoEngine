@@ -12,7 +12,6 @@ import java.util.*;
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_HIDDEN;
-import static org.lwjgl.opengl.GL11.*;
 
 public class MainMenuInputMapper implements State {
     Map<Integer, List<Integer>> allPlayerInputs;
@@ -28,13 +27,12 @@ public class MainMenuInputMapper implements State {
         mouseTextures = new ArrayList<>();
         for (int i = 1; i<16;) {
             mouseTextures.add(TextureManager.addTexture("src/main/resources/HUD/mouse/mouse_" + i +".png"));
-            AtlasManager.newAddToAtlas(gamePanel.getAtlas(), "general", "general", mouseTextures.get(i-1));
+            AtlasManager.addToAtlas(gamePanel.getAtlas(), "general", "general", mouseTextures.get(i-1));
             i++;
         }
         // Create a Cursor instance
         cursor = new Cursor(mouseTextures, 0.001f);
-        //TODO [1] 2025/04/05 need to implement logic for handling animations / frames for textures, we still need the logic for rendering the cursor
-        //GLFW.glfwSetInputMode(gamePanel.getWindow().getWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        GLFW.glfwSetInputMode(gamePanel.getWindow().getWindow(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         System.out.println("MainMenuInputMapper initialized.");
     }
 
@@ -78,6 +76,7 @@ public class MainMenuInputMapper implements State {
             int playerId = entry.getKey(); // Get the player ID
             pressedKeys = entry.getValue(); // Get the pressed keys for this player
             for (Integer key : pressedKeys) {
+                // 0~7 are mouse keys?
                 if(key >= 0 && key <= 7){
                     mousePosition = getMouse(); // Get the player's mouse position
                     //TODO whoops another MainMenu dependency. need to move code to MainMenu somehow? or maybe not... might reuse our mappings across different states

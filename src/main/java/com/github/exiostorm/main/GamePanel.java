@@ -232,7 +232,7 @@ public class GamePanel {
     public void setCurrentState(String newState){
         currentState[0] = newState;
     }
-    public String getCurrentMapper(String stateType) {
+    public String getCurrentMapper() {
         return currentMapper[0];
     }
     public Window getWindow() {

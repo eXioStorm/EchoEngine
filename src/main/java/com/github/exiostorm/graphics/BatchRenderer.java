@@ -7,6 +7,7 @@ import org.lwjgl.BufferUtils;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL30.*;
 
@@ -75,10 +76,10 @@ public class BatchRenderer {
     }
     //TODO going to have issues here with having multiple texture atlases...
     // we could fix this by adding quads to our atlas class instead.
-    public void draw(Texture texture, float x, float y, Shader shader, boolean useShader) {
+    public void draw(Texture texture, float x, float y, Shader shader, Consumer<Shader> shaderModifier) {
         //TODO [0] need to figure out new atlas setup how to get converted coordinates for this part here
         float[] uv = AtlasManager.getUV(atlas, texture);
-        quads.add(new Quad(x, y, texture.getWidth(), texture.getHeight(), uv, shader, useShader));
+        quads.add(new Quad(x, y, texture.getWidth(), texture.getHeight(), uv, shader, shaderModifier));
     }
 
     public void end() {
@@ -114,6 +115,15 @@ public class BatchRenderer {
         // Populate vertex buffer with quad data
         FloatBuffer data = BufferUtils.createFloatBuffer(quads.size() * 4 * VERTEX_SIZE);
         for (Quad quad : quads) {
+            //TODO [0] 2025-04-08
+            // We need to batch uniform changes together and include glDrawElements within that batch.
+            // research confirmed we should be okay having multiple draw calls.
+            // (future idea... maybe we could use a buffer atlas to save recent shader changes and use them in place of changing shader uniforms? though sounds like far too much extra effort...)
+            // 2025-04-09 - I think we're going to need a shader manager that saves a List/Map of "Consumer<Shader>"?
+            //
+            if (quad.shaderModifier != null) {
+                quad.shaderModifier.accept(defaultShader);
+            }
             quad.fillBuffer(data, gamePanel.WIDTH, gamePanel.HEIGHT);
         }
         data.flip(); // Prepare the buffer for reading

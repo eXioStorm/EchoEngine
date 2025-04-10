@@ -1,21 +1,22 @@
 package com.github.exiostorm.graphics;
 
 import java.nio.FloatBuffer;
+import java.util.function.Consumer;
 
 class Quad {
     float x, y, width, height;
     float[] uv;
     Shader shader;
-    boolean useShader;
+    Consumer<Shader> shaderModifier;
 
-    public Quad(float x, float y, float width, float height, float[] uv, Shader shader, boolean useShader) {
+    public Quad(float x, float y, float width, float height, float[] uv, Shader shader, Consumer<Shader> shaderModifier) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.uv = uv;
         this.shader = shader;
-        this.useShader = useShader;
+        this.shaderModifier = shaderModifier;
     }
     public void fillBuffer(FloatBuffer buffer, int screenWidth, int screenHeight) {
         float xNDC = (2.0f * x / screenWidth) - 1.0f;
