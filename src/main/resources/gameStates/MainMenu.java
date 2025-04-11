@@ -112,6 +112,7 @@ public class MainMenu implements State {
     }
     private void initInterfaces(){
         // Create the button and add it to the GUI elements
+
         Button squareButton = new Button(gamePanel.WIDTH-testTexture.getWidth(), (float) (gamePanel.HEIGHT - testTexture.getHeight()) / 2, testTexture);
         squareButton.getTexture().setShader(exampleShader);
         squareButton.setOnHoverAction(button -> {
@@ -134,6 +135,7 @@ public class MainMenu implements State {
             System.out.println("Clicked button : " + button +", at : "+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0]+"x"+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
         });
         guiElements.add(squareButton);
+
         Button patrickButton = new Button((float) (gamePanel.WIDTH - patrickTexture.getHeight()) / 3, (float) (gamePanel.HEIGHT - patrickTexture.getHeight()) / 2, patrickTexture);
         patrickButton.getTexture().setShader(exampleShader);
         patrickButton.setOnHoverAction(button -> {
@@ -155,6 +157,7 @@ public class MainMenu implements State {
             System.out.println("Clicked button : " + button +", at : "+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0]+"x"+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
         });
         guiElements.add(patrickButton);
+
     }
     public void panelAtlas(){
         //TODO [0] bad logic here, need to fix.

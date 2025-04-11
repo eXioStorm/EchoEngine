@@ -95,7 +95,7 @@ public class Button extends GUIElement {
         }
         return intersectCount % 2 == 1; // Odd = inside, even = outside
     }
-
+    @Deprecated
     private boolean rayIntersectsSegment(float x, float y, Vector2f v1, Vector2f v2) {
         if (v1.y > v2.y) {
             Vector2f temp = v1;
