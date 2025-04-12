@@ -1,6 +1,6 @@
 package com.github.exiostorm.main;
 
-import com.github.exiostorm.graphics.TextRenderer;
+import com.github.exiostorm.graphics.archive.TextRenderer;
 
 public class EchoGame {
     public static GamePanel gamePanel;

@@ -2,24 +2,13 @@ package com.github.exiostorm.graphics;
 
 //import sun.util.locale.BaseLocale;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.github.exiostorm.utils.BufferUtils;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.util.msdfgen.*;
-import org.lwjgl.system.MemoryStack;
-
-import javax.naming.Context;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -45,7 +34,7 @@ public class GlyphManager {
     // Actually, probably create our own ttf and load it with our application?
     private List<String> fonts = new ArrayList<>(Arrays.asList("Calligraserif"));
 
-    private TextureAtlas glyphAtlas = AtlasManager.newAtlas(GLYPH_DIR);
+    private TextureAtlas glyphAtlas = AtlasManager.atlas(GLYPH_DIR);
 
     //TODO [1] need a List / enum List of unicode characters to be loaded categorized by language
 

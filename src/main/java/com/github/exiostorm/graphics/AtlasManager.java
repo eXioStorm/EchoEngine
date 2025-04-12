@@ -26,7 +26,7 @@ import static org.lwjgl.opengl.GL11.*;
 public class AtlasManager {
     static Map<String, TextureAtlas> atlases = new HashMap<>();
 
-    public static TextureAtlas newAtlas(String path) {
+    public static TextureAtlas atlas(String path) {
         TextureAtlas atlas = new TextureAtlas();
         atlases.putIfAbsent(path, atlas);
         return atlas;

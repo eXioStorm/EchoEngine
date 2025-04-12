@@ -1,4 +1,4 @@
-package com.github.exiostorm.graphics;
+package com.github.exiostorm.graphics.archive;
 
 import org.lwjgl.stb.STBTTBakedChar;
 import org.lwjgl.stb.STBTruetype;

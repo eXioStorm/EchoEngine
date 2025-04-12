@@ -59,8 +59,8 @@ public class MainMenuInputMapper implements State {
                 // Handle mouse hovering//TODO whoops. MainMenu dependency. need to move code to MainMenu somehow? or maybe not... might reuse our mappings across different states
                 for (GUIElement element : gamePanel.guiElements) {
                     if (element instanceof Button) {
+                        //TODO [0] 2025-04-12 trying to fix the constant triggering bug
                         if (element.isMouseOver((float) getMouse()[0], (float) getMouse()[1])) {
-                            // Optionally handle hover visuals or effects
                             ((Button) element).triggerHoverAction();
                         } else {
                             ((Button) element).stopHoverAction();

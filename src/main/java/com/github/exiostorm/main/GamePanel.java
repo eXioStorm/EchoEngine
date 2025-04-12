@@ -7,7 +7,6 @@ import com.github.exiostorm.input.PlayerInputManager;
 import com.github.exiostorm.input.PlayerInput;
 import com.github.exiostorm.utils.DynamicFactory;
 import com.github.exiostorm.utils.StateManager;
-import lombok.Getter;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 
@@ -124,7 +123,7 @@ public class GamePanel {
         System.out.println("OpenGL: " + glGetString(GL_VERSION));
         //TODO new code 2025/04/05
         shader = new Shader(shaderVertexPath, shaderFragmentPath);
-        atlas = AtlasManager.newAtlas(atlasPath);
+        atlas = AtlasManager.atlas(atlasPath);
         renderer = new BatchRenderer(atlas, shader);
 
         // Load game states from assets directory (compiled or uncompiled)

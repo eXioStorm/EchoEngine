@@ -8,7 +8,6 @@ import com.github.exiostorm.graphics.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Random;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static java.lang.Thread.sleep;
@@ -117,15 +116,21 @@ public class MainMenu implements State {
         squareButton.getTexture().setShader(exampleShader);
         squareButton.setOnHoverAction(button -> {
             if (!squareButton.isHovered()) {
+                squareButton.hovered = true;
                 JukeBox.play("menuoption", "effect", 1, true);
-                squareButton.setShaderModifier(shader -> shader.setUniform("brightness", 0.5f));
+                squareButton.setShaderModifier(shader -> shader.setUniform("brightness", (float)Math.random()));
                 System.out.println("Hovering over button: " + button);
             }
         });
         squareButton.setUnHoverAction(button -> {
             if (squareButton.isHovered()) {
+                squareButton.hovered = false;
                 JukeBox.play("menuoption", "effect", 1, true);
-                squareButton.setShaderModifier(shader -> shader.setUniform("brightness", 1.0f));
+                //TODO 2025-04-12 got distracted and blamed our button logic for a flaw with our rendering logic. ignore the every frame triggers until we get more render logic done~
+                squareButton.setShaderModifier(null);
+                exampleShader.enable();
+                exampleShader.setUniform("brightness", 1.0f);
+                exampleShader.disable();
                 System.out.println("Stopped hovering over button: " + button);
             }
         });
@@ -141,14 +146,17 @@ public class MainMenu implements State {
         patrickButton.setOnHoverAction(button -> {
             if (!patrickButton.isHovered()) {
                 JukeBox.play("menuoption", "effect", 1, true);
-                patrickButton.setShaderModifier(shader -> shader.setUniform("brightness", 0.5f));
+                patrickButton.setShaderModifier(shader -> shader.setUniform("brightness", (float)Math.random()));
                 System.out.println("Hovering over button: " + button);
             }
         });
         patrickButton.setUnHoverAction(button -> {
             if (patrickButton.isHovered()) {
                 JukeBox.play("menuoption", "effect", 1, true);
-                patrickButton.setShaderModifier(shader -> shader.setUniform("brightness", 1.0f));
+                patrickButton.setShaderModifier(null);
+                exampleShader.enable();
+                exampleShader.setUniform("brightness", 1.0f);
+                exampleShader.disable();
                 System.out.println("Stopped hovering over button: " + button);
             }
         });
@@ -172,7 +180,7 @@ public class MainMenu implements State {
         long start = System.currentTimeMillis();
         File jsonFile = new File(path);
         if (!jsonFile.exists()) {
-            atlas1 = AtlasManager.newAtlas(path);
+            atlas1 = AtlasManager.atlas(path);
             AtlasManager.addToAtlas(atlas1, "test1", "test1", backgroundTexture);
             AtlasManager.addToAtlas(atlas1, "test2", "test2", testTexture);
             AtlasManager.addToAtlas(atlas1, "test3", "test3", patrickTexture);

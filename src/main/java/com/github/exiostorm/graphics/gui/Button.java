@@ -26,8 +26,8 @@ public class Button extends GUIElement {
     private static final float EPSILON = 1e-6f;
     //TODO [0] this is why it always says 0x0 when we click
     private double[] mousePosition = {0,0};
-    private boolean hovered = false;
-    private boolean clicked = false;
+    public boolean hovered = false;
+    public boolean clicked = false;
     // Set hover action
     private Consumer<Button> onHoverAction;
     // Set hover action
@@ -122,22 +122,22 @@ public class Button extends GUIElement {
         if (onHoverAction != null) {
             onHoverAction.accept(this);
         }
-        hovered = true;
+        this.hovered = true;
     }
     // Trigger hover action
     public void stopHoverAction() {
         if (unHoverAction != null) {
             unHoverAction.accept(this);
         }
-        hovered = false;
+        this.hovered = false;
     }
 
     // Trigger click action
     public void triggerClickAction() {
-        clicked = true;
         if (onClickAction != null) {
             onClickAction.accept(this);
         }
+        this.clicked = true;
     }
     public Texture getTexture() {
         return texture;
@@ -148,11 +148,11 @@ public class Button extends GUIElement {
     }
 
     public boolean isHovered() {
-        return hovered;
+        return this.hovered;
     }
 
     public boolean isClicked() {
-        return clicked;
+        return this.clicked;
     }
     public void setShaderModifier(Consumer<Shader> shaderModifier) {
         this.shaderModifier = shaderModifier;
