@@ -13,31 +13,74 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Material {
-    Map<String, Integer> uniform1IMap = null;
-    Map<String, Float> uniform1FMap = null;
-    Map<String, Float[]> uniform2FMap = null;
-    Map<String, Vector3f> uniform3FMap = null;
-    Map<String, Matrix4f> uniformMatrix4FMap = null;
-    public void Material() {
+    private String name;
+    private Map<String, Integer> uniform1IMap = null;
+    private Map<String, Float> uniform1FMap = null;
+    private Map<String, Float[]> uniform2FMap = null;
+    private Map<String, Vector3f> uniform3FMap = null;
+    private Map<String, Matrix4f> uniformMatrix4FMap = null;
+
+    /**
+     * Don't directly create Materials from here, use the MaterialManager.
+     * @param name
+     */
+    Material(String name) {
+        this.name = name;
     }
-    public void setMap(String uniform, Integer value) {
+    public Material setMap(String uniform, Integer value) {
         if (uniform1IMap == null) uniform1IMap = new HashMap<>();
         uniform1IMap.put(uniform, value);
+        return this;
     }
-    public void setMap(String uniform, Float value) {
+    public Material setMap(String uniform, Float value) {
         if (uniform1FMap == null) uniform1FMap = new HashMap<>();
         uniform1FMap.put(uniform, value);
+        return this;
     }
-    public void setMap(String uniform, Float value1, Float value2) {
+    public Material setMap(String uniform, Float value1, Float value2) {
         if (uniform2FMap == null) uniform2FMap = new HashMap<>();
         uniform2FMap.put(uniform, new Float[]{value1, value2});
+        return this;
     }
-    public void setMap(String uniform, Vector3f value) {
+    public Material setMap(String uniform, Vector3f value) {
         if (uniform3FMap == null) uniform3FMap = new HashMap<>();
         uniform3FMap.put(uniform, value);
+        return this;
     }
-    public void setMap(String uniform, Matrix4f value) {
+    public Material setMap(String uniform, Matrix4f value) {
         if (uniformMatrix4FMap == null) uniformMatrix4FMap = new HashMap<>();
         uniformMatrix4FMap.put(uniform, value);
+        return this;
+    }
+    //TODO I'm not sure this is correct...
+    public void applyUniforms(Shader shader) {
+        if (uniform1IMap != null) {
+            for (Map.Entry<String, Integer> entry : uniform1IMap.entrySet()) {
+                shader.setUniform(entry.getKey(), entry.getValue());
+            }
+        }
+        if (uniform1FMap != null) {
+            for (Map.Entry<String, Float> entry : uniform1FMap.entrySet()) {
+                shader.setUniform(entry.getKey(), entry.getValue());
+            }
+        }
+        if (uniform2FMap != null) {
+            for (Map.Entry<String, Float[]> entry : uniform2FMap.entrySet()) {
+                shader.setUniform(entry.getKey(), entry.getValue()[0], entry.getValue()[1]);
+            }
+        }
+        if (uniform3FMap != null) {
+            for (Map.Entry<String, Vector3f> entry : uniform3FMap.entrySet()) {
+                shader.setUniform(entry.getKey(), entry.getValue());
+            }
+        }
+        if (uniformMatrix4FMap != null) {
+            for (Map.Entry<String, Matrix4f> entry : uniformMatrix4FMap.entrySet()) {
+                shader.setUniform(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+    public String getName() {
+        return name;
     }
 }
