@@ -5,33 +5,22 @@ import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.github.exiostorm.utils.ShaderUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 
 public class Shader {
-	public static final int VERTEX_ATTRIB = 0;
-	public static final int TCOORD_ATTRIB = 1;
-	
 	public static Shader shader;
-	private boolean enabled = false;
-	private final int ID;
+	public String name;
+	boolean enabled = false;
+	final int ID;
 	FloatBuffer buffer = null;
-	private Map<String, Integer> locationCache = new HashMap<String, Integer>();
-
-	//TODO 2025-04-13 Might have made a mistake here... something is getting mixed up between my Materials, and Shaders...
-	// These likely need to be deleted? don't delete anything yet though.. I think these are just fall-back?
-	//TODO going to use these maps to store default values for shaders, hopefully allowing us to use one shader for multiple behaviours.
-	private Map<String, Integer> glUniform1iDefaults = null;
-	private Map<String, Float> glUniform1fDefaults = null;
-	private Map<String, Float[]> glUniform2fDefaults = null;
-	//TODO confused on these ones, but will roll with it until I learn more.
-	private Map<String, Vector3f> glUniform3fDefaults = null;
-	private Map<String, Matrix4f> glUniformMatrix4fvDefaults = null;
+	Map<String, Integer> locationCache = new HashMap<String, Integer>();
 	
-	public Shader(String vertex, String fragment) {
-		this.ID = ShaderUtils.load(vertex, fragment);
+	public Shader(String name, String vertex, String fragment) {
+		this.name = name;
+		this.ID = ShaderManager.loadShader(name, vertex, fragment);
+		ShaderManager.registerShader(name, this);
 	}
 	
 	public int getUniform(String name) {
@@ -52,12 +41,7 @@ public class Shader {
 		if (!enabled) enable();
 		int location = getUniform(name);
 		if (location != -1) {
-			if (this.glUniform1iDefaults == null) this.glUniform1iDefaults = new HashMap<>();
-			if (this.glUniform1iDefaults.containsKey(name)) {
-				glUniform1i(getUniform(name), value);
-			} else {
-				setDefaultUniform(name, value);
-			}
+			glUniform1i(getUniform(name), value);
 		}
 	}
 
@@ -65,12 +49,7 @@ public class Shader {
 		if (!enabled) enable();
 		int location = getUniform(name);
 		if (location != -1) {
-			if (this.glUniform1fDefaults == null) this.glUniform1fDefaults = new HashMap<>();
-			if (this.glUniform1fDefaults.containsKey(name)) {
-				glUniform1f(getUniform(name), value);
-			} else {
-				setDefaultUniform(name, value);
-			}
+			glUniform1f(getUniform(name), value);
 		}
 	}
 
@@ -78,12 +57,7 @@ public class Shader {
 		if (!enabled) enable();
 		int location = getUniform(name);
 		if (location != -1) {
-			if (this.glUniform2fDefaults == null) this.glUniform2fDefaults = new HashMap<>();
-			if (this.glUniform2fDefaults.containsKey(name)) {
-				glUniform2f(getUniform(name), x, y);
-			} else {
-				setDefaultUniform(name, x, y);
-			}
+			glUniform2f(getUniform(name), x, y);
 		}
 	}
 
@@ -91,12 +65,7 @@ public class Shader {
 		if (!enabled) enable();
 		int location = getUniform(name);
 		if (location != -1) {
-			if (this.glUniform3fDefaults == null) this.glUniform3fDefaults = new HashMap<>();
-			if (this.glUniform3fDefaults.containsKey(name)) {
-				glUniform3f(getUniform(name), vector.x, vector.y, vector.z);
-			} else {
-				setDefaultUniform(name, vector);
-			}
+			glUniform3f(getUniform(name), vector.x, vector.y, vector.z);
 		}
 	}
 
@@ -104,26 +73,13 @@ public class Shader {
 		if (!enabled) enable();
 		int location = getUniform(name);
 		if (location != -1) {
-			if (this.glUniformMatrix4fvDefaults == null) this.glUniformMatrix4fvDefaults = new HashMap<>();
 			if (buffer == null) {
 				buffer = BufferUtils.createFloatBuffer(16);
 			}
-			if (this.glUniformMatrix4fvDefaults.containsKey(name)) {
-				glUniformMatrix4fv(getUniform(name), false, matrix.get(buffer));
-			} else {
-				setDefaultUniform(name, matrix);
-			}
+			glUniformMatrix4fv(getUniform(name), false, matrix.get(buffer));
 		}
 	}
-	//TODO might delete this one? don't see why we can't just use 1i
-	// Method to set a boolean uniform
-	public void setUniform(String name, boolean value) {
-		if (!enabled) enable();
-		int location = getUniform(name);
-		if (location != -1) {
-			glUniform1i(getUniform(name), value ? 1 : 0); // Convert boolean to int (1 for true, 0 for false)
-		}
-	}
+
 	public void enable() {
 		glUseProgram(ID);
 		enabled = true;
@@ -135,74 +91,5 @@ public class Shader {
 	}
 	public int getID() {
 		return ID;
-	}
-
-	// Methods to set default values
-	public void setDefaultUniform(String name, int value) {
-		this.glUniform1iDefaults.put(name, value);
-		setUniform(name, value); // Also set it immediately
-	}
-
-	public void setDefaultUniform(String name, float value) {
-		this.glUniform1fDefaults.put(name, value);
-		setUniform(name, value);
-	}
-
-	public void setDefaultUniform(String name, float x, float y) {
-		this.glUniform2fDefaults.put(name, new Float[]{x, y});
-		setUniform(name, x, y);
-	}
-
-	public void setDefaultUniform(String name, Vector3f vector) {
-		this.glUniform3fDefaults.put(name, vector);
-		setUniform(name, vector);
-	}
-
-	public void setDefaultUniform(String name, Matrix4f matrix) {
-		this.glUniformMatrix4fvDefaults.put(name, matrix);
-		setUniform(name, matrix);
-	}
-
-	public Map<String, Integer> getGlUniform1iDefaults() {
-		return this.glUniform1iDefaults;
-	}
-
-	public Map<String, Float> getGlUniform1fDefaults() {
-		return this.glUniform1fDefaults;
-	}
-
-	public Map<String, Float[]> getGlUniform2fDefaults() {
-		return this.glUniform2fDefaults;
-	}
-
-	public Map<String, Vector3f> getGlUniform3fDefaults() {
-		return this.glUniform3fDefaults;
-	}
-
-	public Map<String, Matrix4f> getGlUniformMatrix4fvDefaults() {
-		return this.glUniformMatrix4fvDefaults;
-	}
-	// might be useless?
-	public void resetAllUniforms() {
-		for (Map.Entry<String, Integer> entry : glUniform1iDefaults.entrySet()) {
-			setUniform(entry.getKey(), entry.getValue());
-		}
-
-		for (Map.Entry<String, Float> entry : glUniform1fDefaults.entrySet()) {
-			setUniform(entry.getKey(), entry.getValue());
-		}
-
-		for (Map.Entry<String, Float[]> entry : glUniform2fDefaults.entrySet()) {
-			Float[] vec = entry.getValue();
-			setUniform(entry.getKey(), vec[0], vec[1]);
-		}
-
-		for (Map.Entry<String, Vector3f> entry : glUniform3fDefaults.entrySet()) {
-			setUniform(entry.getKey(), entry.getValue());
-		}
-
-		for (Map.Entry<String, Matrix4f> entry : glUniformMatrix4fvDefaults.entrySet()) {
-			setUniform(entry.getKey(), entry.getValue());
-		}
 	}
 }

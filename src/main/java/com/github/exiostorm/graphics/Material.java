@@ -21,7 +21,7 @@ public class Material {
     private Map<String, Matrix4f> uniformMatrix4FMap = null;
 
     /**
-     * Don't directly create Materials from here, use the MaterialManager.
+     * Don't directly create Materials from here, use the ShaderManager.
      * @param name
      */
     Material(String name) {
@@ -52,7 +52,6 @@ public class Material {
         uniformMatrix4FMap.put(uniform, value);
         return this;
     }
-    //TODO I'm not sure this is correct...
     public void applyUniforms(Shader shader) {
         if (uniform1IMap != null) {
             for (Map.Entry<String, Integer> entry : uniform1IMap.entrySet()) {

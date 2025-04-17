@@ -35,6 +35,7 @@ public class MainMenu implements State {
         //initShaders();
         //new 2025/04/05
         initInterfaces();
+        initializeMaterials();
         panelAtlas();
 
     }
@@ -89,7 +90,7 @@ public class MainMenu implements State {
 
     }
     private void initShaders() {
-        exampleShader = new Shader("src/main/resources/Shaders/test_vertex.glsl", "src/main/resources/Shaders/test_fragment.glsl");
+        exampleShader = new Shader("test", "src/main/resources/Shaders/test_vertex.glsl", "src/main/resources/Shaders/test_fragment.glsl");
         /*
         exampleShader = new Shader("src/main/resources/Shaders/example_vertex.glsl", "src/main/resources/Shaders/example_fragment.glsl");
         exampleShader.enable();
@@ -118,7 +119,8 @@ public class MainMenu implements State {
             if (!squareButton.isHovered()) {
                 squareButton.hovered = true;
                 JukeBox.play("menuoption", "effect", 1, true);
-                squareButton.setShaderModifier(shader -> shader.setUniform("brightness", (float)Math.random()));
+                //TODO [0] need to get materials setup~
+                squareButton.setShaderMaterial(ShaderManager.getMaterialFromMap("GUIHIGHLIGHT"));
                 System.out.println("Hovering over button: " + button);
             }
         });
@@ -127,7 +129,7 @@ public class MainMenu implements State {
                 squareButton.hovered = false;
                 JukeBox.play("menuoption", "effect", 1, true);
                 //TODO 2025-04-12 got distracted and blamed our button logic for a flaw with our rendering logic. ignore the every frame triggers until we get more render logic done~
-                squareButton.setShaderModifier(null);
+                squareButton.setShaderMaterial(null);
                 exampleShader.enable();
                 exampleShader.setUniform("brightness", 1.0f);
                 exampleShader.disable();
@@ -146,17 +148,19 @@ public class MainMenu implements State {
         patrickButton.setOnHoverAction(button -> {
             if (!patrickButton.isHovered()) {
                 JukeBox.play("menuoption", "effect", 1, true);
-                patrickButton.setShaderModifier(shader -> shader.setUniform("brightness", (float)Math.random()));
+                patrickButton.setShaderMaterial(ShaderManager.getMaterialFromMap("GUIHIGHLIGHT"));
                 System.out.println("Hovering over button: " + button);
             }
         });
         patrickButton.setUnHoverAction(button -> {
             if (patrickButton.isHovered()) {
                 JukeBox.play("menuoption", "effect", 1, true);
-                patrickButton.setShaderModifier(null);
+                patrickButton.setShaderMaterial(null);
+                /*
                 exampleShader.enable();
                 exampleShader.setUniform("brightness", 1.0f);
                 exampleShader.disable();
+                 */
                 System.out.println("Stopped hovering over button: " + button);
             }
         });
@@ -200,5 +204,9 @@ public class MainMenu implements State {
         }
         AtlasManager.saveAtlasToGPU(atlas1);
         renderer = new BatchRenderer(atlas1, exampleShader);
+    }
+    public void initializeMaterials() {
+        ShaderManager.setDefaultMaterial(ShaderManager.newMaterial("DEFAULT").setMap("brightness", 1.0f));
+        ShaderManager.newMaterial("GUIHIGHLIGHT").setMap("brightness", 0.5f);
     }
 }

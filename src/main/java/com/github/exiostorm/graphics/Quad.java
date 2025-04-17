@@ -7,16 +7,17 @@ class Quad {
     float x, y, width, height;
     float[] uv;
     Shader shader;
-    Consumer<Shader> shaderModifier;
-
-    public Quad(float x, float y, float width, float height, float[] uv, Shader shader, Consumer<Shader> shaderModifier) {
+    Material shaderMaterial;
+    //TODO [0] 2025-04-16
+    // need to change shaderModifier to Material
+    public Quad(float x, float y, float width, float height, float[] uv, Shader shader, Material material) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.uv = uv;
         this.shader = shader;
-        this.shaderModifier = shaderModifier;
+        this.shaderMaterial = material;
     }
     public void fillBuffer(FloatBuffer buffer, int screenWidth, int screenHeight) {
         float xNDC = (2.0f * x / screenWidth) - 1.0f;

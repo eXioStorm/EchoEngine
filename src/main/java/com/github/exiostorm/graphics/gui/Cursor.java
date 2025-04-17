@@ -1,5 +1,6 @@
 package com.github.exiostorm.graphics.gui;
 
+import com.github.exiostorm.graphics.Material;
 import com.github.exiostorm.graphics.Shader;
 import com.github.exiostorm.graphics.Texture;
 
@@ -10,7 +11,7 @@ import static com.github.exiostorm.main.EchoGame.gamePanel;
 
 public class Cursor {
     private List<Texture> textures;
-    Consumer<Shader> shaderModifier;
+    Material shaderMaterial;
     public int currentFrame;
     private float minFrameTime;
     private float frameTime;
@@ -52,9 +53,9 @@ public class Cursor {
     }
 
     public void render(float x, float y) {
-        gamePanel.getRenderer().draw(textures.get(currentFrame), x, y, gamePanel.getShader(), shaderModifier);
+        gamePanel.getRenderer().draw(textures.get(currentFrame), x, y, gamePanel.getShader(), shaderMaterial);
     }
-    public void setShaderModifier(Consumer<Shader> shaderModifier) {
-        this.shaderModifier = shaderModifier;
+    public void setShaderMaterial(Material material) {
+        this.shaderMaterial = material;
     }
 }

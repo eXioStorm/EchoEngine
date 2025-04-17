@@ -1,9 +1,6 @@
 package com.github.exiostorm.graphics.gui;
 
-import com.github.exiostorm.graphics.BatchRenderer;
-import com.github.exiostorm.graphics.Shader;
-import com.github.exiostorm.graphics.Texture;
-import com.github.exiostorm.graphics.TextureAtlas;
+import com.github.exiostorm.graphics.*;
 import com.github.exiostorm.main.EchoGame;
 import com.github.exiostorm.main.GamePanel;
 import lombok.Getter;
@@ -21,7 +18,7 @@ public class Button extends GUIElement {
     Shader shader = gamePanel.getShader();
     TextureAtlas atlas = gamePanel.getAtlas();
 
-    Consumer<Shader> shaderModifier;
+    Material shaderMaterial;
     private Texture texture;
     private static final float EPSILON = 1e-6f;
     //TODO [0] this is why it always says 0x0 when we click
@@ -57,7 +54,7 @@ public class Button extends GUIElement {
     public void render() {
         if (!visible) return;
         //TODO [0] need to re-implement logic for shader behavior so we can highlight our buttons / do other rendering modifications.
-        renderer.draw(texture, x, y, shader, shaderModifier);
+        renderer.draw(texture, x, y, shader, shaderMaterial);
     }
 
 
@@ -154,8 +151,8 @@ public class Button extends GUIElement {
     public boolean isClicked() {
         return this.clicked;
     }
-    public void setShaderModifier(Consumer<Shader> shaderModifier) {
-        this.shaderModifier = shaderModifier;
+    public void setShaderMaterial(Material material) {
+        this.shaderMaterial = material;
     }
 
     public void setShader(Shader shader) {

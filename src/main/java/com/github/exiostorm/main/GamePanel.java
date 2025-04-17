@@ -122,7 +122,7 @@ public class GamePanel {
         // Print OpenGL version for debugging purposes
         System.out.println("OpenGL: " + glGetString(GL_VERSION));
         //TODO new code 2025/04/05
-        shader = new Shader(shaderVertexPath, shaderFragmentPath);
+        shader = new Shader("default", shaderVertexPath, shaderFragmentPath);
         atlas = AtlasManager.atlas(atlasPath);
         renderer = new BatchRenderer(atlas, shader);
 
