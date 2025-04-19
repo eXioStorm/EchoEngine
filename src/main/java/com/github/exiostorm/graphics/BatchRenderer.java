@@ -28,12 +28,13 @@ public class BatchRenderer {
     private TextureAtlas atlas;
     private Shader defaultShader;
     private List<Quad> quads = new ArrayList<>();
+    // Counter for automatic ordering
+    private int currentOrderIndex = 0;
 
     // Group quads first by shader, then by material
     private Map<Shader, Map<Material, List<Quad>>> renderGroups = new HashMap<>();
 
     public BatchRenderer(TextureAtlas atlas, Shader defaultShader) {
-        //TODO for this.atlas = atlas we're creating a reference to the supplied atlas, so no worries about external modifications not being reflected.
         this.atlas = atlas;
         this.defaultShader = defaultShader;
         setupBuffers();
@@ -62,8 +63,6 @@ public class BatchRenderer {
         }
         //System.out.println("Index buffer content: " + Arrays.toString(indices));
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
-
-        //TODO maybe something is wrong here with our VERTEX_SIZE setup?
         glVertexAttribPointer(0, 3, GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 0); // Position
         glVertexAttribPointer(1, 2, GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 3 * Float.BYTES); // UV
         glVertexAttribPointer(2, 4, GL_FLOAT, false, VERTEX_SIZE * Float.BYTES, 5 * Float.BYTES); // Color
@@ -77,28 +76,37 @@ public class BatchRenderer {
     }
     public void begin() {
         renderGroups.clear();
-        //quads.clear();
-
+        quads.clear();
+        currentOrderIndex = 0;
     }
 
-    public void draw(Texture texture, float x, float y, Shader shader, Material material) {
+    public void draw(Texture texture, float x, float y, float z, Shader shader, Material material,
+                     float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY) {
         // Use defaults if not provided
         Shader shaderToUse = (shader != null) ? shader : defaultShader;
         Material materialToUse = (material != null) ? material : ShaderManager.getDefaultMaterial();
 
+        // If no z provided, use automatic incrementing value
+        float orderToUse = (z != -1.0f) ? z : currentOrderIndex++;
+
         float[] uv = AtlasManager.getUV(atlas, texture);
-        Quad quad = new Quad(x, y, texture.getWidth(), texture.getHeight(), uv, shaderToUse, materialToUse);
+        Quad quad = new Quad(x, y, z, texture.getWidth(), texture.getHeight(), uv, shaderToUse, materialToUse);
+        quad.z = orderToUse;
 
-        // Get or create the map for this shader
-        Map<Material, List<Quad>> materialMap = renderGroups.computeIfAbsent(
-                shaderToUse, k -> new HashMap<>());
+        // Apply transformations
+        quad.rotation = rotation;
+        quad.scaleX = scaleX;
+        quad.scaleY = scaleY;
+        quad.flipX = flipX;
+        quad.flipY = flipY;
 
-        // Get or create the list for this material
-        List<Quad> quadList = materialMap.computeIfAbsent(
-                materialToUse, k -> new ArrayList<>());
-
-        // Add the quad to the list
-        quadList.add(quad);
+        quads.add(quad);
+    }
+    //TODO [0] might need separate logic for 2d and 3d because of z-ordering?
+    public void draw(Texture texture, float x, float y, float z, Shader shader, Material material) {
+        //TODO don't know why, but the value to completely flip upside down is 9.424f when rotating
+        // value actually 3.1399548 for flip, and 6.2827272 for full 360.
+        draw(texture, x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
     }
     /*
     //TODO going to have issues here with having multiple texture atlases...
@@ -170,6 +178,8 @@ public class BatchRenderer {
         glDisable(GL_BLEND);
     }*/
     private void renderBatch() {
+        if (quads.isEmpty()) return;
+
         // Standard GL setup
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -180,41 +190,33 @@ public class BatchRenderer {
         glBindVertexArray(vaoID);
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
 
-        // For each shader...
-        for (Map.Entry<Shader, Map<Material, List<Quad>>> shaderEntry : renderGroups.entrySet()) {
-            Shader shader = shaderEntry.getKey();
-            Map<Material, List<Quad>> materialMap = shaderEntry.getValue();
+        // Sort ALL quads by order index first
+        quads.sort(Comparator.comparing(q -> q.z));
 
-            shader.enable();
-            shader.setUniform("textureSampler", 0);
+        Shader currentShader = null;
+        Material currentMaterial = null;
+        List<Quad> currentBatch = new ArrayList<>();
 
-            // Check shader status for debugging
-            checkShaderStatus(shader);
+        // Process quads in order
+        for (Quad quad : quads) {
+            // If shader or material changes, we need to flush the current batch
+            if ((currentShader != null && currentShader != quad.shader) ||
+                    (currentMaterial != null && currentMaterial != quad.shaderMaterial)) {
 
-            // For each material with this shader...
-            for (Map.Entry<Material, List<Quad>> materialEntry : materialMap.entrySet()) {
-                Material material = materialEntry.getKey();
-                List<Quad> quadList = materialEntry.getValue();
-
-                if (quadList.isEmpty()) continue;
-
-                // Apply material uniforms
-                material.applyUniforms(shader);
-
-                // Fill buffer
-                FloatBuffer data = BufferUtils.createFloatBuffer(quadList.size() * 4 * VERTEX_SIZE);
-                for (Quad quad : quadList) {
-                    quad.fillBuffer(data, gamePanel.WIDTH, gamePanel.HEIGHT);
-                }
-                data.flip();
-
-                // Upload and draw
-                glBufferSubData(GL_ARRAY_BUFFER, 0, data);
-                glDrawElements(GL_TRIANGLES, quadList.size() * 6, GL_UNSIGNED_INT, 0);
+                // Render current batch
+                renderQuadBatch(currentShader, currentMaterial, currentBatch);
+                currentBatch.clear();
             }
 
-            // Disable shader when done with all materials using it
-            shader.disable();
+            // Update current shader/material
+            currentShader = quad.shader;
+            currentMaterial = quad.shaderMaterial;
+            currentBatch.add(quad);
+        }
+
+        // Render final batch if exists
+        if (!currentBatch.isEmpty()) {
+            renderQuadBatch(currentShader, currentMaterial, currentBatch);
         }
 
         // Cleanup
@@ -232,4 +234,22 @@ public class BatchRenderer {
         }
     }
 
+    private void renderQuadBatch(Shader shader, Material material, List<Quad> quadBatch) {
+        shader.enable();
+        shader.setUniform("textureSampler", 0);
+        material.applyUniforms(shader);
+
+        // Fill buffer
+        FloatBuffer data = BufferUtils.createFloatBuffer(quadBatch.size() * 4 * VERTEX_SIZE);
+        for (Quad quad : quadBatch) {
+            quad.fillBuffer(data, gamePanel.WIDTH, gamePanel.HEIGHT);
+        }
+        data.flip();
+
+        // Upload and draw
+        glBufferSubData(GL_ARRAY_BUFFER, 0, data);
+        glDrawElements(GL_TRIANGLES, quadBatch.size() * 6, GL_UNSIGNED_INT, 0);
+
+        shader.disable();
+    }
 }

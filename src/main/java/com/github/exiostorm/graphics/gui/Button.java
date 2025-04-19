@@ -20,9 +20,6 @@ public class Button extends GUIElement {
 
     Material shaderMaterial;
     private Texture texture;
-    private static final float EPSILON = 1e-6f;
-    //TODO [0] this is why it always says 0x0 when we click
-    private double[] mousePosition = {0,0};
     public boolean hovered = false;
     public boolean clicked = false;
     // Set hover action
@@ -35,14 +32,7 @@ public class Button extends GUIElement {
 
     public Button(float x, float y, Texture texture) {
         super(x, y);
-        //TODO change code here? "new Texture(path)", will need texture to store original file path?
-        //this.texture = new Texture(texture.getPath());
         this.texture = texture;
-        //TODO these are just temporary while I try to figure out where I'm at
-        //List<Texture> textures = List.of(this.texture);
-        //atlas = new TextureAtlas();
-        //TODO [0] I think... instead of creating a new renderer and atlas here we should have something setup to reuse / pass through our existing renderer and atlas. we might need a GUI handler? idk
-        //renderer = new BatchRenderer(atlas, shader);
     }
 
     @Override
@@ -53,11 +43,11 @@ public class Button extends GUIElement {
     @Override
     public void render() {
         if (!visible) return;
-        //TODO [0] need to re-implement logic for shader behavior so we can highlight our buttons / do other rendering modifications.
-        renderer.draw(texture, x, y, shader, shaderMaterial);
+        renderer.draw(texture, x, y, 1, shader, shaderMaterial);
     }
 
-
+    //TODO [0] our transformation logic will conflict with our button logic since nothing else gets transformed besides what's rendered.
+    // will need to change logic to account for transformations.
     @Override
     public boolean isMouseOver(float mouseX, float mouseY) {
         // Adjust mouse coordinates relative to the button's position
@@ -80,39 +70,6 @@ public class Button extends GUIElement {
         // Consider the pixel under the mouse as valid if alpha > 0 (non-transparent)
         return !texture.getTransparencyMap(true)[pixelIndex];
     }
-
-    private boolean isPointInPolygon(float x, float y, List<Vector2f> vertices) {
-        int intersectCount = 0;
-        for (int i = 0; i < vertices.size(); i++) {
-            Vector2f v1 = vertices.get(i);
-            Vector2f v2 = vertices.get((i + 1) % vertices.size());
-            if (rayIntersectsSegment(x, y, v1, v2)) {
-                intersectCount++;
-            }
-        }
-        return intersectCount % 2 == 1; // Odd = inside, even = outside
-    }
-    @Deprecated
-    private boolean rayIntersectsSegment(float x, float y, Vector2f v1, Vector2f v2) {
-        if (v1.y > v2.y) {
-            Vector2f temp = v1;
-            v1 = v2;
-            v2 = temp;
-        }
-        if (Math.abs(y - v1.y) < EPSILON || Math.abs(y - v2.y) < EPSILON) {
-            y += EPSILON; // Avoid edge cases
-        }
-
-        if (y < v1.y || y > v2.y || x > Math.max(v1.x, v2.x)) return false;
-
-        if (x < Math.min(v1.x, v2.x)) return true;
-
-        float slope = (v2.x - v1.x) / (v2.y - v1.y);
-        float intersectionX = v1.x + (y - v1.y) * slope;
-        return x < intersectionX;
-    }
-
-
 
     // Trigger hover action
     public void triggerHoverAction() {
@@ -138,10 +95,6 @@ public class Button extends GUIElement {
     }
     public Texture getTexture() {
         return texture;
-    }
-
-    public double[] getMousePosition() {
-        return mousePosition;
     }
 
     public boolean isHovered() {

@@ -4,50 +4,108 @@ import java.nio.FloatBuffer;
 import java.util.function.Consumer;
 
 class Quad {
-    float x, y, width, height;
+    float x, y, z, width, height;
     float[] uv;
     Shader shader;
     Material shaderMaterial;
-    //TODO [0] 2025-04-16
-    // need to change shaderModifier to Material
-    public Quad(float x, float y, float width, float height, float[] uv, Shader shader, Material material) {
+
+    public float rotation = 0.0f;    // Rotation in radians
+    public float scaleX = 1.0f;      // Scale factor for X
+    public float scaleY = 1.0f;      // Scale factor for Y
+    public boolean flipX = false;    // Horizontal flip
+    public boolean flipY = false;    // Vertical flip
+
+    public Quad(float x, float y, float z, float width, float height, float[] uv, Shader shader, Material material) {
         this.x = x;
         this.y = y;
+        this.z = z;
         this.width = width;
         this.height = height;
         this.uv = uv;
         this.shader = shader;
         this.shaderMaterial = material;
+        // Default transformations
+        this.rotation = 0.0f;
+        this.scaleX = 1.0f;
+        this.scaleY = 1.0f;
+        this.flipX = false;
+        this.flipY = false;
     }
+    // Update fillBuffer to apply transformations
     public void fillBuffer(FloatBuffer buffer, int screenWidth, int screenHeight) {
-        float xNDC = (2.0f * x / screenWidth) - 1.0f;
-        float yNDC = 1.0f - (2.0f * y / screenHeight);
-        float widthNDC = (2.0f * width / screenWidth);
-        float heightNDC = (2.0f * height / screenHeight);
+        // Calculate center for rotation
+        float centerX = x + width / 2;
+        float centerY = y + height / 2;
 
-        float[] vertices = {
-                // Vertex 1 (Top-left)
-                xNDC, yNDC, 0.0f,
-                uv[0], uv[1],
-                1.0f, 1.0f, 1.0f, 1.0f,
+        // Apply scale (potentially from center)
+        float halfWidth = (width * scaleX) / 2;
+        float halfHeight = (height * scaleY) / 2;
 
-                // Vertex 2 (Top-right)
-                xNDC + widthNDC, yNDC, 0.0f,
-                uv[2], uv[1],
-                1.0f, 1.0f, 1.0f, 1.0f,
+        // Calculate corner positions relative to center
+        float[] xCorners = {-halfWidth, halfWidth, halfWidth, -halfWidth};
+        float[] yCorners = {-halfHeight, -halfHeight, halfHeight, halfHeight};
 
-                // Vertex 3 (Bottom-right)
-                xNDC + widthNDC, yNDC - heightNDC, 0.0f,
-                uv[2], uv[3],
-                1.0f, 1.0f, 1.0f, 1.0f,
+        // Apply flipping if needed
+        if (flipX) {
+            xCorners[0] = halfWidth;
+            xCorners[1] = -halfWidth;
+            xCorners[2] = -halfWidth;
+            xCorners[3] = halfWidth;
+        }
 
-                // Vertex 4 (Bottom-left)
-                xNDC, yNDC - heightNDC, 0.0f,
-                uv[0], uv[3],
-                1.0f, 1.0f, 1.0f, 1.0f,
-        };
+        if (flipY) {
+            yCorners[0] = halfHeight;
+            yCorners[1] = halfHeight;
+            yCorners[2] = -halfHeight;
+            yCorners[3] = -halfHeight;
+        }
 
-        buffer.put(vertices);
+        // Apply rotation
+        if (rotation != 0) {
+            float cos = (float) Math.cos(rotation);
+            float sin = (float) Math.sin(rotation);
+
+            for (int i = 0; i < 4; i++) {
+                float rotatedX = xCorners[i] * cos - yCorners[i] * sin;
+                float rotatedY = xCorners[i] * sin + yCorners[i] * cos;
+                xCorners[i] = rotatedX;
+                yCorners[i] = rotatedY;
+            }
+        }
+
+        // Final positions (translated back to world space)
+        float[] finalX = new float[4];
+        float[] finalY = new float[4];
+
+        for (int i = 0; i < 4; i++) {
+            finalX[i] = centerX + xCorners[i];
+            finalY[i] = centerY + yCorners[i];
+
+            // Convert to normalized device coordinates
+            finalX[i] = (finalX[i] / screenWidth) * 2 - 1;
+            finalY[i] = 1 - (finalY[i] / screenHeight) * 2;
+        }
+
+        // Add vertices to buffer
+        // Bottom-left
+        buffer.put(finalX[0]).put(finalY[0]).put(0.0f);  // Position
+        buffer.put(uv[0]).put(uv[1]);                    // Texture coords
+        buffer.put(1.0f).put(1.0f).put(1.0f).put(1.0f);  // Color (RGBA)
+
+        // Bottom-right
+        buffer.put(finalX[1]).put(finalY[1]).put(0.0f);
+        buffer.put(uv[2]).put(uv[1]);
+        buffer.put(1.0f).put(1.0f).put(1.0f).put(1.0f);
+
+        // Top-right
+        buffer.put(finalX[2]).put(finalY[2]).put(0.0f);
+        buffer.put(uv[2]).put(uv[3]);
+        buffer.put(1.0f).put(1.0f).put(1.0f).put(1.0f);
+
+        // Top-left
+        buffer.put(finalX[3]).put(finalY[3]).put(0.0f);
+        buffer.put(uv[0]).put(uv[3]);
+        buffer.put(1.0f).put(1.0f).put(1.0f).put(1.0f);
     }
 
 

@@ -260,5 +260,7 @@ public class TextureManager {
             System.err.println("Error saving transparency map to JSON: " + e.getMessage());
         }
     }
-
+    public static Map<String, Texture> getTextures() {
+        return Textures;
+    }
 }

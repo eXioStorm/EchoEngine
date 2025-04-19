@@ -69,7 +69,7 @@ public class MainMenu implements State {
 
         //renderer.begin();
 
-        renderer.draw(backgroundTexture, 0, 0, exampleShader, null);
+        renderer.draw(backgroundTexture, 0, 0, 0, exampleShader, null);
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
         //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
 
@@ -167,6 +167,7 @@ public class MainMenu implements State {
         patrickButton.setOnClickAction(button -> {
             JukeBox.play("menuselect", "effect", 1, false);
             System.out.println("Clicked button : " + button +", at : "+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0]+"x"+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
+
         });
         guiElements.add(patrickButton);
 
@@ -207,6 +208,6 @@ public class MainMenu implements State {
     }
     public void initializeMaterials() {
         ShaderManager.setDefaultMaterial(ShaderManager.newMaterial("DEFAULT").setMap("brightness", 1.0f));
-        ShaderManager.newMaterial("GUIHIGHLIGHT").setMap("brightness", 0.5f);
+        ShaderManager.newMaterial("GUIHIGHLIGHT").setMap("brightness", 0.9f);
     }
 }

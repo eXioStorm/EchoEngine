@@ -3,6 +3,7 @@ package com.github.exiostorm.graphics.gui;
 import com.github.exiostorm.graphics.Material;
 import com.github.exiostorm.graphics.Shader;
 import com.github.exiostorm.graphics.Texture;
+import com.github.exiostorm.graphics.TextureManager;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -10,7 +11,7 @@ import java.util.function.Consumer;
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 
 public class Cursor {
-    private List<Texture> textures;
+    private List<String> textures;
     Material shaderMaterial;
     public int currentFrame;
     private float minFrameTime;
@@ -18,7 +19,7 @@ public class Cursor {
     private float accumulator;
     private boolean isBehindSchedule;
 
-    public Cursor(List<Texture> textures, float frameTime) {
+    public Cursor(List<String> textures, float frameTime) {
         this.textures = textures;
         this.currentFrame = 0;
         this.minFrameTime = 0.002f;
@@ -53,7 +54,7 @@ public class Cursor {
     }
 
     public void render(float x, float y) {
-        gamePanel.getRenderer().draw(textures.get(currentFrame), x, y, 2, gamePanel.getShader(), shaderMaterial);
+        gamePanel.getRenderer().draw(TextureManager.getTextures().get(textures.get(currentFrame)), x, y, gamePanel.getShader(), shaderMaterial);
     }
     public void setShaderMaterial(Material material) {
         this.shaderMaterial = material;

@@ -14,6 +14,7 @@ import java.util.Map;
 
 public class Material {
     private String name;
+    //TODO [0] change logic to immediately initialize these, then we check "isEmpty()" instead of != null. should be faster, and easier to maintain, and follows more general practices.
     private Map<String, Integer> uniform1IMap = null;
     private Map<String, Float> uniform1FMap = null;
     private Map<String, Float[]> uniform2FMap = null;
@@ -52,6 +53,7 @@ public class Material {
         uniformMatrix4FMap.put(uniform, value);
         return this;
     }
+    //TODO [0] figure out a way to avoid checking if maps are populated every frame...
     public void applyUniforms(Shader shader) {
         if (uniform1IMap != null) {
             for (Map.Entry<String, Integer> entry : uniform1IMap.entrySet()) {
@@ -65,7 +67,8 @@ public class Material {
         }
         if (uniform2FMap != null) {
             for (Map.Entry<String, Float[]> entry : uniform2FMap.entrySet()) {
-                shader.setUniform(entry.getKey(), entry.getValue()[0], entry.getValue()[1]);
+                Float[] i = entry.getValue();
+                shader.setUniform(entry.getKey(), i[0], i[1]);
             }
         }
         if (uniform3FMap != null) {
