@@ -124,7 +124,7 @@ public class GamePanel {
         //TODO new code 2025/04/05
         shader = new Shader("default", shaderVertexPath, shaderFragmentPath);
         atlas = AtlasManager.atlas(atlasPath);
-        renderer = new BatchRenderer(atlas, shader);
+        renderer = new BatchRenderer();
 
         // Load game states from assets directory (compiled or uncompiled)
         stateManager.loadStates(stateDirectory, gameStates, DynamicFactory.fromClass(State.class));

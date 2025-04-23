@@ -11,6 +11,7 @@ import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class Material {
     private String name;
@@ -20,6 +21,7 @@ public class Material {
     private Map<String, Float[]> uniform2FMap = null;
     private Map<String, Vector3f> uniform3FMap = null;
     private Map<String, Matrix4f> uniformMatrix4FMap = null;
+    private Map<String, Supplier<?>> supplierMap = null;
 
     /**
      * Don't directly create Materials from here, use the ShaderManager.
@@ -53,6 +55,11 @@ public class Material {
         uniformMatrix4FMap.put(uniform, value);
         return this;
     }
+    public Material setMap(String uniform, Supplier<?> value) {
+        if (supplierMap == null) supplierMap = new HashMap<>();
+        supplierMap.put(uniform, value);
+        return this;
+    }
     //TODO [0] figure out a way to avoid checking if maps are populated every frame...
     public void applyUniforms(Shader shader) {
         if (uniform1IMap != null) {
@@ -79,6 +86,22 @@ public class Material {
         if (uniformMatrix4FMap != null) {
             for (Map.Entry<String, Matrix4f> entry : uniformMatrix4FMap.entrySet()) {
                 shader.setUniform(entry.getKey(), entry.getValue());
+            }
+        }
+        //TODO [0] honestly, probably best practice NOT to use this...
+        // good thought exercise though.
+        if (supplierMap != null) {
+            for (Map.Entry<String, Supplier<?>> entry : supplierMap.entrySet()) {
+                Object value = entry.getValue().get();
+                if (value instanceof Integer) {
+                    shader.setUniform(entry.getKey(), (int) entry.getValue().get());
+                } else if (value instanceof Float) {
+                    shader.setUniform(entry.getKey(), (float) entry.getValue().get());
+                } else if (value instanceof Vector3f) {
+                    shader.setUniform(entry.getKey(), (Vector3f) entry.getValue().get());
+                } else if (value instanceof Matrix4f) {
+                    shader.setUniform(entry.getKey(), (Matrix4f) entry.getValue().get());
+                }
             }
         }
     }

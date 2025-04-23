@@ -13,13 +13,14 @@ import java.util.function.Consumer;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 
+//TODO [0] need logic for scale so our method "isMouseOver()" can scale up our transparency map as well.
 public class Button extends GUIElement {
-    BatchRenderer renderer = gamePanel.getRenderer();
     Shader shader = gamePanel.getShader();
     TextureAtlas atlas = gamePanel.getAtlas();
 
     Material shaderMaterial;
     private Texture texture;
+    private long lastPressed = 0;
     public boolean hovered = false;
     public boolean clicked = false;
     // Set hover action
@@ -43,7 +44,8 @@ public class Button extends GUIElement {
     @Override
     public void render() {
         if (!visible) return;
-        renderer.draw(texture, x, y, 1, shader, shaderMaterial);
+        //TODO do something with the z coordinate for layering in order of objects last updated. e.g. when moving a button on top of another button.
+        gamePanel.getRenderer().draw(texture, atlas, x, y, 0.000000000000000000000000000000000000000000001f, shader, shaderMaterial);
     }
 
     //TODO [0] our transformation logic will conflict with our button logic since nothing else gets transformed besides what's rendered.
@@ -86,6 +88,7 @@ public class Button extends GUIElement {
         this.hovered = false;
     }
 
+    //TODO [1] figure out something to detect holding button down
     // Trigger click action
     public void triggerClickAction() {
         if (onClickAction != null) {
@@ -126,5 +129,12 @@ public class Button extends GUIElement {
 
     public void setOnDragAction(Consumer<Button> onDragAction) {
         this.onDragAction = onDragAction;
+    }
+    public long getLastPressed() {
+        return lastPressed;
+    }
+
+    public void setLastPressed(long l) {
+        this.lastPressed = l;
     }
 }

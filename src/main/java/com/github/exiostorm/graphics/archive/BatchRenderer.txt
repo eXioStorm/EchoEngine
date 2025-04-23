@@ -22,17 +22,18 @@ public class BatchRenderer {
     private IntBuffer indexBuffer;
     private int vaoID, vboID, eboID;
 
-    //private TextureAtlas atlas;
+    private TextureAtlas atlas;
     private Shader defaultShader;
     private List<Quad> quads = new ArrayList<>();
     // Counter for automatic ordering
     private int zPositionNow = 0;
 
-    private FrameBuffer fboUsedPreviously = null;
-    private boolean fboUsed = false;
+    // Group quads first by shader, then by material
+    private Map<Shader, Map<Material, List<Quad>>> renderGroups = new HashMap<>();
 
-    public BatchRenderer() {
-        //this.defaultShader = defaultShader;
+    public BatchRenderer(TextureAtlas atlas, Shader defaultShader) {
+        this.atlas = atlas;
+        this.defaultShader = defaultShader;
         setupBuffers();
     }
     private void setupBuffers() {
@@ -70,19 +71,14 @@ public class BatchRenderer {
         //glBindBuffer(GL_ARRAY_BUFFER, 0);  // Unbind VBO (optional cleanup)
         glBindVertexArray(0);
     }
-    public void begin(FrameBuffer fbo) {
-        if (fbo != null) {
-            fboUsed = true;
-            fboUsedPreviously = fbo;
-            fboUsedPreviously.bind();
-        }
-        begin();
-    }
     public void begin() {
+        renderGroups.clear();
         quads.clear();
         zPositionNow = 0;
     }
-    public void draw(int textureID, int width, int height, float[] uv, float x, float y, float z, Shader shader, Material material,
+    //TODO [0] abstract method further so we aren't forced to use the Texture class.
+    // example : right now we're having to create a new Texture object for our FrameBuffer when we should just be able to use our frameBuffer object to get width and height.
+    public void draw(Texture texture, float x, float y, float z, Shader shader, Material material,
                      float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY) {
         // Use defaults if not provided
         Shader shaderToUse = (shader != null) ? shader : defaultShader;
@@ -91,8 +87,8 @@ public class BatchRenderer {
         // If no z provided, use automatic incrementing value
         float zPosition = (z != -1.0f) ? z : zPositionNow++;
 
-        //float[] uv = AtlasManager.getUV(atlas, texture);
-        Quad quad = new Quad(x, y, z, width, height, uv, shaderToUse, materialToUse, textureID);
+        float[] uv = AtlasManager.getUV(atlas, texture);
+        Quad quad = new Quad(x, y, z, texture.getWidth(), texture.getHeight(), uv, shaderToUse, materialToUse);
         //TODO huh? removing the next line seems to have no effect? OH we had logic for if z was null... lame
         quad.z = zPosition;
 
@@ -105,26 +101,81 @@ public class BatchRenderer {
 
         quads.add(quad);
     }
-    public void draw(FrameBuffer fbo, float x, float y, float z, Shader shader, Material material) {
-        float[] uv = {0,0,1,1};
-        draw(fbo.getTextureID(), fbo.getWidth(), fbo.getHeight(), uv, x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
-    }
-    public void draw(Texture texture, TextureAtlas atlas, float x, float y, float z, Shader shader, Material material) {
+    //TODO [0] might need separate logic for 2d and 3d because of z-ordering?
+    public void draw(Texture texture, float x, float y, float z, Shader shader, Material material) {
         //TODO don't know why, but the value to completely flip upside down is 9.424f when rotating
         // value actually 3.1399548 for flip, and 6.2827272 for full 360.
-        draw(atlas.getAtlasID(), texture.getWidth(), texture.getHeight(), AtlasManager.getUV(atlas, texture), x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
+        draw(texture, x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
     }
-    public void draw(Texture texture, float x, float y, float z, Shader shader, Material material) {
-        draw(gamePanel.getAtlas().getAtlasID(), texture.getWidth(), texture.getHeight(), AtlasManager.getUV(gamePanel.getAtlas(), texture), x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
-    }
+    /*
+    //TODO going to have issues here with having multiple texture atlases...
+    // we could fix this by adding quads to our atlas class instead.
+    public void draw(Texture texture, float x, float y, Shader shader, Material material) {
+        //TODO [0] need to figure out new atlas setup how to get converted coordinates for this part here
+        float[] uv = AtlasManager.getUV(atlas, texture);
+        quads.add(new Quad(x, y, texture.getWidth(), texture.getHeight(), uv, shader, material));
+    }*/
 
     public void end() {
-        if (fboUsed) {
-            fboUsed = false;
-            fboUsedPreviously.unbind();
-        }
         renderBatch();
     }
+    /*
+    private void renderBatch() {
+        // Set up OpenGL states
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+        //TODO possible option here for multiple atlases, GL_TEXTURE# has a range from 0~31 which is more than plenty to have different atlases for things of different size.
+        // e.g. backgrounds are really large and would give us massive atlases if we tried to keep them stored, and would cause lag if we constantly load / unload them along our other assets.
+        glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
+
+        atlas.bind(); // Bind the texture atlas
+
+        glBindVertexArray(vaoID); // Bind the VAO
+        glBindBuffer(GL_ARRAY_BUFFER, vboID); // Bind the VBO
+
+        defaultShader.enable(); // Enable the shader
+        defaultShader.setUniform("textureSampler", 0); // Set the texture sampler uniform
+
+        // Check for shader link errors (optional but useful for debugging)
+        int[] linkStatus = new int[1];
+        glGetProgramiv(defaultShader.getID(), GL_LINK_STATUS, linkStatus);
+        if (linkStatus[0] == GL_FALSE) {
+            String log = glGetProgramInfoLog(defaultShader.getID());
+            System.err.println("Shader Program Link Error: " + log);
+        }
+
+        // Populate vertex buffer with quad data
+        FloatBuffer data = BufferUtils.createFloatBuffer(quads.size() * 4 * VERTEX_SIZE);
+        for (Quad quad : quads) {
+            //TODO [0] 2025-04-08
+            // We need to batch uniform changes together and include glDrawElements within that batch.
+            // research confirmed we should be okay having multiple draw calls.
+            // (future idea... maybe we could use a buffer atlas to save recent shader changes and use them in place of changing shader uniforms? though sounds like far too much extra effort...)
+            // 2025-04-09 - I think we're going to need a shader manager that saves a List/Map of "Consumer<Shader>"?
+            //
+            if (quad.shaderMaterial != null) {
+                quad.shaderMaterial.applyUniforms(defaultShader);
+            } else {
+                ShaderManager.getDefaultMaterial().applyUniforms(defaultShader);
+            }
+            quad.fillBuffer(data, gamePanel.WIDTH, gamePanel.HEIGHT);
+        }
+        data.flip(); // Prepare the buffer for reading
+
+        // Upload vertex data to the GPU
+        glBufferSubData(GL_ARRAY_BUFFER, 0, data);
+
+        // Render the quads
+        glDrawElements(GL_TRIANGLES, quads.size() * 6, GL_UNSIGNED_INT, 0);
+
+        // Cleanup
+        atlas.unbind();
+        defaultShader.disable();
+        glBindVertexArray(0);
+        glDisable(GL_BLEND);
+    }*/
     private void renderBatch() {
         if (quads.isEmpty()) return;
 
@@ -133,12 +184,8 @@ public class BatchRenderer {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
-        //TODO possible option here for multiple atlases, GL_TEXTURE# has a range from 0~31 which is more than plenty to have different atlases for things of different size.
         glActiveTexture(GL_TEXTURE0);
-        //TODO [0] because our FBO needs to also use the texture slot and be bound with it, we need to move this part of our logic away.
-        // we'll also need to make significant changes to support having multiple atlases for like text rendering & reduced texture sizes...
-        // this might get complicated...
-        //gamePanel.getAtlas().bind();
+        atlas.bind();
         glBindVertexArray(vaoID);
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
 
@@ -147,36 +194,32 @@ public class BatchRenderer {
 
         Shader currentShader = null;
         Material currentMaterial = null;
-        int currentTextureID = -1;
         List<Quad> currentBatch = new ArrayList<>();
 
         // Process quads in order
         for (Quad quad : quads) {
             // If shader or material changes, we need to flush the current batch
-            boolean needFlush =
-                    (currentShader != null && currentShader != quad.shader) ||
-                            (currentTextureID != -1 && currentTextureID != quad.textureID) ||
-                            (currentMaterial != null && currentMaterial != quad.shaderMaterial);
-            if (needFlush && !currentBatch.isEmpty()) {
+            if ((currentShader != null && currentShader != quad.shader) ||
+                    (currentMaterial != null && currentMaterial != quad.shaderMaterial)) {
+
                 // Render current batch
-                renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentBatch);
+                renderQuadBatch(currentShader, currentMaterial, currentBatch);
                 currentBatch.clear();
             }
 
             // Update current shader/material
             currentShader = quad.shader;
             currentMaterial = quad.shaderMaterial;
-            currentTextureID = quad.textureID;
             currentBatch.add(quad);
         }
 
         // Render final batch if exists
         if (!currentBatch.isEmpty()) {
-            renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentBatch);
+            renderQuadBatch(currentShader, currentMaterial, currentBatch);
         }
 
         // Cleanup
-        //gamePanel.getAtlas().unbind();
+        atlas.unbind();
         glBindVertexArray(0);
         glDisable(GL_BLEND);
     }
@@ -190,24 +233,22 @@ public class BatchRenderer {
         }
     }
 
-    private void renderQuadBatch(Shader shader, Material material, int textureID, List<Quad> quadBatch) {
+    private void renderQuadBatch(Shader shader, Material material, List<Quad> quadBatch) {
         shader.enable();
         shader.setUniform("textureSampler", 0);
         material.applyUniforms(shader);
 
-        // Bind the texture
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-
+        // Fill buffer
         FloatBuffer data = BufferUtils.createFloatBuffer(quadBatch.size() * 4 * VERTEX_SIZE);
         for (Quad quad : quadBatch) {
             quad.fillBuffer(data, gamePanel.WIDTH, gamePanel.HEIGHT);
         }
         data.flip();
+
+        // Upload and draw
         glBufferSubData(GL_ARRAY_BUFFER, 0, data);
         glDrawElements(GL_TRIANGLES, quadBatch.size() * 6, GL_UNSIGNED_INT, 0);
 
-        glBindTexture(GL_TEXTURE_2D, 0);
         shader.disable();
     }
 }

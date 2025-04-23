@@ -8,6 +8,7 @@ class Quad {
     float[] uv;
     Shader shader;
     Material shaderMaterial;
+    int textureID;
 
     public float rotation = 0.0f;    // Rotation in radians
     public float scaleX = 1.0f;      // Scale factor for X
@@ -15,7 +16,7 @@ class Quad {
     public boolean flipX = false;    // Horizontal flip
     public boolean flipY = false;    // Vertical flip
 
-    public Quad(float x, float y, float z, float width, float height, float[] uv, Shader shader, Material material) {
+    public Quad(float x, float y, float z, float width, float height, float[] uv, Shader shader, Material material, int textureID) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -24,6 +25,7 @@ class Quad {
         this.uv = uv;
         this.shader = shader;
         this.shaderMaterial = material;
+        this.textureID = textureID;
         // Default transformations
         this.rotation = 0.0f;
         this.scaleX = 1.0f;
@@ -86,24 +88,25 @@ class Quad {
             finalY[i] = 1 - (finalY[i] / screenHeight) * 2;
         }
 
+        //TODO changed 0 to z, logic might have broken some things?
         // Add vertices to buffer
         // Bottom-left
-        buffer.put(finalX[0]).put(finalY[0]).put(0.0f);  // Position
-        buffer.put(uv[0]).put(uv[1]);                    // Texture coords
-        buffer.put(1.0f).put(1.0f).put(1.0f).put(1.0f);  // Color (RGBA)
-
+        buffer.put(finalX[0]).put(finalY[0]).put(z);  // Use the object's z
+        buffer.put(uv[0]).put(uv[1]);
+        buffer.put(1.0f).put(1.0f).put(1.0f).put(1.0f);
+        // RGBA ^
         // Bottom-right
-        buffer.put(finalX[1]).put(finalY[1]).put(0.0f);
+        buffer.put(finalX[1]).put(finalY[1]).put(z);  // Use the object's z
         buffer.put(uv[2]).put(uv[1]);
         buffer.put(1.0f).put(1.0f).put(1.0f).put(1.0f);
 
         // Top-right
-        buffer.put(finalX[2]).put(finalY[2]).put(0.0f);
+        buffer.put(finalX[2]).put(finalY[2]).put(z);  // Use the object's z
         buffer.put(uv[2]).put(uv[3]);
         buffer.put(1.0f).put(1.0f).put(1.0f).put(1.0f);
 
         // Top-left
-        buffer.put(finalX[3]).put(finalY[3]).put(0.0f);
+        buffer.put(finalX[3]).put(finalY[3]).put(z);  // Use the object's z
         buffer.put(uv[0]).put(uv[3]);
         buffer.put(1.0f).put(1.0f).put(1.0f).put(1.0f);
     }

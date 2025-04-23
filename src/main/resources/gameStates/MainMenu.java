@@ -20,7 +20,6 @@ public class MainMenu implements State {
     //TODO [0] need logic that passes the gamePanel from EchoGame when states are created so we can have easier reference to it that's independent from referencing EchoGame.
     BatchRenderer renderer = gamePanel.getRenderer();
     Shader exampleShader = gamePanel.getShader();
-    TextureAtlas atlas1 = gamePanel.getAtlas();
     List<GUIElement> guiElements = gamePanel.guiElements;
 
     private int frameTester = 0;
@@ -69,7 +68,7 @@ public class MainMenu implements State {
 
         //renderer.begin();
 
-        renderer.draw(backgroundTexture, 0, 0, 0, exampleShader, null);
+        renderer.draw(backgroundTexture, gamePanel.getAtlas(), 0, 0, 0, exampleShader, null);
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
         //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
 
@@ -137,9 +136,12 @@ public class MainMenu implements State {
             }
         });
         squareButton.setOnClickAction(button -> {
-            JukeBox.play("menuselect", "effect", 1, false);
-            //exampleShader.setUniform("brightness", (float)Math.random());
-            System.out.println("Clicked button : " + button +", at : "+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0]+"x"+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
+            if ((System.currentTimeMillis()-squareButton.getLastPressed()) >= 1000L) {
+                squareButton.setLastPressed(System.currentTimeMillis());
+                JukeBox.play("menuselect", "effect", 1, false);
+                //exampleShader.setUniform("brightness", (float)Math.random());
+                System.out.println("Clicked button : " + button + ", at : " + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0] + "x" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
+            }
         });
         guiElements.add(squareButton);
 
@@ -165,23 +167,26 @@ public class MainMenu implements State {
             }
         });
         patrickButton.setOnClickAction(button -> {
-            JukeBox.play("menuselect", "effect", 1, false);
-            System.out.println("Clicked button : " + button +", at : "+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0]+"x"+gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
-
+            if ((System.currentTimeMillis()-patrickButton.getLastPressed()) >= 1000L) {
+                patrickButton.setLastPressed(System.currentTimeMillis());
+                JukeBox.play("menuselect", "effect", 1, false);
+                //System.out.println("huh?");
+                System.out.println("Clicked button : " + button + ", at : " + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0] + "x" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
+            }
         });
         guiElements.add(patrickButton);
 
     }
     public void panelAtlas(){
         //TODO [0] bad logic here, need to fix.
-        boolean recalculateAtlases = AtlasManager.addToAtlas(atlas1, "general", "general", backgroundTexture) ||
-                AtlasManager.addToAtlas(atlas1, "general", "general", testTexture) ||
-                AtlasManager.addToAtlas(atlas1, "general", "general", patrickTexture);
-        if (!recalculateAtlases) AtlasManager.finalizeAtlasMaps(atlas1);
+        boolean recalculateAtlases = AtlasManager.addToAtlas(gamePanel.getAtlas(), "general", "general", backgroundTexture) ||
+                AtlasManager.addToAtlas(gamePanel.getAtlas(), "general", "general", testTexture) ||
+                AtlasManager.addToAtlas(gamePanel.getAtlas(), "general", "general", patrickTexture);
+        if (!recalculateAtlases) AtlasManager.finalizeAtlasMaps(gamePanel.getAtlas());
         //TODO [0] can have logic to check if we need to reupload.
-        AtlasManager.saveAtlasToGPU(atlas1);
+        AtlasManager.saveAtlasToGPU(gamePanel.getAtlas());
     }
-    public void createAtlas(String path) throws InterruptedException {
+    /*public void createAtlas(String path) throws InterruptedException {
         long start = System.currentTimeMillis();
         File jsonFile = new File(path);
         if (!jsonFile.exists()) {
@@ -204,8 +209,8 @@ public class MainMenu implements State {
             }
         }
         AtlasManager.saveAtlasToGPU(atlas1);
-        renderer = new BatchRenderer(atlas1, exampleShader);
-    }
+        renderer = new BatchRenderer();
+    }*/
     public void initializeMaterials() {
         ShaderManager.setDefaultMaterial(ShaderManager.newMaterial("DEFAULT").setMap("brightness", 1.0f));
         ShaderManager.newMaterial("GUIHIGHLIGHT").setMap("brightness", 0.9f);

@@ -9,7 +9,8 @@ import java.nio.ByteBuffer;
 import static com.github.exiostorm.graphics.TextureManager.*;
 
 public class Texture {
-    private final String path;
+	private int id;
+    private String path;
     private int width;
     private int height;
 	private Shader shader = null;
@@ -28,6 +29,18 @@ public class Texture {
 		this.transparencyMap = null;
 		this.byteBuffer = null;
 		getOrGenerateDimensions(this);
+	}
+	//TODO might delete this later, working out FBO logic.
+	/**
+	 * BufferObject method
+	 * @param id ID of buffer
+	 * @param width width of buffer
+	 * @param height height of buffer
+	 */
+	public Texture(int id, int width, int height) {
+		this.id = id;
+		this.width = width;
+		this.height = height;
 	}
 	public BufferedImage getBufferedImage(boolean save) {
         if (this.bufferedImage == null) {

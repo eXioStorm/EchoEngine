@@ -53,7 +53,7 @@ public class Cursor {
     }
 
     public void render(float x, float y) {
-        gamePanel.getRenderer().draw(textures.get(currentFrame), x, y, 2, gamePanel.getShader(), shaderMaterial);
+        gamePanel.getRenderer().draw(textures.get(currentFrame), gamePanel.getAtlas(), x, y, 1.0f, gamePanel.getShader(), shaderMaterial);
     }
     public void setShaderMaterial(Material material) {
         this.shaderMaterial = material;
