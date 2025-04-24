@@ -27,6 +27,7 @@ public class BatchRenderer {
     private List<Quad> quads = new ArrayList<>();
     // Counter for automatic ordering
     private int zPositionNow = 0;
+    private int previousTexSlot = GL_TEXTURE_2D;
 
     private FrameBuffer fboUsedPreviously = null;
     private boolean fboUsed = false;
@@ -82,17 +83,18 @@ public class BatchRenderer {
         quads.clear();
         zPositionNow = 0;
     }
-    public void draw(int textureID, int width, int height, float[] uv, float x, float y, float z, Shader shader, Material material,
+    public void draw(int textureID, int textureSlot, int width, int height, float[] uv, float x, float y, float z, Shader shader, Material material,
                      float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY) {
         // Use defaults if not provided
         Shader shaderToUse = (shader != null) ? shader : defaultShader;
+        int texSlotUsed = (textureSlot != -1) ? textureSlot : previousTexSlot;
         Material materialToUse = (material != null) ? material : ShaderManager.getDefaultMaterial();
 
         // If no z provided, use automatic incrementing value
         float zPosition = (z != -1.0f) ? z : zPositionNow++;
 
         //float[] uv = AtlasManager.getUV(atlas, texture);
-        Quad quad = new Quad(x, y, z, width, height, uv, shaderToUse, materialToUse, textureID);
+        Quad quad = new Quad(x, y, z, width, height, uv, shaderToUse, materialToUse, textureID, texSlotUsed);
         //TODO huh? removing the next line seems to have no effect? OH we had logic for if z was null... lame
         quad.z = zPosition;
 
@@ -107,15 +109,15 @@ public class BatchRenderer {
     }
     public void draw(FrameBuffer fbo, float x, float y, float z, Shader shader, Material material) {
         float[] uv = {0,0,1,1};
-        draw(fbo.getTextureID(), fbo.getWidth(), fbo.getHeight(), uv, x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
+        draw(fbo.getTextureID(), fbo.getTextureSlot(), fbo.getWidth(), fbo.getHeight(), uv, x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
     }
     public void draw(Texture texture, TextureAtlas atlas, float x, float y, float z, Shader shader, Material material) {
         //TODO don't know why, but the value to completely flip upside down is 9.424f when rotating
         // value actually 3.1399548 for flip, and 6.2827272 for full 360.
-        draw(atlas.getAtlasID(), texture.getWidth(), texture.getHeight(), AtlasManager.getUV(atlas, texture), x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
+        draw(atlas.getAtlasID(), atlas.getAtlasSlot(), texture.getWidth(), texture.getHeight(), AtlasManager.getUV(atlas, texture), x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
     }
     public void draw(Texture texture, float x, float y, float z, Shader shader, Material material) {
-        draw(gamePanel.getAtlas().getAtlasID(), texture.getWidth(), texture.getHeight(), AtlasManager.getUV(gamePanel.getAtlas(), texture), x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
+        draw(gamePanel.getAtlas().getAtlasID(), gamePanel.getAtlas().getAtlasSlot(), texture.getWidth(), texture.getHeight(), AtlasManager.getUV(gamePanel.getAtlas(), texture), x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
     }
 
     public void end() {
@@ -142,12 +144,14 @@ public class BatchRenderer {
         glBindVertexArray(vaoID);
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
 
+        //TODO [0] need to research if this works alright for both 2d/3d
         // Sort ALL quads by order index first
         quads.sort(Comparator.comparing(q -> q.z));
 
         Shader currentShader = null;
         Material currentMaterial = null;
         int currentTextureID = -1;
+        int currentTextureSlot = -1;
         List<Quad> currentBatch = new ArrayList<>();
 
         // Process quads in order
@@ -156,10 +160,11 @@ public class BatchRenderer {
             boolean needFlush =
                     (currentShader != null && currentShader != quad.shader) ||
                             (currentTextureID != -1 && currentTextureID != quad.textureID) ||
-                            (currentMaterial != null && currentMaterial != quad.shaderMaterial);
+                            (currentMaterial != null && currentMaterial != quad.shaderMaterial) ||
+                            (currentTextureSlot != -1 && currentTextureSlot != quad.textureSlot);
             if (needFlush && !currentBatch.isEmpty()) {
                 // Render current batch
-                renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentBatch);
+                renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentTextureSlot, currentBatch);
                 currentBatch.clear();
             }
 
@@ -167,12 +172,13 @@ public class BatchRenderer {
             currentShader = quad.shader;
             currentMaterial = quad.shaderMaterial;
             currentTextureID = quad.textureID;
+            currentTextureSlot = quad.textureSlot;
             currentBatch.add(quad);
         }
 
         // Render final batch if exists
         if (!currentBatch.isEmpty()) {
-            renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentBatch);
+            renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentTextureSlot, currentBatch);
         }
 
         // Cleanup
@@ -190,14 +196,15 @@ public class BatchRenderer {
         }
     }
 
-    private void renderQuadBatch(Shader shader, Material material, int textureID, List<Quad> quadBatch) {
+    private void renderQuadBatch(Shader shader, Material material, int textureID, int textureSlot, List<Quad> quadBatch) {
         shader.enable();
         shader.setUniform("textureSampler", 0);
         material.applyUniforms(shader);
 
+        //TODO [!] need to update things so we can select the texture slot (to allow us to have multiple atlases in memory at a time)
         // Bind the texture
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureID);
+        glActiveTexture(textureSlot);
+        glBindTexture(textureSlot, textureID);
 
         FloatBuffer data = BufferUtils.createFloatBuffer(quadBatch.size() * 4 * VERTEX_SIZE);
         for (Quad quad : quadBatch) {
@@ -207,7 +214,7 @@ public class BatchRenderer {
         glBufferSubData(GL_ARRAY_BUFFER, 0, data);
         glDrawElements(GL_TRIANGLES, quadBatch.size() * 6, GL_UNSIGNED_INT, 0);
 
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(textureSlot, 0);
         shader.disable();
     }
 }

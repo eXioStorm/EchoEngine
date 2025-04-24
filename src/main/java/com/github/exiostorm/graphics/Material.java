@@ -7,10 +7,12 @@ package com.github.exiostorm.graphics;
 // Although our solution might be complicated, hopefully it will allow our engine to be a LOT more flexible with managing things later.
 
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Vector;
 import java.util.function.Supplier;
 
 public class Material {
@@ -18,7 +20,7 @@ public class Material {
     //TODO [0] change logic to immediately initialize these, then we check "isEmpty()" instead of != null. should be faster, and easier to maintain, and follows more general practices.
     private Map<String, Integer> uniform1IMap = null;
     private Map<String, Float> uniform1FMap = null;
-    private Map<String, Float[]> uniform2FMap = null;
+    private Map<String, Vector2f> uniform2FMap = null;
     private Map<String, Vector3f> uniform3FMap = null;
     private Map<String, Matrix4f> uniformMatrix4FMap = null;
     private Map<String, Supplier<?>> supplierMap = null;
@@ -40,9 +42,9 @@ public class Material {
         uniform1FMap.put(uniform, value);
         return this;
     }
-    public Material setMap(String uniform, Float value1, Float value2) {
+    public Material setMap(String uniform, Vector2f value) {
         if (uniform2FMap == null) uniform2FMap = new HashMap<>();
-        uniform2FMap.put(uniform, new Float[]{value1, value2});
+        uniform2FMap.put(uniform, value);
         return this;
     }
     public Material setMap(String uniform, Vector3f value) {
@@ -73,9 +75,8 @@ public class Material {
             }
         }
         if (uniform2FMap != null) {
-            for (Map.Entry<String, Float[]> entry : uniform2FMap.entrySet()) {
-                Float[] i = entry.getValue();
-                shader.setUniform(entry.getKey(), i[0], i[1]);
+            for (Map.Entry<String, Vector2f> entry : uniform2FMap.entrySet()) {
+                shader.setUniform(entry.getKey(), entry.getValue());
             }
         }
         if (uniform3FMap != null) {

@@ -7,10 +7,12 @@ import static com.github.exiostorm.main.EchoGame.gamePanel;
 public class FrameBuffer {
     private int fboID;
     private int textureID;
+    private int textureSlot;
     private int depthRboID;
     private int width, height;
 
-    public FrameBuffer() {
+    public FrameBuffer(int textureSlot) {
+        this.textureSlot = textureSlot;
         this.width = gamePanel.WIDTH;
         this.height = gamePanel.HEIGHT;
         initialize();
@@ -69,5 +71,8 @@ public class FrameBuffer {
 
     public int getHeight() {
         return height;
+    }
+    public int getTextureSlot() {
+        return textureSlot;
     }
 }

@@ -4,6 +4,7 @@ import com.github.exiostorm.graphics.gui.GUIElement;
 
 import com.github.exiostorm.main.State;
 import com.github.exiostorm.graphics.*;
+import org.joml.Vector2f;
 
 import java.io.File;
 import java.io.IOException;
@@ -214,5 +215,9 @@ public class MainMenu implements State {
     public void initializeMaterials() {
         ShaderManager.setDefaultMaterial(ShaderManager.newMaterial("DEFAULT").setMap("brightness", 1.0f));
         ShaderManager.newMaterial("GUIHIGHLIGHT").setMap("brightness", 0.9f);
+        ShaderManager.newMaterial("lights")
+                .setMap("screenSize", new Vector2f(gamePanel.WIDTH, gamePanel.HEIGHT))
+                .setMap("numLights", 3)
+                .setMap("ambientLight", 0.2f);
     }
 }

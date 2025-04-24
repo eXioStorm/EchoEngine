@@ -1,7 +1,6 @@
 package com.github.exiostorm.graphics;
 
 import java.nio.FloatBuffer;
-import java.util.function.Consumer;
 
 class Quad {
     float x, y, z, width, height;
@@ -9,6 +8,7 @@ class Quad {
     Shader shader;
     Material shaderMaterial;
     int textureID;
+    int textureSlot;
 
     public float rotation = 0.0f;    // Rotation in radians
     public float scaleX = 1.0f;      // Scale factor for X
@@ -16,7 +16,7 @@ class Quad {
     public boolean flipX = false;    // Horizontal flip
     public boolean flipY = false;    // Vertical flip
 
-    public Quad(float x, float y, float z, float width, float height, float[] uv, Shader shader, Material material, int textureID) {
+    public Quad(float x, float y, float z, float width, float height, float[] uv, Shader shader, Material material, int textureID, int textureSlot) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -26,6 +26,7 @@ class Quad {
         this.shader = shader;
         this.shaderMaterial = material;
         this.textureID = textureID;
+        this.textureSlot = textureSlot;
         // Default transformations
         this.rotation = 0.0f;
         this.scaleX = 1.0f;
@@ -88,7 +89,6 @@ class Quad {
             finalY[i] = 1 - (finalY[i] / screenHeight) * 2;
         }
 
-        //TODO changed 0 to z, logic might have broken some things?
         // Add vertices to buffer
         // Bottom-left
         buffer.put(finalX[0]).put(finalY[0]).put(z);  // Use the object's z

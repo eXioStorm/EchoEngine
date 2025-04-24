@@ -157,6 +157,9 @@ public class GamePanel {
         // Enable blending for transparent text rendering
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //TODO [!] (╯°□°)╯︵ ┻━┻
+        // FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUCK
+        // Our FBO is going to make this annoying...
         renderer.begin();
         stateManager.render(gameStates, currentState);
         stateManager.render(inputMappers, currentMapper);

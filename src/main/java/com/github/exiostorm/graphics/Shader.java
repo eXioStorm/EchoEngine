@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 
@@ -53,11 +54,11 @@ public class Shader {
 		}
 	}
 
-	public void setUniform(String name, float x, float y) {
+	public void setUniform(String name, Vector2f value) {
 		if (!enabled) enable();
 		int location = getUniform(name);
 		if (location != -1) {
-			glUniform2f(getUniform(name), x, y);
+			glUniform2f(getUniform(name), value.x, value.y);
 		}
 	}
 
