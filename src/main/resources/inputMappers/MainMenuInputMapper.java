@@ -44,7 +44,9 @@ public class MainMenuInputMapper implements State {
     }
     @Override
     public void render() {
+        gamePanel.getRenderer().begin();
         cursor.render((float)getMouse()[0],(float)getMouse()[1]);
+        gamePanel.getRenderer().end();
     }
     private double[] getMouse(){
         return gamePanel.playerInputManager.getPlayer(0).getMousePosition();

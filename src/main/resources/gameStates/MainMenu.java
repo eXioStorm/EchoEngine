@@ -5,6 +5,7 @@ import com.github.exiostorm.graphics.gui.GUIElement;
 import com.github.exiostorm.main.State;
 import com.github.exiostorm.graphics.*;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,15 +13,20 @@ import java.util.List;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static java.lang.Thread.sleep;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class MainMenu implements State {
     private Texture backgroundTexture;
     private Texture testTexture;
     private Texture patrickTexture;
+    private FrameBuffer fbo;
     //TODO [0] need logic that passes the gamePanel from EchoGame when states are created so we can have easier reference to it that's independent from referencing EchoGame.
     BatchRenderer renderer = gamePanel.getRenderer();
     Shader exampleShader = gamePanel.getShader();
+    Shader lightShader;
+    Shader testShader;
     List<GUIElement> guiElements = gamePanel.guiElements;
 
     private int frameTester = 0;
@@ -32,12 +38,15 @@ public class MainMenu implements State {
         initAudio();
         //TODO something here to select UIHandler? <- huh?
         initTextures();//TODO
+        lightShader = new Shader("light",  "src/main/resources/Shaders/lights_vertex.glsl", "src/main/resources/Shaders/lights_fragment.glsl");
+        testShader = lightShader;
+        //gamePanel.setShader(testShader);
         //initShaders();
         //new 2025/04/05
         initInterfaces();
         initializeMaterials();
         panelAtlas();
-
+        initFBO();
     }
 
     @Override
@@ -66,10 +75,12 @@ public class MainMenu implements State {
         TextRenderer.renderText("test : \"ΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩ\"<- shouldn't be empty","Inkfree", 0.0f * GamePanel.WIDTH, 0.3f * GamePanel.HEIGHT, 0.5f);  // Smaller menu font
         TextRenderer.renderText("Default font test!",0.0f * GamePanel.WIDTH, 0.4f * GamePanel.HEIGHT, 0.5f);
          */
-
+        //TODO [!] start FBO here~
+        renderer.begin(fbo);
         //renderer.begin();
 
-        renderer.draw(backgroundTexture, gamePanel.getAtlas(), 0, 0, 0, exampleShader, null);
+
+        renderer.draw(backgroundTexture, gamePanel.getAtlas(), 0, 0, 0, exampleShader, ShaderManager.getMaterialFromMap("DEFAULT"));
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
         //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
 
@@ -78,10 +89,12 @@ public class MainMenu implements State {
         }
 
         //graphics.draw(backgroundTexture, 0, 0, exampleShader, false);
-
-        //renderer.end();
-
-
+        renderer.end();
+        renderer.begin();
+        //TODO [!]
+        //renderer.draw(fbo, 0,0,0, lightShader, ShaderManager.getMaterialFromMap("lights"));
+        renderer.draw(fbo, 0,0,0, testShader, ShaderManager.getMaterialFromMap("lights"));
+        renderer.end();
         //exampleShader.enable();
         //exampleShader.setUniform("isFixedFunction", true); // For fixed-function
         //exampleShader.disable();
@@ -130,9 +143,9 @@ public class MainMenu implements State {
                 JukeBox.play("menuoption", "effect", 1, true);
                 //TODO 2025-04-12 got distracted and blamed our button logic for a flaw with our rendering logic. ignore the every frame triggers until we get more render logic done~
                 squareButton.setShaderMaterial(null);
-                exampleShader.enable();
-                exampleShader.setUniform("brightness", 1.0f);
-                exampleShader.disable();
+                //exampleShader.enable();
+                //exampleShader.setUniform("brightness", 1.0f);
+                //exampleShader.disable();
                 System.out.println("Stopped hovering over button: " + button);
             }
         });
@@ -168,9 +181,19 @@ public class MainMenu implements State {
             }
         });
         patrickButton.setOnClickAction(button -> {
-            if ((System.currentTimeMillis()-patrickButton.getLastPressed()) >= 1000L) {
+            if ((System.currentTimeMillis()-patrickButton.getLastPressed()) >= 500L) {
                 patrickButton.setLastPressed(System.currentTimeMillis());
                 JukeBox.play("menuselect", "effect", 1, false);
+                if (testShader==lightShader) {
+                    System.out.println("switching back to normal shader");
+                    renderer.checkShaderStatus(testShader);
+                    testShader = exampleShader;
+                } else {
+                    System.out.println("switching back to light shader");
+                    renderer.checkShaderStatus(testShader);
+                    testShader = lightShader;
+                    renderer.checkShaderStatus(testShader);
+                }
                 //System.out.println("huh?");
                 System.out.println("Clicked button : " + button + ", at : " + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0] + "x" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
             }
@@ -186,6 +209,9 @@ public class MainMenu implements State {
         if (!recalculateAtlases) AtlasManager.finalizeAtlasMaps(gamePanel.getAtlas());
         //TODO [0] can have logic to check if we need to reupload.
         AtlasManager.saveAtlasToGPU(gamePanel.getAtlas());
+    }
+    public void initFBO() {
+        fbo = new FrameBuffer(GL_TEXTURE0);
     }
     /*public void createAtlas(String path) throws InterruptedException {
         long start = System.currentTimeMillis();
@@ -214,10 +240,34 @@ public class MainMenu implements State {
     }*/
     public void initializeMaterials() {
         ShaderManager.setDefaultMaterial(ShaderManager.newMaterial("DEFAULT").setMap("brightness", 1.0f));
-        ShaderManager.newMaterial("GUIHIGHLIGHT").setMap("brightness", 0.9f);
-        ShaderManager.newMaterial("lights")
+        ShaderManager.newMaterial("GUIHIGHLIGHT").setMap("brightness", 0.5f);
+        ShaderManager.newMaterial("lights");/*
                 .setMap("screenSize", new Vector2f(gamePanel.WIDTH, gamePanel.HEIGHT))
                 .setMap("numLights", 3)
                 .setMap("ambientLight", 0.2f);
+        Vector2f[] lightPositions = new Vector2f[10];
+        Vector3f[] lightColors = new Vector3f[10];
+        float[] lightIntensities = new float[10];
+        float[] lightRadii = new float[10];
+        // Configure a campfire light
+        lightPositions[0] = new Vector2f(0, 0); // Campfire position
+        lightColors[0] = new Vector3f(1.0f, 0.7f, 0.3f); // Warm orange color
+        lightIntensities[0] = 1.0f;
+        lightRadii[0] = 0.2f;
+        // Add a blue torch
+        lightPositions[1] = new Vector2f(500, 400);
+        lightColors[1] = new Vector3f(0.2f, 0.4f, 1.0f); // Blue color
+        lightIntensities[1] = 1.2f;
+        lightRadii[1] = 200.0f;
+        // Add a green lantern
+        lightPositions[2] = new Vector2f(100, 500);
+        lightColors[2] = new Vector3f(0.1f, 0.8f, 0.2f); // Green color
+        lightIntensities[2] = 1.0f;
+        lightRadii[2] = 150.0f;
+        ShaderManager.getMaterialFromMap("lights")
+                .setMap("lightPositions", lightPositions)
+                .setMap("lightColors", lightColors)
+                .setMap("lightIntensities", lightIntensities)
+                .setMap("lightRadii", lightRadii);*/
     }
 }

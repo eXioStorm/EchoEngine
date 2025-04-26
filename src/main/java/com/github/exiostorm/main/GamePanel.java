@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 
 //TODO setup GUI / Buttons / Settings, make some BGM, and add volume control to a settings menu. add mouse clicks to input.
 //TODO add default inputmapper/gamestate so we can default to them if nothing is set instead of crashing.
@@ -152,18 +153,20 @@ public class GamePanel {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // draw everything on plane 0?
         glDisable(GL_DEPTH_TEST);
+        //TODO [!] something wrong here...
         // Enable textures
         glEnable(GL_TEXTURE_2D);
+        glEnable(GL_TEXTURE0);
         // Enable blending for transparent text rendering
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         //TODO [!] (╯°□°)╯︵ ┻━┻
         // FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUCK
         // Our FBO is going to make this annoying...
-        renderer.begin();
+        //renderer.begin();
         stateManager.render(gameStates, currentState);
         stateManager.render(inputMappers, currentMapper);
-        renderer.end();
+        //renderer.end();
         // Disable blending after text rendering
         glDisable(GL_BLEND);
         // something with plane 0 / 3d rendering
@@ -275,6 +278,10 @@ public class GamePanel {
 
     public Shader getShader() {
         return shader;
+    }
+
+    public void setShader(Shader shader) {
+        this.shader = shader;
     }
 
     public TextureAtlas getAtlas() {

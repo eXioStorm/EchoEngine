@@ -53,12 +53,50 @@ public class Shader {
 			glUniform1f(getUniform(name), value);
 		}
 	}
+	public void setUniform(String name, float[] value) {
+		if (!enabled) enable();
+		int location = getUniform(name);
+		if (location != -1) {
+			glUniform1fv(getUniform(name), value);
+		}
+	}
 
 	public void setUniform(String name, Vector2f value) {
 		if (!enabled) enable();
 		int location = getUniform(name);
 		if (location != -1) {
 			glUniform2f(getUniform(name), value.x, value.y);
+		}
+	}
+
+	public void setUniform(String name, Vector2f[] vectors) {
+		if (!enabled) enable();
+		int location = getUniform(name);
+		if (location != -1) {
+			float[] data = new float[vectors.length * 2];
+			for (int i = 0; i < vectors.length; i++) {
+				if (vectors[i] != null) {
+					data[i * 2] = vectors[i].x;
+					data[i * 2 + 1] = vectors[i].y;
+				}
+			}
+			glUniform2fv(getUniform(name), data);
+		}
+	}
+
+	public void setUniform(String name, Vector3f[] vectors) {
+		if (!enabled) enable();
+		int location = getUniform(name);
+		if (location != -1) {
+			float[] data = new float[vectors.length * 3];
+			for (int i = 0; i < vectors.length; i++) {
+				if (vectors[i] != null) {
+					data[i * 3] = vectors[i].x;
+					data[i * 3 + 1] = vectors[i].y;
+					data[i * 3 + 2] = vectors[i].z;
+				}
+			}
+			glUniform3fv(getUniform(name), data);
 		}
 	}
 

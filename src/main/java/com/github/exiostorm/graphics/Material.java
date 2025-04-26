@@ -12,7 +12,6 @@ import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
 import java.util.function.Supplier;
 
 public class Material {
@@ -20,7 +19,10 @@ public class Material {
     //TODO [0] change logic to immediately initialize these, then we check "isEmpty()" instead of != null. should be faster, and easier to maintain, and follows more general practices.
     private Map<String, Integer> uniform1IMap = null;
     private Map<String, Float> uniform1FMap = null;
-    private Map<String, Vector2f> uniform2FMap = null;
+    private Map<String, float[]> uniform1FAMap = null;
+    private Map<String, Vector2f> uniform2FVMap = null;
+    private Map<String, Vector2f[]> uniform2FVAMap = null;
+    private Map<String, Vector3f[]> uniform3FVMap = null;
     private Map<String, Vector3f> uniform3FMap = null;
     private Map<String, Matrix4f> uniformMatrix4FMap = null;
     private Map<String, Supplier<?>> supplierMap = null;
@@ -42,9 +44,24 @@ public class Material {
         uniform1FMap.put(uniform, value);
         return this;
     }
+    public Material setMap(String uniform, float[] value) {
+        if (uniform1FAMap == null) uniform1FAMap = new HashMap<>();
+        uniform1FAMap.put(uniform, value);
+        return this;
+    }
     public Material setMap(String uniform, Vector2f value) {
-        if (uniform2FMap == null) uniform2FMap = new HashMap<>();
-        uniform2FMap.put(uniform, value);
+        if (uniform2FVMap == null) uniform2FVMap = new HashMap<>();
+        uniform2FVMap.put(uniform, value);
+        return this;
+    }
+    public Material setMap(String uniform, Vector2f[] value) {
+        if (uniform2FVAMap == null) uniform2FVAMap = new HashMap<>();
+        uniform2FVAMap.put(uniform, value);
+        return this;
+    }
+    public Material setMap(String uniform, Vector3f[] value) {
+        if (uniform3FVMap == null) uniform3FVMap = new HashMap<>();
+        uniform3FVMap.put(uniform, value);
         return this;
     }
     public Material setMap(String uniform, Vector3f value) {
@@ -74,13 +91,28 @@ public class Material {
                 shader.setUniform(entry.getKey(), entry.getValue());
             }
         }
-        if (uniform2FMap != null) {
-            for (Map.Entry<String, Vector2f> entry : uniform2FMap.entrySet()) {
+        if (uniform1FAMap != null) {
+            for (Map.Entry<String, float[]> entry : uniform1FAMap.entrySet()) {
+                shader.setUniform(entry.getKey(), entry.getValue());
+            }
+        }
+        if (uniform2FVMap != null) {
+            for (Map.Entry<String, Vector2f> entry : uniform2FVMap.entrySet()) {
+                shader.setUniform(entry.getKey(), entry.getValue());
+            }
+        }
+        if (uniform2FVAMap != null) {
+            for (Map.Entry<String, Vector2f[]> entry : uniform2FVAMap.entrySet()) {
                 shader.setUniform(entry.getKey(), entry.getValue());
             }
         }
         if (uniform3FMap != null) {
             for (Map.Entry<String, Vector3f> entry : uniform3FMap.entrySet()) {
+                shader.setUniform(entry.getKey(), entry.getValue());
+            }
+        }
+        if (uniform3FVMap != null) {
+            for (Map.Entry<String, Vector3f[]> entry : uniform3FVMap.entrySet()) {
                 shader.setUniform(entry.getKey(), entry.getValue());
             }
         }

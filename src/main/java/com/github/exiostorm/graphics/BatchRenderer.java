@@ -136,7 +136,7 @@ public class BatchRenderer {
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         //TODO possible option here for multiple atlases, GL_TEXTURE# has a range from 0~31 which is more than plenty to have different atlases for things of different size.
-        glActiveTexture(GL_TEXTURE0);
+        //glActiveTexture(GL_TEXTURE_2D);
         //TODO [0] because our FBO needs to also use the texture slot and be bound with it, we need to move this part of our logic away.
         // we'll also need to make significant changes to support having multiple atlases for like text rendering & reduced texture sizes...
         // this might get complicated...
@@ -187,12 +187,14 @@ public class BatchRenderer {
         glDisable(GL_BLEND);
     }
 
-    private void checkShaderStatus(Shader shader) {
+    public void checkShaderStatus(Shader shader) {
         int[] linkStatus = new int[1];
         glGetProgramiv(shader.getID(), GL_LINK_STATUS, linkStatus);
         if (linkStatus[0] == GL_FALSE) {
             String log = glGetProgramInfoLog(shader.getID());
             System.err.println("Shader Program Link Error: " + log);
+        } else {
+            System.out.println(shader.getID() + " : " + linkStatus[0]);
         }
     }
 
@@ -204,7 +206,7 @@ public class BatchRenderer {
         //TODO [!] need to update things so we can select the texture slot (to allow us to have multiple atlases in memory at a time)
         // Bind the texture
         glActiveTexture(textureSlot);
-        glBindTexture(textureSlot, textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
 
         FloatBuffer data = BufferUtils.createFloatBuffer(quadBatch.size() * 4 * VERTEX_SIZE);
         for (Quad quad : quadBatch) {
