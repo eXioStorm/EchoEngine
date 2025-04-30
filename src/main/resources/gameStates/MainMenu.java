@@ -84,6 +84,7 @@ public class MainMenu implements State {
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
         //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
 
+        //TODO [0] update how this works so it's more similar to the other lines above and below?
         for (GUIElement element : guiElements) {
             element.render();
         }

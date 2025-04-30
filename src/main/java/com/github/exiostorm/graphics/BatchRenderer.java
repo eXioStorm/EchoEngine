@@ -108,8 +108,8 @@ public class BatchRenderer {
         quads.add(quad);
     }
     public void draw(FrameBuffer fbo, float x, float y, float z, Shader shader, Material material) {
-        float[] uv = {0,0,1,1};
-        draw(fbo.getTextureID(), fbo.getTextureSlot(), fbo.getWidth(), fbo.getHeight(), uv, x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
+        float[] uv = {0,1,1,0};
+        draw(fbo.getTextureID(), fbo.getTextureUnit(), fbo.getWidth(), fbo.getHeight(), uv, x, y, z, shader, material, 0.0f, 1.0f, 1.0f, false, false);
     }
     public void draw(Texture texture, TextureAtlas atlas, float x, float y, float z, Shader shader, Material material) {
         //TODO don't know why, but the value to completely flip upside down is 9.424f when rotating
@@ -121,11 +121,11 @@ public class BatchRenderer {
     }
 
     public void end() {
+        renderBatch();
         if (fboUsed) {
             fboUsed = false;
             fboUsedPreviously.unbind();
         }
-        renderBatch();
     }
     private void renderBatch() {
         if (quads.isEmpty()) return;

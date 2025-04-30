@@ -22,6 +22,7 @@ import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
 
 //TODO setup GUI / Buttons / Settings, make some BGM, and add volume control to a settings menu. add mouse clicks to input.
 //TODO add default inputmapper/gamestate so we can default to them if nothing is set instead of crashing.
@@ -46,7 +47,7 @@ public class GamePanel {
     private Window window;
     public int WIDTH = 320;
     public int HEIGHT = 240;
-    public static int SCALE = 1;
+    public int SCALE = 1;
     public static int FPS = 30;
     private long targetTime = 1000; //don't know if we still need this, will do homework on what targetTime is.
     private float deltaTime;
@@ -157,6 +158,7 @@ public class GamePanel {
         // Enable textures
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_TEXTURE0);
+        glEnable(GL_TEXTURE1);
         // Enable blending for transparent text rendering
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

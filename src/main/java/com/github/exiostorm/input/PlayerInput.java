@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static org.lwjgl.glfw.GLFW.*;
 
 //TODO need to setup something eventually at some point for midi device support.
@@ -49,7 +50,7 @@ public class PlayerInput {
 
     public double[] getMousePosition() {
         //TODO change how this is retrieved, move the math for GamePanel to GamePanel. that way this code remains modular.
-        return new double[]{ mouseX / GamePanel.SCALE, mouseY / GamePanel.SCALE }; // Return current mouse position
+        return new double[]{ mouseX / gamePanel.SCALE, mouseY / gamePanel.SCALE }; // Return current mouse position
     }
 
     public boolean isMouseButtonPressed(int button) {
