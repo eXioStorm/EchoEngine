@@ -3,8 +3,8 @@ in vec2 TexCoord;
 in vec4 VertexColor;
 out vec4 FragColor;
 uniform sampler2D textureSampler;
-uniform float brightness = 0.5;
-uniform vec3 colorTint = vec3(0.5, 0.5, 0.5);
+uniform float brightness = 1.0;
+uniform vec3 colorTint = vec3(1.0, 1.0, 1.0);
 void main()
     {
     vec4 texColor = texture(textureSampler, TexCoord) * VertexColor;
