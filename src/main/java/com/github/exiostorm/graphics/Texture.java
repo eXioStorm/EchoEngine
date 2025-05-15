@@ -48,6 +48,7 @@ public class Texture {
         }
         return bufferedImage;
     }
+	//TODO [!] need another parameter for transformations such as flip or rotate.
 	public boolean[] getTransparencyMap(boolean save) {
         if (this.transparencyMap == null) {
             return getOrGenerateTransparencyMap(this, save);
