@@ -5,6 +5,7 @@
 * same method also includes rotation and flipping, though other relevant data needs to be adjusted to reflect this change.
 #### [Layering]()
 * I'm thinking that when we render entities, we should have them all lumped into an array that's sorted by the last entity that moved. this could make the entity layer more trivial to render on the correct layer.? in this scenario we then just render
+* 
 entities by the tile layers, and then just manage where entities are in the world while keeping our tilemap layers. (though we should probably always keep the local player as the top layer for these entities?) basically our "layers" are these arrays.
 need to research more about these layers, as people normally use z-layering, however I don't believe that fits our application because of things like floating platforms.
 * need to figure out how to layer things like player equipments... we probably use some setup that layers the player's equipments in the same layer cycle.(causing the equipment to be rendered after everything the player is rendered after, as well as before.)
