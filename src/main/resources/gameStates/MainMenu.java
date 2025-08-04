@@ -185,6 +185,7 @@ public class MainMenu implements State {
             if ((System.currentTimeMillis()-patrickButton.getLastPressed()) >= 500L) {
                 patrickButton.setLastPressed(System.currentTimeMillis());
                 JukeBox.play("menuselect", "effect", 1, false);
+                //TODO bug has something to do with this being the last rendered?
                 if (testShader==lightShader) {
                     System.out.println("switching back to normal shader");
                     renderer.checkShaderStatus(testShader);
