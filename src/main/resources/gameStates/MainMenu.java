@@ -83,7 +83,7 @@ public class MainMenu implements State {
 
         //TODO [!][20250805] weird material bleed bug if material isn't default? need to investigate for FBO.
         // We need the material for our FBO so that we can pass values to the shader for things like light locations.
-        // Could the issue have been that our FBO was sharing our shader? need to investigate.
+        // Could the issue have been that our FBO was sharing our shader? need to investigate. (I think it was sharing the shader, materials passed to the shader remain until changed again)
         // [!][!!][!!!]
         renderer.draw(backgroundTexture, gamePanel.getAtlas(), 0, 0, 0, exampleShader, ShaderManager.getMaterialFromMap("DEFAULT"));
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
