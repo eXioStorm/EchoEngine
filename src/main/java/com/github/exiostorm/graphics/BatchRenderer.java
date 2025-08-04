@@ -156,16 +156,19 @@ public class BatchRenderer {
 
         // Process quads in order
         for (Quad quad : quads) {
+
             // If shader or material changes, we need to flush the current batch
-            boolean needFlush =
-                    (currentShader != null && currentShader != quad.shader) ||
-                            (currentTextureID != -1 && currentTextureID != quad.textureID) ||
-                            (currentMaterial != null && currentMaterial != quad.shaderMaterial) ||
-                            (currentTextureSlot != -1 && currentTextureSlot != quad.textureSlot);
-            if (needFlush && !currentBatch.isEmpty()) {
-                // Render current batch
-                renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentTextureSlot, currentBatch);
-                currentBatch.clear();
+            if (!currentBatch.isEmpty()) {
+                boolean needFlush =
+                        (currentShader != null && currentShader != quad.shader) ||
+                                (currentTextureID != -1 && currentTextureID != quad.textureID) ||
+                                (currentMaterial != null && currentMaterial != quad.shaderMaterial) ||
+                                (currentTextureSlot != -1 && currentTextureSlot != quad.textureSlot);
+                if (needFlush) {
+                    // Render current batch
+                    renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentTextureSlot, currentBatch);
+                    currentBatch.clear();
+                }
             }
 
             // Update current shader/material

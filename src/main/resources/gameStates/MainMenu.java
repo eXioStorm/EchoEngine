@@ -30,6 +30,7 @@ public class MainMenu implements State {
     List<GUIElement> guiElements = gamePanel.guiElements;
 
     private int frameTester = 0;
+    private boolean brighttester = false;
 
 
     @Override
@@ -39,7 +40,8 @@ public class MainMenu implements State {
         //TODO something here to select UIHandler? <- huh?
         initTextures();//TODO
         lightShader = new Shader("light",  "src/main/resources/Shaders/lights_vertex.glsl", "src/main/resources/Shaders/lights_fragment.glsl");
-        testShader = lightShader;
+        //testShader = lightShader;
+        testShader = exampleShader;
         //gamePanel.setShader(testShader);
         //initShaders();
         //new 2025/04/05
@@ -79,22 +81,25 @@ public class MainMenu implements State {
         renderer.begin(fbo);
         //renderer.begin();
 
-
+        //TODO [!][20250805] weird material bleed bug if material isn't default? need to investigate for FBO.
         renderer.draw(backgroundTexture, gamePanel.getAtlas(), 0, 0, 0, exampleShader, ShaderManager.getMaterialFromMap("DEFAULT"));
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
         //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
+
 
         //TODO [0] update how this works so it's more similar to the other lines above and below?
         for (GUIElement element : guiElements) {
             element.render();
         }
+        //renderer.draw(patrickTexture, gamePanel.getAtlas(), 20, 60, 0.000000000000000000000000000000000000000000001f, exampleShader, null);
+
 
         //graphics.draw(backgroundTexture, 0, 0, exampleShader, false);
         renderer.end();
         renderer.begin();
         //TODO [!]
         //renderer.draw(fbo, 0,0,0, lightShader, ShaderManager.getMaterialFromMap("lights"));
-        renderer.draw(fbo, 0,0,0, testShader, ShaderManager.getMaterialFromMap("lights"));
+        renderer.draw(fbo, 0,0,0, testShader, ShaderManager.getMaterialFromMap("DEFAULT"));
         renderer.end();
         //exampleShader.enable();
         //exampleShader.setUniform("isFixedFunction", true); // For fixed-function
@@ -155,6 +160,23 @@ public class MainMenu implements State {
                 squareButton.setLastPressed(System.currentTimeMillis());
                 JukeBox.play("menuselect", "effect", 1, false);
                 //exampleShader.setUniform("brightness", (float)Math.random());
+                //if (testShader==lightShader) {
+                if (brighttester) {
+                    //System.out.println("switching back to normal shader");
+                    System.out.println("switching back to default mat value");
+                    ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 1.0f));
+                    brighttester = false;
+                    //renderer.checkShaderStatus(testShader);
+                    //testShader = exampleShader;
+                } else {
+                    //System.out.println("switching back to light shader");
+                    //renderer.checkShaderStatus(testShader);
+                    //testShader = lightShader;
+                    System.out.println("switching back to dimmed mat value");
+                    ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 0.8f));
+                    brighttester = true;
+                    //renderer.checkShaderStatus(testShader);
+                }
                 System.out.println("Clicked button : " + button + ", at : " + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0] + "x" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
             }
         });
@@ -186,15 +208,21 @@ public class MainMenu implements State {
                 patrickButton.setLastPressed(System.currentTimeMillis());
                 JukeBox.play("menuselect", "effect", 1, false);
                 //TODO bug has something to do with this being the last rendered?
-                if (testShader==lightShader) {
-                    System.out.println("switching back to normal shader");
-                    renderer.checkShaderStatus(testShader);
+                if (brighttester) {
+                    //System.out.println("switching back to normal shader");
+                    System.out.println("switching back to default mat value");
+                    //ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 1.0f));
+                    brighttester = false;
+                    //renderer.checkShaderStatus(testShader);
                     testShader = exampleShader;
                 } else {
-                    System.out.println("switching back to light shader");
-                    renderer.checkShaderStatus(testShader);
+                    //System.out.println("switching back to light shader");
+                    //renderer.checkShaderStatus(testShader);
                     testShader = lightShader;
-                    renderer.checkShaderStatus(testShader);
+                    System.out.println("switching back to dimmed mat value");
+                    //ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 0.8f));
+                    brighttester = true;
+                    //renderer.checkShaderStatus(testShader);
                 }
                 //System.out.println("huh?");
                 System.out.println("Clicked button : " + button + ", at : " + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0] + "x" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);

@@ -91,6 +91,7 @@ public class MainMenuInputMapper implements State {
                                 }
                             }
                         }
+
                     }
                     //JukeBox.play("menuselect", "effect", 1, false);
                     /*System.out.println("Player " + (playerId+1) + " clicked mouse button: " + key +
