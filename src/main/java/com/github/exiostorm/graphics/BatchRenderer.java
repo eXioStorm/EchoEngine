@@ -182,6 +182,8 @@ public class BatchRenderer {
         // Render final batch if exists
         if (!currentBatch.isEmpty()) {
             renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentTextureSlot, currentBatch);
+            //TODO [!][20250805] need to implement shader/material default mappings somewhere that is set in gamePanel maybe to designate our default material/shader settings.
+            ShaderManager.getMaterialFromMap("DEFAULT").applyUniforms(currentShader);
         }
 
         // Cleanup

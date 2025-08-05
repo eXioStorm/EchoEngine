@@ -104,7 +104,7 @@ public class MainMenu implements State {
         // Confirmed. FBO mustn't share the previously used shader unless the material is reset before-hand. no issues if a different shader is used with a different material.
         // [!][!!][!!!]
         //renderer.draw(fbo, 0,0,0, lightShader, ShaderManager.getMaterialFromMap("lights"));
-        ShaderManager.getMaterialFromMap("DEFAULT").applyUniforms(exampleShader);
+        //ShaderManager.getMaterialFromMap("DEFAULT").applyUniforms(exampleShader);
         renderer.draw(fbo, 0,0,0, exampleShader, ShaderManager.getMaterialFromMap("lights"));
         renderer.end();
         //exampleShader.enable();
