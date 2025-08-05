@@ -81,10 +81,7 @@ public class MainMenu implements State {
         renderer.begin(fbo);
         //renderer.begin();
 
-        //TODO [!][20250805] weird material bleed bug if material isn't default? need to investigate for FBO.
-        // We need the material for our FBO so that we can pass values to the shader for things like light locations.
-        // Could the issue have been that our FBO was sharing our shader? need to investigate. (I think it was sharing the shader, materials passed to the shader remain until changed again)
-        // [!][!!][!!!]
+
         renderer.draw(backgroundTexture, gamePanel.getAtlas(), 0, 0, 0, exampleShader, ShaderManager.getMaterialFromMap("DEFAULT"));
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
         //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
@@ -101,8 +98,14 @@ public class MainMenu implements State {
         renderer.end();
         renderer.begin();
         //TODO [!]
+        //TODO [!][20250805] weird material bleed bug if material isn't default? need to investigate for FBO.
+        // We need the material for our FBO so that we can pass values to the shader for things like light locations.
+        // Could the issue have been that our FBO was sharing our shader? need to investigate. (I think it was sharing the shader, materials passed to the shader remain until changed again)
+        // Confirmed. FBO mustn't share the previously used shader unless the material is reset before-hand. no issues if a different shader is used with a different material.
+        // [!][!!][!!!]
         //renderer.draw(fbo, 0,0,0, lightShader, ShaderManager.getMaterialFromMap("lights"));
-        renderer.draw(fbo, 0,0,0, testShader, ShaderManager.getMaterialFromMap("DEFAULT"));
+        ShaderManager.getMaterialFromMap("DEFAULT").applyUniforms(exampleShader);
+        renderer.draw(fbo, 0,0,0, exampleShader, ShaderManager.getMaterialFromMap("lights"));
         renderer.end();
         //exampleShader.enable();
         //exampleShader.setUniform("isFixedFunction", true); // For fixed-function
@@ -214,16 +217,16 @@ public class MainMenu implements State {
                 if (brighttester) {
                     //System.out.println("switching back to normal shader");
                     System.out.println("switching back to default mat value");
-                    //ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 1.0f));
+                    ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 1.0f));
                     brighttester = false;
                     //renderer.checkShaderStatus(testShader);
-                    testShader = exampleShader;
+                    //testShader = exampleShader;
                 } else {
                     //System.out.println("switching back to light shader");
                     //renderer.checkShaderStatus(testShader);
                     testShader = lightShader;
                     System.out.println("switching back to dimmed mat value");
-                    //ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 0.8f));
+                    ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 0.8f));
                     brighttester = true;
                     //renderer.checkShaderStatus(testShader);
                 }
