@@ -88,6 +88,8 @@ public class BatchRenderer {
         // Use defaults if not provided
         Shader shaderToUse = (shader != null) ? shader : defaultShader;
         int texSlotUsed = (textureSlot != -1) ? textureSlot : previousTexSlot;
+        //TODO [!]
+        // Maybe also update this to use our initial value map
         Material materialToUse = (material != null) ? material : ShaderManager.getDefaultMaterial();
 
         // If no z provided, use automatic incrementing value
@@ -168,6 +170,11 @@ public class BatchRenderer {
                     // Render current batch
                     renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentTextureSlot, currentBatch);
                     currentBatch.clear();
+                    //TODO [!][!!][!!!][20250806]
+                    // We need to implement shader defaults to our ShaderManager.
+                    if (currentShader != quad.shader) {
+                        ShaderManager.getMaterialFromMap("DEFAULT").applyUniforms(currentShader);
+                    }
                 }
             }
 
@@ -182,7 +189,9 @@ public class BatchRenderer {
         // Render final batch if exists
         if (!currentBatch.isEmpty()) {
             renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentTextureSlot, currentBatch);
-            //TODO [!][20250805] need to implement shader/material default mappings somewhere that is set in gamePanel maybe to designate our default material/shader settings.
+            //TODO [!][!!][!!!][20250805] need to implement shader/material default mappings somewhere that is set in gamePanel maybe to designate our default material/shader settings.
+            // Our ShaderManager needs to store default values for shaders, and I can't just name them all "DEFAULT"...
+            // also, perhaps this could be moved to renderQuadBatch because we need to reset every material every time so that our shaders are ready for re-use. otherwise more bugs to ensue.
             ShaderManager.getMaterialFromMap("DEFAULT").applyUniforms(currentShader);
         }
 
@@ -223,5 +232,8 @@ public class BatchRenderer {
 
         glBindTexture(textureSlot, 0);
         shader.disable();
+        //TODO [!][!!][!!!][20250805]
+        // I think I'll move this back to the other method, and have it apply when the shader changes. (basically cleanup for the previous shader)
+        //ShaderManager.getMaterialFromMap("DEFAULT").applyUniforms(shader);
     }
 }
