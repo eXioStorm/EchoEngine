@@ -16,9 +16,7 @@ import static org.lwjgl.opengl.GL20.glDeleteShader;
 
 //TODO with so little code here this class feels redundant...
 public class ShaderManager {
-    //TODO confused on the usage of these two, need more time to work out how/what to use.
-    private static Material defaultMaterial = null;
-    private static Map<Shader, Material> shaderInitials = new HashMap<>();
+    private static Map<Shader, Material> shaderDefaults = new HashMap<>();
 
     private static Map<String, Material> materialMap = new HashMap<>();
     private static Map<String, Shader> shaderMap = new HashMap<>();
@@ -49,11 +47,11 @@ public class ShaderManager {
     public static void registerShader(String name, Shader shader) {
         shaderMap.put(name, shader);
     }
-    public static Material getDefaultMaterial() {
-        return defaultMaterial;
+    public static Material getDefaultMaterial(Shader shader) {
+        return shaderDefaults.get(shader);
     }
-    public static void setDefaultMaterial(Material material) {
-        defaultMaterial = material;
+    public static void setDefaultMaterial(Shader shader, Material material) {
+        shaderDefaults.put(shader, material);
     }
 
     public static int loadShader(String name, String vertPath, String fragPath) {

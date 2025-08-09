@@ -9,10 +9,12 @@ public class EchoGame {
         setupGameConfiguration();
         gamePanel.run();  // Run the game loop
     }
+    //TODO Improper directories once project is built, need better build or directory path.
     private static void setupGameConfiguration(){
         gamePanel.setName("Echo Engine");
         gamePanel.setIconPath("src/main/resources/HUD/icon.png");
         gamePanel.setAtlasPath("src/main/resources/atlas/atlas.json");
+        //TODO [!] need to setup a default material json config for this shader~ (instead of leaving it for initialization)
         gamePanel.setShaderVertexPath("src/main/resources/Shaders/test_vertex.glsl");
         gamePanel.setShaderFragmentPath("src/main/resources/Shaders/test_fragment.glsl");
         //TODO change scale to a float?

@@ -82,7 +82,7 @@ public class MainMenu implements State {
         //renderer.begin();
 
 
-        renderer.draw(backgroundTexture, gamePanel.getAtlas(), 0, 0, 0, exampleShader, ShaderManager.getMaterialFromMap("DEFAULT"));
+        renderer.draw(backgroundTexture, gamePanel.getAtlas(), 0, 0, 0, exampleShader, ShaderManager.getDefaultMaterial(exampleShader));
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
         //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
 
@@ -169,7 +169,7 @@ public class MainMenu implements State {
                 if (brighttester) {
                     //System.out.println("switching back to normal shader");
                     System.out.println("switching back to default mat value");
-                    ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 1.0f));
+                    ShaderManager.setDefaultMaterial(exampleShader, ShaderManager.getDefaultMaterial(exampleShader).setMap("brightness", 1.0f));
                     brighttester = false;
                     //renderer.checkShaderStatus(testShader);
                     //testShader = exampleShader;
@@ -178,7 +178,7 @@ public class MainMenu implements State {
                     //renderer.checkShaderStatus(testShader);
                     //testShader = lightShader;
                     System.out.println("switching back to dimmed mat value");
-                    ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 0.8f));
+                    ShaderManager.setDefaultMaterial(exampleShader, ShaderManager.getDefaultMaterial(exampleShader).setMap("brightness", 0.8f));
                     brighttester = true;
                     //renderer.checkShaderStatus(testShader);
                 }
@@ -216,7 +216,7 @@ public class MainMenu implements State {
                 if (brighttester) {
                     //System.out.println("switching back to normal shader");
                     System.out.println("switching back to default mat value");
-                    ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 1.0f));
+                    ShaderManager.setDefaultMaterial(exampleShader, ShaderManager.getDefaultMaterial(exampleShader).setMap("brightness", 1.0f));
                     brighttester = false;
                     //renderer.checkShaderStatus(testShader);
                     //testShader = exampleShader;
@@ -225,7 +225,7 @@ public class MainMenu implements State {
                     //renderer.checkShaderStatus(testShader);
                     testShader = lightShader;
                     System.out.println("switching back to dimmed mat value");
-                    ShaderManager.setDefaultMaterial(ShaderManager.getMaterialFromMap("DEFAULT").setMap("brightness", 0.8f));
+                    ShaderManager.setDefaultMaterial(exampleShader, ShaderManager.getDefaultMaterial(exampleShader).setMap("brightness", 0.8f));
                     brighttester = true;
                     //renderer.checkShaderStatus(testShader);
                 }
@@ -274,7 +274,7 @@ public class MainMenu implements State {
         renderer = new BatchRenderer();
     }*/
     public void initializeMaterials() {
-        ShaderManager.setDefaultMaterial(ShaderManager.newMaterial("DEFAULT").setMap("brightness", 1.0f));
+        ShaderManager.setDefaultMaterial(exampleShader, ShaderManager.newMaterial("CSMD").setMap("brightness", 1.0f));
         ShaderManager.newMaterial("GUIHIGHLIGHT").setMap("brightness", 0.5f);
         ShaderManager.newMaterial("lights");/*
                 .setMap("screenSize", new Vector2f(gamePanel.WIDTH, gamePanel.HEIGHT))

@@ -90,9 +90,11 @@ public class BatchRenderer {
         int texSlotUsed = (textureSlot != -1) ? textureSlot : previousTexSlot;
         //TODO [!]
         // Maybe also update this to use our initial value map
-        Material materialToUse = (material != null) ? material : ShaderManager.getDefaultMaterial();
+        Material materialToUse = (material != null) ? material : ShaderManager.getDefaultMaterial(shaderToUse);
 
-        // If no z provided, use automatic incrementing value
+        //TODO [!] [20250810]
+        // When we get more 3d elements this will become an issue, because our value is a float
+        // ++ causes too large of a jump, we need to increment by the smallest amount possible.
         float zPosition = (z != -1.0f) ? z : zPositionNow++;
 
         //float[] uv = AtlasManager.getUV(atlas, texture);
@@ -170,10 +172,9 @@ public class BatchRenderer {
                     // Render current batch
                     renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentTextureSlot, currentBatch);
                     currentBatch.clear();
-                    //TODO [!][!!][!!!][20250806]
-                    // We need to implement shader defaults to our ShaderManager.
+                    // This resets our shader initial values when the next shader is used.
                     if (currentShader != quad.shader) {
-                        ShaderManager.getMaterialFromMap("DEFAULT").applyUniforms(currentShader);
+                        ShaderManager.getDefaultMaterial(currentShader).applyUniforms(currentShader);
                     }
                 }
             }
@@ -189,10 +190,7 @@ public class BatchRenderer {
         // Render final batch if exists
         if (!currentBatch.isEmpty()) {
             renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentTextureSlot, currentBatch);
-            //TODO [!][!!][!!!][20250805] need to implement shader/material default mappings somewhere that is set in gamePanel maybe to designate our default material/shader settings.
-            // Our ShaderManager needs to store default values for shaders, and I can't just name them all "DEFAULT"...
-            // also, perhaps this could be moved to renderQuadBatch because we need to reset every material every time so that our shaders are ready for re-use. otherwise more bugs to ensue.
-            ShaderManager.getMaterialFromMap("DEFAULT").applyUniforms(currentShader);
+            ShaderManager.getDefaultMaterial(currentShader).applyUniforms(currentShader);;
         }
 
         // Cleanup
