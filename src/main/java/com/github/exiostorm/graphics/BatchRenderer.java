@@ -92,7 +92,7 @@ public class BatchRenderer {
         // Maybe also update this to use our initial value map
         Material materialToUse = (material != null) ? material : ShaderManager.getDefaultMaterial(shaderToUse);
 
-        //TODO [!] [20250810]
+        //TODO [!][!!][!!!] [20250810]
         // When we get more 3d elements this will become an issue, because our value is a float
         // ++ causes too large of a jump, we need to increment by the smallest amount possible.
         float zPosition = (z != -1.0f) ? z : zPositionNow++;

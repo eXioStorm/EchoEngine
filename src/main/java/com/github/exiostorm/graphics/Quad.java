@@ -35,6 +35,9 @@ class Quad {
         this.flipY = false;
     }
     // Update fillBuffer to apply transformations
+    //TODO [!][!!][!!!][20250810]
+    // a lot of this should probably get put into a method under utilities, as it's just math to transform a rectangle.
+    // We will be able to re-use it for our boolean map that we use for hit-boxes.
     public void fillBuffer(FloatBuffer buffer, int screenWidth, int screenHeight) {
         // Calculate center for rotation
         float centerX = x + width / 2;
