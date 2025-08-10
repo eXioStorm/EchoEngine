@@ -173,7 +173,8 @@ public class BatchRenderer {
                     renderQuadBatch(currentShader, currentMaterial, currentTextureID, currentTextureSlot, currentBatch);
                     currentBatch.clear();
                     // This resets our shader initial values when the next shader is used.
-                    if (currentShader != quad.shader) {
+                    // || currentMaterial != quad.shaderMaterial?
+                    if (currentShader != quad.shader || currentMaterial != quad.shaderMaterial) {
                         ShaderManager.getDefaultMaterial(currentShader).applyUniforms(currentShader);
                     }
                 }
