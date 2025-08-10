@@ -3,6 +3,7 @@ package com.github.exiostorm.graphics.gui;
 import com.github.exiostorm.graphics.*;
 import com.github.exiostorm.main.EchoGame;
 import com.github.exiostorm.main.GamePanel;
+import com.github.exiostorm.utils.MathTools;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector2f;
@@ -20,9 +21,19 @@ public class Button extends GUIElement {
 
     Material shaderMaterial;
     private Texture texture;
+    private int width;
+    private int height;
+    private boolean[] transparencyMap;
+    private float rotation;    // Rotation in radians
+    private float scaleX;      // Scale factor for X
+    private float scaleY;      // Scale factor for Y
+    private boolean flipX;    // Horizontal flip
+    private boolean flipY;    // Vertical flip
     private long lastPressed = 0;
     public boolean hovered = false;
     public boolean clicked = false;
+    private boolean boundaryBox = false;
+    private boolean hasTransforms = false;
     // Set hover action
     private Consumer<Button> onHoverAction;
     // Set hover action
@@ -31,9 +42,51 @@ public class Button extends GUIElement {
     private Consumer<Button> onClickAction;
     private Consumer<Button> onDragAction;
 
-    public Button(float x, float y, Texture texture) {
+    public Button(float x, float y, float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY, boolean boundaryBox, Texture texture) {
         super(x, y);
+        this.rotation = rotation;
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
+        this.flipX = flipX;
+        this.flipY = flipY;
+        this.boundaryBox = boundaryBox;
+        //TODO [!] need method here to modify the transparencyMap.
+        MathTools.TransformResult transformResult = MathTools.transformMap(texture.getTransparencyMap(), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
+        this.transparencyMap = transformResult.map;
+        this.width = transformResult.width;
+        this.height = transformResult.height;
+        this.hasTransforms = true;
         this.texture = texture;
+    }
+    public Button(float x, float y, float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY, Texture texture) {
+        super(x, y);
+        this.rotation = rotation;
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
+        this.flipX = flipX;
+        this.flipY = flipY;
+        MathTools.TransformResult transformResult = MathTools.transformMap(texture.getTransparencyMap(), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
+        this.transparencyMap = transformResult.map;
+        this.width = transformResult.width;
+        this.height = transformResult.height;
+        this.hasTransforms = true;
+        this.texture = texture;
+    }
+    //TODO [!] idk about having boundaryBox as part of the initialization, but will leave it in for now.
+    public Button(float x, float y, boolean boundaryBox, Texture texture) {
+        super(x, y);
+        this.width = texture.getWidth();
+        this.height = texture.getHeight();
+        this.texture = texture;
+        this.boundaryBox = boundaryBox;
+        if (!boundaryBox) this.transparencyMap = texture.getTransparencyMap(true);
+    }
+    public Button(float x, float y, Texture texture) {
+        super(x,y);
+        this.width = texture.getWidth();
+        this.height = texture.getHeight();
+        this.texture = texture;
+        this.transparencyMap = texture.getTransparencyMap(true);
     }
 
     @Override
@@ -57,20 +110,24 @@ public class Button extends GUIElement {
         float localMouseY = mouseY - y;
 
         // Ensure the mouse is within the bounds of the button
-        if (localMouseX < 0 || localMouseX >= texture.getWidth() ||
-                localMouseY < 0 || localMouseY >= texture.getHeight()) {
+        //TODO [!][!!][!!!][20250810]
+        // Need to modify logic to use our button object instead of original texture width/height
+        // because we need to support transformations, and we need simplified logic to
+        // support bounding boxes instead for cases where we need more efficiency.
+        if (localMouseX < 0 || localMouseX >= this.width ||
+                localMouseY < 0 || localMouseY >= this.height) {
             return false;
         }
-
+        if (boundaryBox) { return true;}
         // Map mouse coordinates to pixel coordinates in the original texture
         int pixelX = (int) localMouseX;
         int pixelY = (int) localMouseY;
 
         // Get the pixel index in the 1D array
-        int pixelIndex = pixelY * texture.getWidth() + pixelX;
+        int pixelIndex = pixelY * this.width + pixelX;
 
         // Consider the pixel under the mouse as valid if alpha > 0 (non-transparent)
-        return !texture.getTransparencyMap(true)[pixelIndex];
+        return !this.transparencyMap[pixelIndex];
     }
 
     // Trigger hover action
@@ -136,5 +193,16 @@ public class Button extends GUIElement {
 
     public void setLastPressed(long l) {
         this.lastPressed = l;
+    }
+    public void modifyTransforms (float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY) {
+        this.hasTransforms = true;
+        this.rotation = rotation;
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
+        this.flipX = flipX;
+        this.flipY = flipY;
+    }
+    public void useBoundaryBox(boolean value) {
+        this.boundaryBox = value;
     }
 }

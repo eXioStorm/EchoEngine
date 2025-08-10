@@ -231,8 +231,5 @@ public class BatchRenderer {
 
         glBindTexture(textureSlot, 0);
         shader.disable();
-        //TODO [!][!!][!!!][20250805]
-        // I think I'll move this back to the other method, and have it apply when the shader changes. (basically cleanup for the previous shader)
-        //ShaderManager.getMaterialFromMap("DEFAULT").applyUniforms(shader);
     }
 }
