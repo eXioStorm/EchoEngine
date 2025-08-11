@@ -188,7 +188,7 @@ public class MainMenu implements State {
         guiElements.add(squareButton);
         //TODO [!][!!][!!!][20250811]
         // test our changes to Button class for transformations such as flip.
-        Button patrickButton = new Button((float) (gamePanel.WIDTH - patrickTexture.getHeight()) / 3, (float) (gamePanel.HEIGHT - patrickTexture.getHeight()) / 2, patrickTexture);
+        Button patrickButton = new Button((float) (gamePanel.WIDTH - patrickTexture.getHeight()) / 3, (float) (gamePanel.HEIGHT - patrickTexture.getHeight()) / 2, 0, 1.0f, 1.0f, false, false, patrickTexture);
         patrickButton.getTexture().setShader(exampleShader);
         patrickButton.setOnHoverAction(button -> {
             if (!patrickButton.isHovered()) {

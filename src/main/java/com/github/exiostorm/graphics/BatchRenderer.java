@@ -83,6 +83,9 @@ public class BatchRenderer {
         quads.clear();
         zPositionNow = 0;
     }
+    //TODO [!][!!][!!!][20250811]
+    // organize/cleanup these overloaded methods so that they accurately pile up args instead of being out of order.
+    // it gets confusing when trying to write the code.
     public void draw(int textureID, int textureSlot, int width, int height, float[] uv, float x, float y, float z, Shader shader, Material material,
                      float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY) {
         // Use defaults if not provided

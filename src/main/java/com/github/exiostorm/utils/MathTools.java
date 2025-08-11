@@ -273,8 +273,6 @@ public class MathTools {
 
         // Apply rotation
         if (rotation != 0) {
-            // Check if it's a 90-degree increment for more efficient processing
-            float degrees = (float) Math.toDegrees(rotation);
             TransformResult result = rectangleRotate(currentMap, currentWidth, currentHeight, rotation);
             currentMap = result.map;
             currentWidth = result.width;

@@ -51,7 +51,7 @@ public class Button extends GUIElement {
         this.flipY = flipY;
         this.boundaryBox = boundaryBox;
         //TODO [!] need method here to modify the transparencyMap.
-        MathTools.TransformResult transformResult = MathTools.transformMap(texture.getTransparencyMap(), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
+        MathTools.TransformResult transformResult = MathTools.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
         this.transparencyMap = transformResult.map;
         this.width = transformResult.width;
         this.height = transformResult.height;
@@ -65,7 +65,7 @@ public class Button extends GUIElement {
         this.scaleY = scaleY;
         this.flipX = flipX;
         this.flipY = flipY;
-        MathTools.TransformResult transformResult = MathTools.transformMap(texture.getTransparencyMap(), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
+        MathTools.TransformResult transformResult = MathTools.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
         this.transparencyMap = transformResult.map;
         this.width = transformResult.width;
         this.height = transformResult.height;
@@ -98,7 +98,8 @@ public class Button extends GUIElement {
     public void render() {
         if (!visible) return;
         //TODO do something with the z coordinate for layering in order of objects last updated. e.g. when moving a button on top of another button.
-        gamePanel.getRenderer().draw(texture, atlas, x, y, 0.000000000000000000000000000000000000000000001f, shader, shaderMaterial);
+        //gamePanel.getRenderer().draw(texture, atlas, x, y, 0.000000000000000000000000000000000000000000001f, shader, shaderMaterial);
+        gamePanel.getRenderer().draw(gamePanel.getAtlas().getAtlasID(), gamePanel.getAtlas().getAtlasSlot(), texture.getWidth(), texture.getHeight(), AtlasManager.getUV(gamePanel.getAtlas(), texture), x, y, 0.000000000000000000000000000000000000000000001f, shader, shaderMaterial, 0.0f, 1.0f, 1.0f, flipX, flipY);
     }
 
     //TODO [0] our transformation logic will conflict with our button logic since nothing else gets transformed besides what's rendered.
@@ -118,6 +119,7 @@ public class Button extends GUIElement {
                 localMouseY < 0 || localMouseY >= this.height) {
             return false;
         }
+        //TODO [!] this won't work when transformed. need a bit more logic to make transformations work again.
         if (boundaryBox) { return true;}
         // Map mouse coordinates to pixel coordinates in the original texture
         int pixelX = (int) localMouseX;
