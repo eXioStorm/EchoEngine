@@ -7,7 +7,8 @@ import com.github.exiostorm.graphics.Texture;
 import org.json.*;
 
 import static com.github.exiostorm.physics.CollisionShapeGenerator.BoundingBox.saveCollisionShapesToJson;
-
+//TODO [!][!!][!!!][20250812]
+// Big ol' hunk of AI slop. going to take awhile to go through and personally identify contents of this class.
 public class CollisionShapeGenerator {
 
     // Simple bounding box class for Sweep and Prune

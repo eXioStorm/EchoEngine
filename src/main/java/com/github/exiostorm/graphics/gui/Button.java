@@ -72,14 +72,14 @@ public class Button extends GUIElement {
         this.hasTransforms = true;
         this.texture = texture;
     }
-    //TODO [!] idk about having boundaryBox as part of the initialization, but will leave it in for now.
-    public Button(float x, float y, boolean boundaryBox, Texture texture) {
+    //TODO [!] idk about having usePolygon as part of the initialization, but will leave it in for now.
+    public Button(float x, float y, boolean usePolygon, Texture texture) {
         super(x, y);
         this.width = texture.getWidth();
         this.height = texture.getHeight();
         this.texture = texture;
-        this.boundaryBox = boundaryBox;
-        if (!boundaryBox) this.transparencyMap = texture.getTransparencyMap(true);
+        this.boundaryBox = usePolygon;
+        if (!usePolygon) this.transparencyMap = texture.getTransparencyMap(true);
     }
     public Button(float x, float y, Texture texture) {
         super(x,y);
