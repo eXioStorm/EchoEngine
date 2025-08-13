@@ -1,16 +1,9 @@
 package com.github.exiostorm.graphics.gui;
 
 import com.github.exiostorm.graphics.*;
-import com.github.exiostorm.main.EchoGame;
-import com.github.exiostorm.main.GamePanel;
-import com.github.exiostorm.utils.MathTools;
-import lombok.Getter;
-import lombok.Setter;
-import org.joml.Vector2f;
+import com.github.exiostorm.utils.*;
 
 import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
@@ -34,7 +27,7 @@ public class Button extends GUIElement {
     private long lastPressed = 0;
     public boolean hovered = false;
     public boolean clicked = false;
-    private boolean boundaryBox = false;
+    private boolean usePolygon = false;
     private boolean hasTransforms = false;
     // Set hover action
     private Consumer<Button> onHoverAction;
@@ -44,15 +37,15 @@ public class Button extends GUIElement {
     private Consumer<Button> onClickAction;
     private Consumer<Button> onDragAction;
 
-    public Button(float x, float y, float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY, boolean boundaryBox, Texture texture) {
+    public Button(float x, float y, float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY, boolean usePolygon, Texture texture) {
         super(x, y);
         this.rotation = rotation;
         this.scaleX = scaleX;
         this.scaleY = scaleY;
         this.flipX = flipX;
         this.flipY = flipY;
-        this.boundaryBox = boundaryBox;
-        //TODO [!] need method here to modify the transparencyMap.
+        this.usePolygon = usePolygon;
+        //TODO [!][!!][!!!][20250813@2:58pm] need to also transform polygon if that gets used.
         MathTools.TransformResult transformResult = MathTools.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
         this.transparencyMap = transformResult.map;
         this.width = transformResult.width;
@@ -67,6 +60,7 @@ public class Button extends GUIElement {
         this.scaleY = scaleY;
         this.flipX = flipX;
         this.flipY = flipY;
+        //TODO [!][!!][!!!][20250813@2:58pm] need to also transform polygon if that gets used.
         MathTools.TransformResult transformResult = MathTools.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
         this.transparencyMap = transformResult.map;
         this.width = transformResult.width;
@@ -80,8 +74,12 @@ public class Button extends GUIElement {
         this.width = texture.getWidth();
         this.height = texture.getHeight();
         this.texture = texture;
-        this.boundaryBox = usePolygon;
-        if (!usePolygon) this.transparencyMap = texture.getTransparencyMap(true);
+        this.usePolygon = usePolygon;
+        if (!usePolygon) {
+            this.transparencyMap = texture.getTransparencyMap(true);
+        } else {
+            this.polygon = squareHole.generateSimplePolygon(this.width, this.height);
+        }
     }
     public Button(float x, float y, Texture texture) {
         super(x,y);
@@ -122,7 +120,15 @@ public class Button extends GUIElement {
             return false;
         }
         //TODO [!] this won't work when transformed. need a bit more logic to make transformations work again.
-        if (boundaryBox) { return true;}
+        if (usePolygon) {
+            // Use polygon detection if polygon is defined
+            if (polygon != null) {
+                return polygon.contains((int)localMouseX, (int)localMouseY);
+            } else {
+                // Fall back to rectangle detection
+                return true;
+            }
+        }
         // Map mouse coordinates to pixel coordinates in the original texture
         int pixelX = (int) localMouseX;
         int pixelY = (int) localMouseY;
@@ -207,6 +213,6 @@ public class Button extends GUIElement {
         this.flipY = flipY;
     }
     public void useBoundaryBox(boolean value) {
-        this.boundaryBox = value;
+        this.usePolygon = value;
     }
 }
