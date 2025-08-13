@@ -122,6 +122,7 @@ public class Button extends GUIElement {
         //TODO [!] this won't work when transformed. need a bit more logic to make transformations work again.
         if (usePolygon) {
             // Use polygon detection if polygon is defined
+            //TODO [!][!!][!!!][20250813@3:02pm] if usePolygon is true, then polygon should never be null. look this over later.
             if (polygon != null) {
                 return polygon.contains((int)localMouseX, (int)localMouseY);
             } else {
