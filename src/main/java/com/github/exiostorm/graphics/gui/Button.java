@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector2f;
 
+import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
@@ -21,6 +22,7 @@ public class Button extends GUIElement {
 
     Material shaderMaterial;
     private Texture texture;
+    private Polygon polygon; //TODO [!][!!][!!!][20250813@2:15pm]
     private int width;
     private int height;
     private boolean[] transparencyMap;

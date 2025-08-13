@@ -10,6 +10,9 @@ import java.nio.file.*;
 
 //TODO [!][!!][!!!][20250813]
 // Big ol' hunk of AI slop. going to take awhile to go through and personally identify contents of this class.
+
+//TODO [!][!!][!!!][20250813]
+// Maybe forget about polygon generation for now, just generate a simple "square" polygon to start, hand have the information handling polygon collision?
 public class TransparencyPolygonConverter {
 
     /**
