@@ -1,6 +1,5 @@
 package com.github.exiostorm.graphics;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
@@ -107,7 +106,7 @@ public class TextureManager {
         if (save) {
             texture.setTransparencyMap(transparencyMap);
             // Save to JSON without causing a circular reference
-            saveTransparencyMapToJson(texture, transparencyMap);
+            saveTextureToJson(texture, transparencyMap);
         }
 
         return transparencyMap;
@@ -124,7 +123,7 @@ public class TextureManager {
 
         // Try loading from JSON first
         if (jsonFile.exists()) {
-            boolean[] loadedMap = loadTransparencyMapFromJson(texture);
+            boolean[] loadedMap = loadTextureFromJson(texture);
             if (loadedMap != null) {
                 if (save) {
                     texture.setTransparencyMap(loadedMap);
@@ -149,7 +148,7 @@ public class TextureManager {
             // The map is already saved by generateTransparencyMap
         } else {
             // Just save what we already have
-            saveTransparencyMapToJson(texture, texture.getTransparencyMap());
+            saveTextureToJson(texture, texture.getTransparencyMap());
         }
     }
 
@@ -178,6 +177,11 @@ public class TextureManager {
             }
         }
     }
+    //TODO [!][!!][!!!][20250814@2:04am]
+    // methods for polygon json data need to be made in this class~
+    public static void getOrGeneratePolygon(Texture texture) {
+
+    }
     private static void loadDimensionsFromJson(Texture texture, File jsonFile) {
         System.out.println("FOUND EXISTING DIMENSIONS JSON FILE! : " + jsonFile.getPath());
 
@@ -201,7 +205,7 @@ public class TextureManager {
             texture.setHeight(image.getHeight());
         }
     }
-    private static boolean[] loadTransparencyMapFromJson(Texture texture) {
+    private static boolean[] loadTextureFromJson(Texture texture) {
         String jsonPath = getJsonPath(texture);
         File jsonFile = new File(jsonPath);
 
@@ -218,14 +222,12 @@ public class TextureManager {
 
             JSONObject jsonObject = new JSONObject(jsonContent.toString());
 
-            // Only try to load transparency map
-            if (jsonObject.has("transparencyMap")) {
-                JSONArray transparencyArray = jsonObject.getJSONArray("transparencyMap");
-                boolean[] transparencyMap = new boolean[transparencyArray.length()];
+            // Load transparency map from hex string
+            if (jsonObject.has("transparencyMapHex") && jsonObject.has("transparencyMapLength")) {
+                String hexString = jsonObject.getString("transparencyMapHex");
+                int length = jsonObject.getInt("transparencyMapLength");
 
-                for (int i = 0; i < transparencyArray.length(); i++) {
-                    transparencyMap[i] = transparencyArray.getInt(i) == 1;
-                }
+                boolean[] transparencyMap = hexStringToBooleanArray(hexString, length);
 
                 System.out.println("Loaded transparency map from JSON with " + transparencyMap.length + " entries");
                 return transparencyMap;
@@ -235,8 +237,8 @@ public class TextureManager {
         }
         return null;
     }
-    // Fixed method to avoid circular dependency
-    private static void saveTransparencyMapToJson(Texture texture, boolean[] transparencyMap) {
+
+    private static void saveTextureToJson(Texture texture, boolean[] transparencyMap) {
         String jsonPath = getJsonPath(texture);
         JSONObject jsonObject = new JSONObject();
 
@@ -244,13 +246,11 @@ public class TextureManager {
         jsonObject.put("width", texture.getWidth());
         jsonObject.put("height", texture.getHeight());
 
-        // Save transparency map
+        // Save transparency map as hex string
         if (transparencyMap != null) {
-            JSONArray transparencyArray = new JSONArray();
-            for (boolean isTransparent : transparencyMap) {
-                transparencyArray.put(isTransparent ? 1 : 0);
-            }
-            jsonObject.put("transparencyMap", transparencyArray);
+            String hexString = booleanArrayToHexString(transparencyMap);
+            jsonObject.put("transparencyMapHex", hexString);
+            jsonObject.put("transparencyMapLength", transparencyMap.length);
         }
 
         try (FileWriter fileWriter = new FileWriter(jsonPath)) {
@@ -259,6 +259,71 @@ public class TextureManager {
         } catch (IOException e) {
             System.err.println("Error saving transparency map to JSON: " + e.getMessage());
         }
+    }
+
+    /**
+     * Convert boolean array to hexadecimal string representation
+     * Each bit represents one boolean value, packed into bytes
+     */
+    private static String booleanArrayToHexString(boolean[] booleans) {
+        if (booleans == null || booleans.length == 0) {
+            return "";
+        }
+
+        // Calculate number of bytes needed (round up)
+        int numBytes = (booleans.length + 7) / 8;
+        byte[] bytes = new byte[numBytes];
+
+        // Pack booleans into bits
+        for (int i = 0; i < booleans.length; i++) {
+            if (booleans[i]) {
+                int byteIndex = i / 8;
+                int bitIndex = i % 8;
+                bytes[byteIndex] |= (1 << bitIndex);
+            }
+        }
+
+        // Convert bytes to hex string
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes) {
+            hexString.append(String.format("%02x", b & 0xFF));
+        }
+
+        return hexString.toString();
+    }
+
+    /**
+     * Convert hexadecimal string back to boolean array
+     * @param hexString the hex representation
+     * @param length the original array length (needed because of potential padding)
+     */
+    private static boolean[] hexStringToBooleanArray(String hexString, int length) {
+        if (hexString == null || hexString.isEmpty() || length <= 0) {
+            return new boolean[0];
+        }
+
+        boolean[] booleans = new boolean[length];
+
+        // Convert hex string to bytes
+        int numBytes = hexString.length() / 2;
+        byte[] bytes = new byte[numBytes];
+
+        for (int i = 0; i < numBytes; i++) {
+            String byteString = hexString.substring(i * 2, i * 2 + 2);
+            bytes[i] = (byte) Integer.parseInt(byteString, 16);
+        }
+
+        // Extract bits back to booleans
+        for (int i = 0; i < length; i++) {
+            int byteIndex = i / 8;
+            int bitIndex = i % 8;
+
+            if (byteIndex < bytes.length) {
+                booleans[i] = (bytes[byteIndex] & (1 << bitIndex)) != 0;
+            }
+        }
+
+        return booleans;
     }
     public static Map<String, Texture> getTextures() {
         return Textures;

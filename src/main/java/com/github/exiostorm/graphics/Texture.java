@@ -3,6 +3,7 @@ package com.github.exiostorm.graphics;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
@@ -13,12 +14,11 @@ public class Texture {
     private String path;
     private int width;
     private int height;
-	private Shader shader = null;
+	private Shader shader;
+	private Polygon polygon;
 	private boolean[] transparencyMap;
 	private ByteBuffer byteBuffer;
 	private BufferedImage bufferedImage;
-	private String lombokString = "Placeholder to suppress lombok message : ";
-	private String packge = "com.github.exiostorm.graphics.Texture.";
 
 	/**
 	 * Set as package private, so we force the use of TextureManager. Do not use directly.
@@ -26,8 +26,10 @@ public class Texture {
 	 */
 	Texture(String path) {
 		this.path = path;
+		this.polygon = null;
 		this.transparencyMap = null;
 		this.byteBuffer = null;
+		this.shader = null;
 		getOrGenerateDimensions(this);
 	}
 	//TODO might delete this later, working out FBO logic.
@@ -61,23 +63,11 @@ public class Texture {
 		}
 		return byteBuffer;
 	}
-	//TODO getters/setters
-	public int getWidth() {
-		if (this.width < 0) { System.out.println(lombokString + packge + "getWidth()"); }
-		return this.width;
-	}
-	public void setWidth(int width) {
-		if (this.width < 0) { System.out.println(lombokString + packge + "setWidth()"); }
-		this.width = width;
-	}
-	public int getHeight() {
-		if (this.height < 0) { System.out.println(lombokString + packge + "getHeight()"); }
-		return this.height;
-	}
-	public void setHeight(int height) {
-		if (this.height < 0) { System.out.println(lombokString + packge + "setHeight()"); }
-		this.height = height;
-	}
+
+	public int getWidth() { return this.width; }
+	public void setWidth(int width) { this.width = width; }
+	public int getHeight() { return this.height; }
+	public void setHeight(int height) { this.height = height; }
 
 	public String getPath() {
 		return path;
@@ -86,10 +76,10 @@ public class Texture {
 	public Shader getShader() {
 		return shader;
 	}
-
 	public void setShader(Shader shader) {
 		this.shader = shader;
 	}
+
 	public boolean[] getTransparencyMap(){
 		return this.transparencyMap;
 	}

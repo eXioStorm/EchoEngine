@@ -7,6 +7,7 @@ import java.awt.*;
 import java.util.function.Consumer;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
+import static com.github.exiostorm.utils.ShapeTransformer.transformPolygon;
 
 //TODO [0] need logic for scale so our method "isMouseOver()" can scale up our transparency map as well.
 public class Button extends GUIElement {
@@ -39,36 +40,40 @@ public class Button extends GUIElement {
 
     public Button(float x, float y, float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY, boolean usePolygon, Texture texture) {
         super(x, y);
+        this.texture = texture;
+        this.hasTransforms = true;
         this.rotation = rotation;
         this.scaleX = scaleX;
         this.scaleY = scaleY;
         this.flipX = flipX;
         this.flipY = flipY;
         this.usePolygon = usePolygon;
-        //TODO [!][!!][!!!][20250813@2:58pm] need to also transform polygon if that gets used.
-        MathTools.TransformResult transformResult = MathTools.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
-        this.transparencyMap = transformResult.map;
-        this.width = transformResult.width;
-        this.height = transformResult.height;
-        this.hasTransforms = true;
-        this.texture = texture;
+        if (usePolygon) {
+            this.width = texture.getWidth();
+            this.height = texture.getHeight();
+            this.polygon = squareHole.generateSimplePolygon(this.width, this.height);
+            this.polygon = transformPolygon(this.polygon, scaleX, scaleY, flipX, flipY, rotation);
+        } else {
+            ShapeTransformer.TransformResult transformResult = ShapeTransformer.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
+            this.transparencyMap = transformResult.map;
+            this.width = transformResult.width;
+            this.height = transformResult.height;
+        }
     }
     public Button(float x, float y, float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY, Texture texture) {
         super(x, y);
+        this.texture = texture;
+        this.hasTransforms = true;
         this.rotation = rotation;
         this.scaleX = scaleX;
         this.scaleY = scaleY;
         this.flipX = flipX;
         this.flipY = flipY;
-        //TODO [!][!!][!!!][20250813@2:58pm] need to also transform polygon if that gets used.
-        MathTools.TransformResult transformResult = MathTools.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
+        ShapeTransformer.TransformResult transformResult = ShapeTransformer.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
         this.transparencyMap = transformResult.map;
         this.width = transformResult.width;
         this.height = transformResult.height;
-        this.hasTransforms = true;
-        this.texture = texture;
     }
-    //TODO [!] idk about having usePolygon as part of the initialization, but will leave it in for now.
     public Button(float x, float y, boolean usePolygon, Texture texture) {
         super(x, y);
         this.width = texture.getWidth();
@@ -111,18 +116,13 @@ public class Button extends GUIElement {
         float localMouseY = mouseY - y;
 
         // Ensure the mouse is within the bounds of the button
-        //TODO [!][!!][!!!][20250810]
-        // Need to modify logic to use our button object instead of original texture width/height
-        // because we need to support transformations, and we need simplified logic to
-        // support bounding boxes instead for cases where we need more efficiency.
         if (localMouseX < 0 || localMouseX >= this.width ||
                 localMouseY < 0 || localMouseY >= this.height) {
             return false;
         }
-        //TODO [!] this won't work when transformed. need a bit more logic to make transformations work again.
+
+        // Use polygon detection if polygon is defined
         if (usePolygon) {
-            // Use polygon detection if polygon is defined
-            //TODO [!][!!][!!!][20250813@3:02pm] if usePolygon is true, then polygon should never be null. look this over later.
             if (polygon != null) {
                 return polygon.contains((int)localMouseX, (int)localMouseY);
             } else {
@@ -130,6 +130,7 @@ public class Button extends GUIElement {
                 return true;
             }
         }
+
         // Map mouse coordinates to pixel coordinates in the original texture
         int pixelX = (int) localMouseX;
         int pixelY = (int) localMouseY;
