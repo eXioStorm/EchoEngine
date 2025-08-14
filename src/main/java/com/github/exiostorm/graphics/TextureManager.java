@@ -122,6 +122,8 @@ public class TextureManager {
         }
 
         String jsonPath = getJsonPath(texture);
+        //TODO [!][!!][!!!][20250815@12:06am]
+        // add jsonFile to Texture so that all these methods can just access it without having to create it every time.
         File jsonFile = new File(jsonPath);
 
         // Try loading from JSON first
@@ -157,6 +159,8 @@ public class TextureManager {
 
     public static void getOrGenerateDimensions(Texture texture) {
         String jsonPath = getJsonPath(texture);
+        //TODO [!][!!][!!!][20250815@12:06am]
+        // add jsonFile to Texture so that all these methods can just access it without having to create it every time.
         File jsonFile = new File(jsonPath);
 
         if (jsonFile.exists()) {
@@ -172,7 +176,8 @@ public class TextureManager {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("width", texture.getWidth());
             jsonObject.put("height", texture.getHeight());
-
+            //TODO [!][!!][!!!][20250815@12:06am]
+            // add FileWriter to Texture so that all these methods can just access it without having to create it every time.
             try (FileWriter fileWriter = new FileWriter(jsonPath)) {
                 fileWriter.write(jsonObject.toString(0));
             } catch (IOException e) {
@@ -211,6 +216,8 @@ public class TextureManager {
      */
     public static Polygon loadPolygonFromJson(Texture texture) {
         String jsonPath = getJsonPath(texture);
+        //TODO [!][!!][!!!][20250815@12:06am]
+        // add jsonFile to Texture so that all these methods can just access it without having to create it every time.
         File jsonFile = new File(jsonPath);
 
         if (!jsonFile.exists()) {
@@ -276,6 +283,8 @@ public class TextureManager {
         JSONObject jsonObject = new JSONObject();
 
         // Load existing JSON data if file exists
+        //TODO [!][!!][!!!][20250815@12:06am]
+        // add jsonFile to Texture so that all these methods can just access it without having to create it every time.
         File jsonFile = new File(jsonPath);
         if (jsonFile.exists()) {
             try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
@@ -309,6 +318,8 @@ public class TextureManager {
         jsonObject.put("polygon", polygonObject);
 
         // Save to file
+        //TODO [!][!!][!!!][20250815@12:06am]
+        // add FileWriter to Texture so that all these methods can just access it without having to create it every time.
         try (FileWriter fileWriter = new FileWriter(jsonPath)) {
             fileWriter.write(jsonObject.toString(0));
             System.out.println("Polygon saved to JSON: " + jsonPath);
@@ -340,6 +351,8 @@ public class TextureManager {
     }
     private static boolean[] loadTextureFromJson(Texture texture) {
         String jsonPath = getJsonPath(texture);
+        //TODO [!][!!][!!!][20250815@12:06am]
+        // add jsonFile to Texture so that all these methods can just access it without having to create it every time.
         File jsonFile = new File(jsonPath);
 
         if (!jsonFile.exists()) {
