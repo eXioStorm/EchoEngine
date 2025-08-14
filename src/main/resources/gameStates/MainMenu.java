@@ -182,7 +182,7 @@ public class MainMenu implements State {
                     brighttester = true;
                     //renderer.checkShaderStatus(testShader);
                 }
-                System.out.println("Clicked button : " + button + ", at : " + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0] + "x" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
+                System.out.println("Clicked button : " + button + " @ X:[" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0] + "] Y:[" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]+"]");
             }
         });
         guiElements.add(squareButton);
@@ -231,7 +231,7 @@ public class MainMenu implements State {
                     //renderer.checkShaderStatus(testShader);
                 }
                 //System.out.println("huh?");
-                System.out.println("Clicked button : " + button + ", at : " + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0] + "x" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]);
+                System.out.println("Clicked button : " + button + " @ X:[" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[0] + "] Y:[" + gamePanel.playerInputManager.getPlayer(0).getMousePosition()[1]+"]");
             }
         });
         guiElements.add(patrickButton);

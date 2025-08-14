@@ -385,7 +385,8 @@ public class TextureManager {
             jsonObject.put("transparencyMapHex", hexString);
             jsonObject.put("transparencyMapLength", transparencyMap.length);
         }
-
+        //TODO [!][!!][!!!][20250815@12:06am]
+        // add FileWriter to Texture so that all these methods can just access it without having to create it every time.
         try (FileWriter fileWriter = new FileWriter(jsonPath)) {
             fileWriter.write(jsonObject.toString(0));
             System.out.println("Transparency map saved to JSON: " + jsonPath);

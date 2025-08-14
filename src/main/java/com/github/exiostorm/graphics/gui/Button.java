@@ -22,11 +22,11 @@ public class Button extends GUIElement {
     private int width;
     private int height;
     private boolean[] transparencyMap;
-    private float rotation;    // Rotation in radians
-    private float scaleX;      // Scale factor for X
-    private float scaleY;      // Scale factor for Y
-    private boolean flipX;    // Horizontal flip
-    private boolean flipY;    // Vertical flip
+    private float rotation = 0;    // Rotation in radians
+    private float scaleX = 1.0f;      // Scale factor for X
+    private float scaleY = 1.0f;      // Scale factor for Y
+    private boolean flipX = false;    // Horizontal flip
+    private boolean flipY = false;    // Vertical flip
     private long lastPressed = 0;
     public boolean hovered = false;
     public boolean clicked = false;
