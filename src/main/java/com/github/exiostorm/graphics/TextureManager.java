@@ -1,6 +1,6 @@
 package com.github.exiostorm.graphics;
 
-import com.github.exiostorm.utils.squareHole;
+import com.github.exiostorm.utils.ShapeUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -329,7 +329,7 @@ public class TextureManager {
         }
 
         // If not found, generate polygon (you'll need to implement this based on your logic)
-        polygon = squareHole.generateSimplePolygon(texture.getWidth(), texture.getHeight());;
+        polygon = ShapeUtils.generateSimplePolygon(texture.getWidth(), texture.getHeight());;
 
         if (polygon != null) {
             // Save the generated polygon for future use

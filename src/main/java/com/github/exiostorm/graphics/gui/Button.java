@@ -7,7 +7,7 @@ import java.awt.*;
 import java.util.function.Consumer;
 
 import static com.github.exiostorm.main.EchoGame.gamePanel;
-import static com.github.exiostorm.utils.ShapeTransformer.transformPolygon;
+import static com.github.exiostorm.utils.ShapeUtils.transformPolygon;
 
 //TODO [0] need logic for scale so our method "isMouseOver()" can scale up our transparency map as well.
 public class Button extends GUIElement {
@@ -53,7 +53,7 @@ public class Button extends GUIElement {
             this.height = texture.getHeight();
             this.polygon = transformPolygon(texture.getPolygon(), scaleX, scaleY, flipX, flipY, rotation);
         } else {
-            ShapeTransformer.TransformResult transformResult = ShapeTransformer.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
+            ShapeUtils.TransformResult transformResult = ShapeUtils.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
             this.transparencyMap = transformResult.map;
             this.width = transformResult.width;
             this.height = transformResult.height;
@@ -68,7 +68,7 @@ public class Button extends GUIElement {
         this.scaleY = scaleY;
         this.flipX = flipX;
         this.flipY = flipY;
-        ShapeTransformer.TransformResult transformResult = ShapeTransformer.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
+        ShapeUtils.TransformResult transformResult = ShapeUtils.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
         this.transparencyMap = transformResult.map;
         this.width = transformResult.width;
         this.height = transformResult.height;
