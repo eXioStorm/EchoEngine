@@ -1,8 +1,11 @@
 package com.github.exiostorm.graphics;
 
+import com.github.exiostorm.utils.squareHole;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -179,11 +182,9 @@ public class TextureManager {
     }
     //TODO [!][!!][!!!][20250814@2:04am]
     // methods for polygon json data need to be made in this class~
-    public static void getOrGeneratePolygon(Texture texture) {
 
-    }
     private static void loadDimensionsFromJson(Texture texture, File jsonFile) {
-        System.out.println("FOUND EXISTING DIMENSIONS JSON FILE! : " + jsonFile.getPath());
+        //System.out.println("FOUND EXISTING DIMENSIONS JSON FILE! : " + jsonFile.getPath());
 
         try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
             StringBuilder jsonContent = new StringBuilder();
@@ -197,13 +198,145 @@ public class TextureManager {
             // Only load dimensions
             texture.setWidth(jsonObject.getInt("width"));
             texture.setHeight(jsonObject.getInt("height"));
-            System.out.println("JSON values read. Width: " + texture.getWidth() + ", Height: " + texture.getHeight());
+            //System.out.println("JSON values read. Width: " + texture.getWidth() + ", Height: " + texture.getHeight());
         } catch (IOException e) {
             System.err.println("Error reading JSON file: " + e.getMessage());
             BufferedImage image = generateBufferedImage(texture, true);
             texture.setWidth(image.getWidth());
             texture.setHeight(image.getHeight());
         }
+    }
+    /**
+     * Load polygon data from JSON file if it exists, otherwise return null
+     */
+    public static Polygon loadPolygonFromJson(Texture texture) {
+        String jsonPath = getJsonPath(texture);
+        File jsonFile = new File(jsonPath);
+
+        if (!jsonFile.exists()) {
+            return null;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
+            StringBuilder jsonContent = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonContent.append(line);
+            }
+
+            JSONObject jsonObject = new JSONObject(jsonContent.toString());
+
+            // Check if polygon data exists
+            if (jsonObject.has("polygon")) {
+                JSONObject polygonObject = jsonObject.getJSONObject("polygon");
+
+                if (polygonObject.has("xpoints") && polygonObject.has("ypoints") && polygonObject.has("npoints")) {
+                    JSONArray xpointsArray = polygonObject.getJSONArray("xpoints");
+                    JSONArray ypointsArray = polygonObject.getJSONArray("ypoints");
+                    int npoints = polygonObject.getInt("npoints");
+
+                    // Validate data consistency
+                    if (xpointsArray.length() != ypointsArray.length() || xpointsArray.length() != npoints) {
+                        System.err.println("Inconsistent polygon data in JSON file");
+                        return null;
+                    }
+
+                    // Convert JSONArrays to int arrays
+                    int[] xpoints = new int[npoints];
+                    int[] ypoints = new int[npoints];
+
+                    for (int i = 0; i < npoints; i++) {
+                        xpoints[i] = xpointsArray.getInt(i);
+                        ypoints[i] = ypointsArray.getInt(i);
+                    }
+
+                    Polygon polygon = new Polygon(xpoints, ypoints, npoints);
+                    System.out.println("Loaded polygon from JSON with " + npoints + " points");
+                    return polygon;
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading polygon from JSON: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error parsing polygon data from JSON: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Save polygon data to JSON file (merges with existing data)
+     */
+    public static void savePolygonToJson(Texture texture, Polygon polygon) {
+        if (polygon == null) {
+            return;
+        }
+
+        String jsonPath = getJsonPath(texture);
+        JSONObject jsonObject = new JSONObject();
+
+        // Load existing JSON data if file exists
+        File jsonFile = new File(jsonPath);
+        if (jsonFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
+                StringBuilder jsonContent = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonContent.append(line);
+                }
+                jsonObject = new JSONObject(jsonContent.toString());
+            } catch (IOException e) {
+                System.err.println("Error reading existing JSON file: " + e.getMessage());
+                // Continue with empty JSON object
+            }
+        }
+
+        // Add or update polygon data
+        JSONObject polygonObject = new JSONObject();
+
+        JSONArray xpointsArray = new JSONArray();
+        JSONArray ypointsArray = new JSONArray();
+
+        for (int i = 0; i < polygon.npoints; i++) {
+            xpointsArray.put(polygon.xpoints[i]);
+            ypointsArray.put(polygon.ypoints[i]);
+        }
+
+        polygonObject.put("xpoints", xpointsArray);
+        polygonObject.put("ypoints", ypointsArray);
+        polygonObject.put("npoints", polygon.npoints);
+
+        jsonObject.put("polygon", polygonObject);
+
+        // Save to file
+        try (FileWriter fileWriter = new FileWriter(jsonPath)) {
+            fileWriter.write(jsonObject.toString(0));
+            System.out.println("Polygon saved to JSON: " + jsonPath);
+        } catch (IOException e) {
+            System.err.println("Error saving polygon to JSON: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get or generate polygon data for texture
+     */
+    public static Polygon getOrGeneratePolygon(Texture texture) {
+        // First try to load from JSON
+        Polygon polygon = loadPolygonFromJson(texture);
+
+        if (polygon != null) {
+            return polygon;
+        }
+
+        // If not found, generate polygon (you'll need to implement this based on your logic)
+        polygon = squareHole.generateSimplePolygon(texture.getWidth(), texture.getHeight());;
+
+        if (polygon != null) {
+            // Save the generated polygon for future use
+            savePolygonToJson(texture, polygon);
+        }
+
+        return polygon;
     }
     private static boolean[] loadTextureFromJson(Texture texture) {
         String jsonPath = getJsonPath(texture);

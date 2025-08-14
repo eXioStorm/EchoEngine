@@ -51,7 +51,7 @@ public class Button extends GUIElement {
         if (usePolygon) {
             this.width = texture.getWidth();
             this.height = texture.getHeight();
-            this.polygon = squareHole.generateSimplePolygon(this.width, this.height);
+            this.polygon = texture.getPolygon();
             this.polygon = transformPolygon(this.polygon, scaleX, scaleY, flipX, flipY, rotation);
         } else {
             ShapeTransformer.TransformResult transformResult = ShapeTransformer.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
@@ -83,7 +83,7 @@ public class Button extends GUIElement {
         if (!usePolygon) {
             this.transparencyMap = texture.getTransparencyMap(true);
         } else {
-            this.polygon = squareHole.generateSimplePolygon(this.width, this.height);
+            this.polygon = texture.getPolygon();
         }
     }
     public Button(float x, float y, Texture texture) {

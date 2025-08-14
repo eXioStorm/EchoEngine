@@ -57,6 +57,12 @@ public class Texture {
         }
         return this.transparencyMap;
     }
+	public Polygon getPolygon() {
+		if (this.polygon == null) {
+			return getOrGeneratePolygon(this);
+		}
+		return this.polygon;
+	}
 	public ByteBuffer getByteBuffer(byte saveFlag) {
 		if (this.byteBuffer == null) {
 			return generateByteBuffer(this, saveFlag);
