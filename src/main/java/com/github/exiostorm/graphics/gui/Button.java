@@ -16,7 +16,7 @@ public class Button extends GUIElement {
 
     Material shaderMaterial;
     private Texture texture;
-    private Polygon polygon; //TODO [!][!!][!!!][20250813@2:15pm]
+    private Polygon polygon;
     private int width;
     private int height;
     private boolean[] transparencyMap;
@@ -51,8 +51,7 @@ public class Button extends GUIElement {
         if (usePolygon) {
             this.width = texture.getWidth();
             this.height = texture.getHeight();
-            this.polygon = texture.getPolygon();
-            this.polygon = transformPolygon(this.polygon, scaleX, scaleY, flipX, flipY, rotation);
+            this.polygon = transformPolygon(texture.getPolygon(), scaleX, scaleY, flipX, flipY, rotation);
         } else {
             ShapeTransformer.TransformResult transformResult = ShapeTransformer.transformMap(texture.getTransparencyMap(true), texture.getWidth(), texture.getHeight(), scaleX, scaleY, flipX, flipY, rotation);
             this.transparencyMap = transformResult.map;
@@ -104,7 +103,7 @@ public class Button extends GUIElement {
         if (!visible) return;
         //TODO do something with the z coordinate for layering in order of objects last updated. e.g. when moving a button on top of another button.
         //gamePanel.getRenderer().draw(texture, atlas, x, y, 0.000000000000000000000000000000000000000000001f, shader, shaderMaterial);
-        gamePanel.getRenderer().draw(gamePanel.getAtlas().getAtlasID(), gamePanel.getAtlas().getAtlasSlot(), texture.getWidth(), texture.getHeight(), AtlasManager.getUV(gamePanel.getAtlas(), texture), x, y, 0.000000000000000000000000000000000000000000001f, shader, shaderMaterial, 0.0f, 1.0f, 1.0f, flipX, flipY);
+        gamePanel.getRenderer().draw(gamePanel.getAtlas().getAtlasID(), gamePanel.getAtlas().getAtlasSlot(), texture.getWidth(), texture.getHeight(), AtlasManager.getUV(gamePanel.getAtlas(), texture), x, y, 0.000000000000000000000000000000000000000000001f, shader, shaderMaterial, rotation, scaleX, scaleY, flipX, flipY);
     }
 
     //TODO [0] our transformation logic will conflict with our button logic since nothing else gets transformed besides what's rendered.
@@ -207,6 +206,8 @@ public class Button extends GUIElement {
         this.lastPressed = l;
     }
     public void modifyTransforms (float rotation, float scaleX, float scaleY, boolean flipX, boolean flipY) {
+        //TODO [!][!!][!!!][20250814@1:53pm]
+        // need to include logic to update transformed shapes
         this.hasTransforms = true;
         this.rotation = rotation;
         this.scaleX = scaleX;
@@ -214,7 +215,7 @@ public class Button extends GUIElement {
         this.flipX = flipX;
         this.flipY = flipY;
     }
-    public void useBoundaryBox(boolean value) {
+    public void usePolygon(boolean value) {
         this.usePolygon = value;
     }
 }
