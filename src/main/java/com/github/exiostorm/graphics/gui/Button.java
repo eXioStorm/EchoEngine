@@ -10,6 +10,8 @@ import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static com.github.exiostorm.utils.ShapeUtils.transformPolygon;
 
 //TODO [0] need logic for scale so our method "isMouseOver()" can scale up our transparency map as well.
+//TODO [!][!!][!!!][20250814@2:42pm]
+// Maybe use suppliers to use polygon/transMap instead so we don't have if checks that pile up? reduce number of if checks that are always true/false?
 public class Button extends GUIElement {
     Shader shader = gamePanel.getShader();
     TextureAtlas atlas = gamePanel.getAtlas();
@@ -103,7 +105,11 @@ public class Button extends GUIElement {
         if (!visible) return;
         //TODO do something with the z coordinate for layering in order of objects last updated. e.g. when moving a button on top of another button.
         //gamePanel.getRenderer().draw(texture, atlas, x, y, 0.000000000000000000000000000000000000000000001f, shader, shaderMaterial);
-        gamePanel.getRenderer().draw(gamePanel.getAtlas().getAtlasID(), gamePanel.getAtlas().getAtlasSlot(), texture.getWidth(), texture.getHeight(), AtlasManager.getUV(gamePanel.getAtlas(), texture), x, y, 0.000000000000000000000000000000000000000000001f, shader, shaderMaterial, rotation, scaleX, scaleY, flipX, flipY);
+        //TODO [!][!!][!!!][20250814@2:46pm]
+        // instead of having "0.000000000000000000000000000000000000000000001f", we need to implement a layer system...
+        gamePanel.getRenderer().draw(
+        this.atlas.getAtlasID(), this.atlas.getAtlasSlot(), this.texture.getWidth(), this.texture.getHeight(), AtlasManager.getUV(this.atlas, texture), x, y, 0.000000000000000000000000000000000000000000001f, this.shader, this.shaderMaterial, this.rotation, this.scaleX, this.scaleY, this.flipX, this.flipY
+        );
     }
 
     //TODO [0] our transformation logic will conflict with our button logic since nothing else gets transformed besides what's rendered.

@@ -431,6 +431,7 @@ public class TextureManager {
      * @param length the original array length (needed because of potential padding)
      */
     private static boolean[] hexStringToBooleanArray(String hexString, int length) {
+        // I sure hope that I never have to read/debug this...
         if (hexString == null || hexString.isEmpty() || length <= 0) {
             return new boolean[0];
         }
