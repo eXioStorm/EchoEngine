@@ -185,8 +185,6 @@ public class TextureManager {
             }
         }
     }
-    //TODO [!][!!][!!!][20250814@2:04am]
-    // methods for polygon json data need to be made in this class~
 
     private static void loadDimensionsFromJson(Texture texture, File jsonFile) {
         //System.out.println("FOUND EXISTING DIMENSIONS JSON FILE! : " + jsonFile.getPath());

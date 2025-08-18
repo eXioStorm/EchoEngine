@@ -17,15 +17,13 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 //TODO fuck. we also need new logic for a new atlas because of sizing restrictions. our atlas will need re-sized and re-uploaded when new glyphs are added.
 // Should have something to toggle the ability to generate new glyphs so that people can prevent performance hits. then new glyphs will just render with a default character.
 //TODO work on SDF generator logic
+
+//TODO [!][!!][!!!][20250818@1:19pm] Please give me the motivation to work through this PITA.
+// Because Java doesn't have any libraries or bindings to MSDF-ATLAS-GEN we have to pretty much create / port it to Java ourselves. So, I'm pretty sure this is going to be a large
+// math-intensive obstacle to get through. Goodluck!
 public class GlyphManager {
-    //private String lombokString = "Placeholder to suppress lombok message : ";
-    //private String packge = "com.github.exiostorm.graphics.GlyphManager.";
     private String glyphs = "glyphs";
     private String GLYPH_DIR = "glyphs/fonts/";
-
-    private static final int DEFAULT_RESOLUTION = 64;
-    private static final double DEFAULT_RANGE = 4.0;
-    private static final double DEFAULT_ANGLE_THRESHOLD = Math.PI / 3.0; // 60 degrees
 
     private String parentDirectory = "";
     private byte defaultLocale = 15;/*BaseLocale.US*/
