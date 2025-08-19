@@ -39,6 +39,8 @@ public class GamePanel {
     private String Name = "Application";
     private String DefaultState = "MainMenu";
     private String DefaultMapper = "MainMenu";
+    private String FontDirectory = "src/main/resources/fonts";
+    private String DefaultFont = "Ariel";
     private String iconPath = null;
     private String stateDirectory = null;
     private String inputmappersDirectory = null;
@@ -208,6 +210,18 @@ public class GamePanel {
     }
     public void setDefaultState(String defaultState){
         DefaultState = defaultState;
+    }
+    public String getFontDirectory(){
+        return FontDirectory;
+    }
+    public void setFontDirectory(String font) {
+        FontDirectory = font;
+    }
+    public String getDefaultFont(){
+      return DefaultFont;
+    }
+    public void setDefaultFont(String font) {
+        DefaultFont = font;
     }
     public void setDefaultInputMapper(String defaultMappers){
         DefaultMapper = defaultMappers;

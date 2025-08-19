@@ -2,9 +2,17 @@ package com.github.exiostorm.graphics;
 
 //import sun.util.locale.BaseLocale;
 
+import com.github.exiostorm.utils.MSDFGenExt;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,6 +20,8 @@ import java.util.List;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import static com.github.exiostorm.main.EchoGame.gamePanel;
+import static java.awt.Font.getFont;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 
 //TODO fuck. we also need new logic for a new atlas because of sizing restrictions. our atlas will need re-sized and re-uploaded when new glyphs are added.
@@ -28,9 +38,16 @@ public class GlyphManager {
     private String parentDirectory = "";
     private byte defaultLocale = 15;/*BaseLocale.US*/
     private int atlasSlot = GL_TEXTURE_2D;
+    //TODO [!][!!][!!!][20250819@12:33am]
+    // these values were added by prompt. they're not dynamic... need to analyze their usage and how to work with them.
+    private static final int GLYPH_SIZE = 64; // Output texture size
+    private static final double RANGE = 4.0; // Distance field range in pixels
+    private static final double SCALE = 32.0; // Font scale for rendering
     //TODO [0] need to set something up to detect OS and load a font file from the OS directory.
     // Actually, probably create our own ttf and load it with our application?
     private List<String> fonts = new ArrayList<>(Arrays.asList("Calligraserif"));
+    // Font cache
+    private java.util.Map<String, Font> loadedFonts = new java.util.HashMap<>();
 
     private TextureAtlas glyphAtlas = AtlasManager.atlas(GLYPH_DIR);
 
@@ -56,6 +73,8 @@ public class GlyphManager {
         // the problem when we do that with our atlas is that we lose the ability to have subatlases for texture swapping. in this particular instance we don't need it.
     }
 
+    //TODO [!][!!][!!!][20250818@2:50pm]
+    // idk what to write here just yet, just looking over this method and seeing what I was trying to do... 4 months ago...
     /**
      * During checking for our glyphs we use this method if our glyph is not found already on disk.
      * @param unicode the unicode to be saved... Might need to change this to a BufferedImage? won't know until I have more logic created.
@@ -82,13 +101,146 @@ public class GlyphManager {
     // "Our" MSDFGenExt has math logic for the generation of glyphs, things like contour, color, direction, point, etc. I have no understanding of how it works.
     //TODO Previously we were using ChatGpt trying to generate the glyphs and it was trying to use C++ references that we didn't have any identical references for in Java, currently we have no reference for actually generating anything and
     // we left off porting the C++ code to Java. We need to confirm we've ported the code we need and then generate our code / references with our new ported code.
-    public String createGlyph(int unicode, String font, File file) {
+    //public String createGlyph(int unicode, String font, File file) {
         //TODO [0] need to generate the glyph, save it to our directory, and then create a new texture.[New Texture is created on line 84 with TextureManager.addTexture(createGlyph())]
         //TODO [0] might need to set it up to batch process our glyphs as we'll be using multiple glyphs from any one ttf font file.
         // Load the TTF font into a ByteBuffer
 
-        return "null";
+     //   return "null";
+    //}
+    /**
+     * Creates an MSDF glyph texture and saves it to disk
+     * @param unicode The unicode codepoint
+     * @param fontName The font name
+     * @param outputFile The file to save the glyph to
+     * @return The path to the created texture file
+     */
+    public String createGlyph(int unicode, String fontName, File outputFile) {
+        try {
+            //TODO [!][!!][!!!][20250819@12:45am][1:07am ran out of LLM prompts... will continue later.]
+            // uhhhhhh... where exactly is it trying to grab fonts from? we need to re-direct it.
+
+            // Load the font
+            Font font = getFont(fontName);
+            if (font == null) {
+                System.err.println("Font not found: " + fontName);
+                return null;
+            }
+
+            // Create the glyph shape
+            Shape glyphShape = createGlyphShape(font, unicode);
+            if (glyphShape == null) {
+                System.err.println("Could not create glyph shape for unicode: " + unicode);
+                return null;
+            }
+
+            // Extract contours from the shape
+            List<MSDFGenExt.Contour> contours = MSDFGenExt.extractContours(glyphShape);
+            if (contours.isEmpty()) {
+                System.err.println("No contours found for unicode: " + unicode);
+                return null;
+            }
+
+            // Apply edge coloring
+            contours = MSDFGenExt.edgeColoringSimple(glyphShape, Math.toRadians(3.0),
+                    System.currentTimeMillis() % 1000);
+
+            // Generate the MSDF
+            BufferedImage msdfImage = MSDFGenExt.generateMSDF(contours, GLYPH_SIZE, RANGE);
+
+            // Ensure output directory exists
+            outputFile.getParentFile().mkdirs();
+
+            // Save the image
+            ImageIO.write(msdfImage, "PNG", outputFile);
+
+            return outputFile.getPath();
+
+        } catch (Exception e) {
+            System.err.println("Error creating glyph: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
+
+    /**
+     * Load a font from the resources folder
+     */
+    private Font getFont(String fontName) {
+        if (loadedFonts.containsKey(fontName)) {
+            return loadedFonts.get(fontName);
+        }
+
+        Font font = null;
+
+        // Try to load from resources folder first
+        try {
+            String resourcePath = gamePanel.getFontDirectory() + fontName + ".ttf";
+            File testFile = new File(gamePanel.getFontDirectory() + fontName + ".ttf");
+            if (testFile.exists()) System.out.println("found font file : " + fontName + ".ttf " + "@ : "+gamePanel.getFontDirectory());
+            java.io.InputStream fontStream = getClass().getResourceAsStream(resourcePath);
+            InputStream testStream = new FileInputStream(testFile);
+
+            if (testStream != null) {
+                font = Font.createFont(Font.TRUETYPE_FONT, testStream);
+                font = font.deriveFont((float)SCALE);
+                testStream.close();
+                System.out.println("✓ Loaded font from resources: " + resourcePath);
+            } else {
+                System.err.println("Font not found in resources: " + resourcePath);
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading font from resources: " + e.getMessage());
+        }
+
+        // Fallback: try to load from file system (your original GLYPH_DIR)
+        if (font == null) {
+            File fontFile = new File(GLYPH_DIR + fontName + ".ttf");
+            if (fontFile.exists()) {
+                try {
+                    font = Font.createFont(Font.TRUETYPE_FONT, fontFile);
+                    font = font.deriveFont((float)SCALE);
+                    System.out.println("✓ Loaded font from file system: " + fontFile.getPath());
+                } catch (Exception e) {
+                    System.err.println("Error loading font file: " + e.getMessage());
+                }
+            }
+        }
+
+        // Last resort: use a system font as fallback
+        if (font == null) {
+            System.err.println("⚠ Font '" + fontName + "' not found, using system fallback");
+            //TODO [!!!][!!!][!!!][20250819@10:47am]
+            font = new Font(Font.SERIF, Font.PLAIN, (int)SCALE); // Use SERIF as more reliable fallback
+        }
+
+        if (font != null) {
+            loadedFonts.put(fontName, font);
+        }
+
+        return font;
+    }
+
+    /**
+     * Create a Shape from a font glyph
+     */
+    private Shape createGlyphShape(Font font, int unicode) {
+        try {
+            FontRenderContext frc = new FontRenderContext(null, true, true);
+            String text = new String(Character.toChars(unicode));
+            GlyphVector gv = font.createGlyphVector(frc, text);
+
+            if (gv.getNumGlyphs() == 0) {
+                return null;
+            }
+
+            return gv.getGlyphOutline(0);
+        } catch (Exception e) {
+            System.err.println("Error creating glyph shape: " + e.getMessage());
+            return null;
+        }
+    }
+
     /**
      * Loads a TTF font file into a direct ByteBuffer.
      *
@@ -162,6 +314,6 @@ public class GlyphManager {
         this.fonts = fonts;
     }
     public void addFont(String fonts) { this.fonts.add(fonts); }
-    public void removeFont(String fonts) { this.fonts.add(fonts); }
+    public void removeFont(String fonts) { this.fonts.remove(fonts); }
     /**/
 }

@@ -22,6 +22,7 @@ public class MainMenu implements State {
     private Texture testTexture;
     private Texture patrickTexture;
     private FrameBuffer fbo;
+    static GlyphManager glyphManager;
     //TODO [0] need logic that passes the gamePanel from EchoGame when states are created so we can have easier reference to it that's independent from referencing EchoGame.
     BatchRenderer renderer = gamePanel.getRenderer();
     Shader exampleShader = gamePanel.getShader();
@@ -49,6 +50,9 @@ public class MainMenu implements State {
         initializeMaterials();
         panelAtlas();
         initFBO();
+        //TODO [!][!!][!!!][20250819@12:33am]
+        initializeGlyphs();
+        testSingleGlyph(glyphManager);
     }
 
     @Override
@@ -186,7 +190,7 @@ public class MainMenu implements State {
             }
         });
         guiElements.add(squareButton);
-        //TODO [!][!!][!!!][20250811]
+        //TODO [!][!!][!!][20250811]
         // test our changes to Button class for transformations such as flip.
         Button patrickButton = new Button((float) (gamePanel.WIDTH - patrickTexture.getHeight()) / 3, (float) (gamePanel.HEIGHT - patrickTexture.getHeight()) / 2, 0, 1.0f, 1.0f, false, false, false, patrickTexture);
         patrickButton.getTexture().setShader(exampleShader);
@@ -305,5 +309,29 @@ public class MainMenu implements State {
                 .setMap("lightColors", lightColors)
                 .setMap("lightIntensities", lightIntensities)
                 .setMap("lightRadii", lightRadii);*/
+    }
+    private static void initializeGlyphs() {
+        glyphManager = new GlyphManager();
+    }
+    private static void testSingleGlyph(GlyphManager manager) {
+        System.out.println("=== Testing Single Glyph Generation ===");
+
+        // Test generating the letter 'A'
+        int unicode = 'A';
+        String font = "Calligraserif"; // System font
+
+        System.out.println("Generating glyph for: " + (char)unicode + " (Unicode: " + unicode + ")");
+
+        File outputFile = new File("test_output/glyph_" + unicode + ".png");
+        String result = manager.createGlyph(unicode, font, outputFile);
+
+        if (result != null) {
+            System.out.println("✓ Glyph generated successfully: " + result);
+            System.out.println("  File size: " + outputFile.length() + " bytes");
+        } else {
+            System.out.println("✗ Failed to generate glyph");
+        }
+
+        System.out.println();
     }
 }
