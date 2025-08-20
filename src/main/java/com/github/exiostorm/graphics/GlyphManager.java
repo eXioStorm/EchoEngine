@@ -140,10 +140,12 @@ public class GlyphManager {
                 System.err.println("No contours found for unicode: " + unicode);
                 return null;
             }
+            //TODO [!!!][!!!][!!!][20250820@1:52am]
+            // visual "bug" might have to do with the seed that's set here. might not be a bug.
 
             // Apply edge coloring
             contours = MSDFGenExt.edgeColoringSimple(glyphShape, Math.toRadians(3.0),
-                    System.currentTimeMillis() % 1000);
+                    0);
 
             // Generate the MSDF
             BufferedImage msdfImage = MSDFGenExt.generateMSDF(contours, GLYPH_SIZE, RANGE);
@@ -167,6 +169,8 @@ public class GlyphManager {
      * Load a font from the resources folder
      */
     private Font getFont(String fontName) {
+        //TODO [!!!][!!!][!!!][20250819@9:49pm]
+        // Need this to also fetch from font directory if it exists already.
         if (loadedFonts.containsKey(fontName)) {
             return loadedFonts.get(fontName);
         }
@@ -176,19 +180,13 @@ public class GlyphManager {
         // Try to load from resources folder first
         try {
             String resourcePath = gamePanel.getFontDirectory() + fontName + ".ttf";
-            File testFile = new File(gamePanel.getFontDirectory() + fontName + ".ttf");
-            if (testFile.exists()) System.out.println("found font file : " + fontName + ".ttf " + "@ : "+gamePanel.getFontDirectory());
-            java.io.InputStream fontStream = getClass().getResourceAsStream(resourcePath);
-            InputStream testStream = new FileInputStream(testFile);
+            File fontFile = new File(resourcePath);
+            InputStream fontStream = new FileInputStream(fontFile);
 
-            if (testStream != null) {
-                font = Font.createFont(Font.TRUETYPE_FONT, testStream);
-                font = font.deriveFont((float)SCALE);
-                testStream.close();
-                System.out.println("✓ Loaded font from resources: " + resourcePath);
-            } else {
-                System.err.println("Font not found in resources: " + resourcePath);
-            }
+            font = Font.createFont(Font.TRUETYPE_FONT, fontStream);
+            font = font.deriveFont((float)SCALE);
+            fontStream.close();
+            System.out.println("✓ Loaded font from resources: " + resourcePath);
         } catch (Exception e) {
             System.err.println("Error loading font from resources: " + e.getMessage());
         }

@@ -52,7 +52,12 @@ public class MainMenu implements State {
         initFBO();
         //TODO [!][!!][!!!][20250819@12:33am]
         initializeGlyphs();
-        testSingleGlyph(glyphManager);
+        int unicode = 'A';
+        while(unicode<'E') {
+            testSingleGlyph(glyphManager, unicode);
+            unicode++;
+        }
+        //testSingleGlyph(glyphManager, unicode);
     }
 
     @Override
@@ -313,11 +318,11 @@ public class MainMenu implements State {
     private static void initializeGlyphs() {
         glyphManager = new GlyphManager();
     }
-    private static void testSingleGlyph(GlyphManager manager) {
+    private static void testSingleGlyph(GlyphManager manager, int unicode) {
         System.out.println("=== Testing Single Glyph Generation ===");
 
         // Test generating the letter 'A'
-        int unicode = 'A';
+        //int unicode = 'A';
         String font = "Calligraserif"; // System font
 
         System.out.println("Generating glyph for: " + (char)unicode + " (Unicode: " + unicode + ")");
