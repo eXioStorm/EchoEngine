@@ -145,7 +145,7 @@ public class GlyphManager {
 
             // Apply edge coloring
             contours = MSDFGenExt.edgeColoringSimple(glyphShape, Math.toRadians(3.0),
-                    0);
+                    System.currentTimeMillis() % 1000);
 
             // Generate the MSDF
             BufferedImage msdfImage = MSDFGenExt.generateMSDF(contours, GLYPH_SIZE, RANGE);

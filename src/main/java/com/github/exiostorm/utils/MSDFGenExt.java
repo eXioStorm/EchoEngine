@@ -13,9 +13,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+//TODO [!!!][!!!][!!!][20250821@1:16pm]
 /**
- * MSDF generation utilities for Java AWT Shapes
+ * figured out why Claude was struggling so much to get this working properly.
+ * MSDF generation involves many more classes with heavy mathematical calculations to be made.
+ * this means we pretty much have to port the entire project, every class.
+ * So, that's what we'll do. port every class one-by-one, and THEN edit out what we don't need.
+ * By porting the project that way, we'll make it easier for Claude to port the logic directly rather than taking shortcuts to fit the limited context window.
  */
+@Deprecated
 public class MSDFGenExt {
 
     // Constants for edge colors
@@ -27,6 +33,25 @@ public class MSDFGenExt {
     public static final int MAGENTA = RED | BLUE;   // 5
     public static final int CYAN = GREEN | BLUE;    // 6
     public static final int WHITE = RED | GREEN | BLUE; // 7
+
+    /**
+     * Error correction configuration to match C++
+     */
+    public static class ErrorCorrectionConfig {
+        public static final int DISABLED = 0;
+        public static final int EDGE_PRIORITY = 1;
+        public static final int INDISCRIMINATE = 2;
+        public static final int EDGE_ONLY = 3;
+
+        public static final int DO_NOT_CHECK_DISTANCE = 0;
+        public static final int CHECK_DISTANCE_AT_EDGE = 1;
+        public static final int ALWAYS_CHECK_DISTANCE = 2;
+
+        public int mode = EDGE_PRIORITY;
+        public int distanceCheckMode = CHECK_DISTANCE_AT_EDGE;
+        public double minDeviationRatio = 1.11;
+        public double minImproveRatio = 1.1;
+    }
 
     /**
      * Represents a contour in the shape
@@ -330,6 +355,25 @@ public class MSDFGenExt {
         // Add the last contour if it wasn't closed
         if (currentContour != null && !currentContour.getEdges().isEmpty()) {
             contours.add(currentContour);
+        }
+
+        return contours;
+    }
+
+    /**
+     * Normalize contours (equivalent to C++ shape.normalize())
+     */
+    public static List<Contour> normalizeContours(List<Contour> contours) {
+        // Remove empty contours
+        contours.removeIf(Contour::isEmpty);
+
+        // Remove degenerate edges and normalize directions
+        for (Contour contour : contours) {
+            contour.getEdges().removeIf(edgeHolder -> {
+                EdgeSegment edge = edgeHolder.getEdge();
+                // Remove edges with zero length
+                return edge.getP0().distance(edge.getP1()) < 1e-10f;
+            });
         }
 
         return contours;
@@ -760,9 +804,17 @@ public class MSDFGenExt {
         double centerY = textureSize / (2.0 * scale) - (bounds.getY() + bounds.getHeight() / 2.0);
         return new Vector2d(centerX, centerY);
     }
-
-    private boolean shouldApplyScanlinePass() {
+    //TODO finish the logic for this method.
+    public static boolean shouldApplyScanlinePass() {
         // Match C++ logic for when scanline pass is needed
         return true; // Simplified - C++ has complex conditions
+    }
+    /**
+     * Apply scanline pass for sign correction (simplified version)
+     */
+    public static BufferedImage applyScanlinePass(BufferedImage msdfImage, List<Contour> contours) {
+        // This is a simplified implementation - the C++ version is much more complex
+        // For now, just return the original image
+        return msdfImage;
     }
 }
