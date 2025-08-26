@@ -1,6 +1,7 @@
 package com.github.exiostorm.utils.msdf;
 
 import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
+import org.joml.Vector2d;
 import org.joml.Vector2f;
 
 import java.awt.*;
@@ -8,6 +9,14 @@ import java.awt.*;
 import static com.github.exiostorm.utils.msdf.enums.EdgeColorEnum.*;
 
 public class EdgeColoring {
+    private static int symmetricalTrichotomy(int position, int n) {
+        return (int) ((3+2.875*position/(n-1)-1.4375+.5)-3);
+    }
+    private static boolean isCorner(Vector2f dirA, Vector2f dirB, double crossThreshold) {
+        float dot = dirA.dot(dirB);
+        float cross = dirA.x * dirB.y - dirA.y * dirB.x;
+        return dot <= 0 || Math.abs(cross) > crossThreshold; // Added missing dot product check
+    }
     static int seedExtract3(Seed seed) {
         int v = (int)(seed.value % 3);
         seed.value /= 3;
@@ -30,7 +39,7 @@ public class EdgeColoring {
 
             { // Identify corners
                 corners.clear();
-                Vector2f prevDirection = contour.edges(contour.edges.size() - 1).direction(1);
+                Vector2d prevDirection = contour.edges(contour.edges.size() - 1).direction(1);
                 int index = 0;
                 for (java.util.Iterator<EdgeHolder> edgeIter = contour.edges.iterator(); edgeIter.hasNext(); index++) {
                     EdgeHolder edge = edgeIter.next();

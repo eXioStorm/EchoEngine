@@ -1,0 +1,641 @@
+package com.github.exiostorm.utils.msdf;
+
+import org.joml.Vector2d;
+
+import java.awt.geom.Rectangle2D;
+import java.util.Vector;
+
+public abstract class EdgeSegment {
+    public static EdgeSegment create(Vector2d p0, Vector2d p1, EdgeColor edgeColor) {
+        return new LinearSegment(p0, p1, edgeColor);
+    }
+    public static EdgeSegment create(Vector2d p0, Vector2d p1, Vector2d p2, EdgeColor edgeColor) {
+
+        Vector2d v1 = new Vector2d(p1).sub(p0);
+        Vector2d v2 = new Vector2d(p2).sub(p1);
+
+        if (v1.dot(v2) == 0.0f) {
+            return new LinearSegment(p0, p2, edgeColor);
+        }
+
+        return new QuadraticSegment(p0, p1, p2, edgeColor);
+    }
+    public static EdgeSegment create(Vector2d p0, Vector2d p1, Vector2d p2, Vector2d p3, EdgeColor edgeColor) {
+
+        Vector2d p12 = new Vector2d(p2).sub(p1);
+        if (new Vector2d(p1).sub(p0).dot(p12) == 0.0f && p12.dot(new Vector2d(p3).sub(p2)) == 0.0f) {
+            return new LinearSegment(p0, p3, edgeColor);
+        }
+        Vector2d newP12 = new Vector2d(p1).mul(1.5f).sub(new Vector2d(p0).mul(0.5f));
+
+        Vector2d rightSide = new Vector2d(p2).mul(1.5f).sub(new Vector2d(p3).mul(0.5f));
+
+        if (newP12.equals(rightSide)) {
+            return new QuadraticSegment(p0, newP12, p3, edgeColor);
+        }
+        return new CubicSegment(p0, p1, p2, p3, edgeColor);
+    }
+    public void distanceToPerpendicularDistance(SignedDistance distance, Vector2d origin, double param) {
+        if (param < 0) {
+            Vector2d dir = direction(0).normalize();
+            Vector2d aq = new Vector2d(origin).sub(point(0));
+            double ts = dotProduct(aq, dir);
+            if (ts < 0) {
+                double perpendicularDistance = crossProduct(aq, dir);
+                if (Math.abs(perpendicularDistance) <= Math.abs(distance.distance)) {
+                    distance.distance = perpendicularDistance;
+                    distance.dot = 0;
+                }
+            }
+        } else if (param > 1) {
+            Vector2d dir = direction(1).normalize();
+            Vector2d bq = new Vector2d(origin).sub(point(1));
+            double ts = dotProduct(bq, dir);
+            if (ts > 0) {
+                double perpendicularDistance = crossProduct(bq, dir);
+                if (Math.abs(perpendicularDistance) <= Math.abs(distance.distance)) {
+                    distance.distance = perpendicularDistance;
+                    distance.dot = 0;
+                }
+            }
+        }
+    }
+
+    public abstract EdgeSegment clone();
+    public abstract int type();
+    public abstract Vector2d[] controlPoints();
+    public abstract Vector2d point(double param);
+    public abstract Vector2d direction(double param);
+    public abstract Vector2d directionChange(double param);
+    public abstract double length();
+    public abstract SignedDistance signedDistance(Vector2d origin, double[] param);
+    public abstract int scanlineIntersections(double[] x, int[] dy, double y);
+    public abstract void bound(Rectangle2D bounds);
+    public abstract void reverse();
+    public abstract void moveStartPoint(Vector2d to);
+    public abstract void moveEndPoint(Vector2d to);
+    public abstract void splitInThirds(EdgeSegment[] parts);
+}
+class LinearSegment extends EdgeSegment {
+    private Vector2d[] p = new Vector2d[2];
+
+    public LinearSegment(Vector2d p0, Vector2d p1, EdgeColor edgeColor) {
+        super(edgeColor);
+        p[0] = new Vector2d(p0);
+        p[1] = new Vector2d(p1);
+    }
+
+    @Override
+    public LinearSegment clone() {
+        return new LinearSegment(p[0], p[1], color);
+    }
+
+    @Override
+    public int type() {
+        return EDGE_TYPE;
+    }
+
+    @Override
+    public Vector2d[] controlPoints() {
+        return p.clone();
+    }
+
+    @Override
+    public Vector2d point(double param) {
+        return mix(p[0], p[1], param);
+    }
+
+    @Override
+    public Vector2d direction(double param) {
+        return new Vector2d(p[1]).sub(p[0]);
+    }
+
+    @Override
+    public Vector2d directionChange(double param) {
+        return new Vector2d();
+    }
+
+    @Override
+    public double length() {
+        return new Vector2d(p[1]).sub(p[0]).length();
+    }
+
+    @Override
+    public SignedDistance signedDistance(Vector2d origin, double[] param) {
+        Vector2d aq = new Vector2d(origin).sub(p[0]);
+        Vector2d ab = new Vector2d(p[1]).sub(p[0]);
+        param[0] = dotProduct(aq, ab) / dotProduct(ab, ab);
+        Vector2d eq = new Vector2d(p[param[0] > 0.5 ? 1 : 0]).sub(origin);
+        double endpointDistance = eq.length();
+        if (param[0] > 0 && param[0] < 1) {
+            double orthoDistance = dotProduct(ab.getOrthonormal(false), aq);
+            if (Math.abs(orthoDistance) < endpointDistance)
+                return new SignedDistance(orthoDistance, 0);
+        }
+        return new SignedDistance(nonZeroSign(crossProduct(aq, ab)) * endpointDistance,
+                Math.abs(dotProduct(ab.normalize(), eq.normalize())));
+    }
+
+    @Override
+    public int scanlineIntersections(double[] x, int[] dy, double y) {
+        if ((y >= p[0].y && y < p[1].y) || (y >= p[1].y && y < p[0].y)) {
+            double param = (y - p[0].y) / (p[1].y - p[0].y);
+            x[0] = mix(p[0].x, p[1].x, param);
+            dy[0] = sign(p[1].y - p[0].y);
+            return 1;
+        }
+        return 0;
+    }
+
+    @Override
+    public void bound(Rectangle2D bounds) {
+        pointBounds(p[0], bounds);
+        pointBounds(p[1], bounds);
+    }
+
+    @Override
+    public void reverse() {
+        Vector2d tmp = p[0];
+        p[0] = p[1];
+        p[1] = tmp;
+    }
+
+    @Override
+    public void moveStartPoint(Vector2d to) {
+        p[0] = new Vector2d(to);
+    }
+
+    @Override
+    public void moveEndPoint(Vector2d to) {
+        p[1] = new Vector2d(to);
+    }
+
+    @Override
+    public void splitInThirds(EdgeSegment[] parts) {
+        parts[0] = new LinearSegment(p[0], point(1.0/3.0), color);
+        parts[1] = new LinearSegment(point(1.0/3.0), point(2.0/3.0), color);
+        parts[2] = new LinearSegment(point(2.0/3.0), p[1], color);
+    }
+}
+
+class QuadraticSegment extends EdgeSegment {
+    private Vector2d[] p = new Vector2d[3];
+
+    public QuadraticSegment(Vector2d p0, Vector2d p1, Vector2d p2, EdgeColor edgeColor) {
+        super(edgeColor);
+        p[0] = new Vector2d(p0);
+        p[1] = new Vector2d(p1);
+        p[2] = new Vector2d(p2);
+    }
+
+    @Override
+    public QuadraticSegment clone() {
+        return new QuadraticSegment(p[0], p[1], p[2], color);
+    }
+
+    @Override
+    public int type() {
+        return EDGE_TYPE;
+    }
+
+    @Override
+    public Vector2d[] controlPoints() {
+        return p.clone();
+    }
+
+    @Override
+    public Vector2d point(double param) {
+        return mix(mix(p[0], p[1], param), mix(p[1], p[2], param), param);
+    }
+
+    @Override
+    public Vector2d direction(double param) {
+        Vector2d v1 = new Vector2d(p[1]).sub(p[0]);
+        Vector2d v2 = new Vector2d(p[2]).sub(p[1]);
+        Vector2d tangent = mix(v1, v2, param);
+        if (tangent.lengthSquared() == 0)
+            return new Vector2d(p[2]).sub(p[0]);
+        return tangent;
+    }
+
+    @Override
+    public Vector2d directionChange(double param) {
+        Vector2d v1 = new Vector2d(p[2]).sub(p[1]);
+        Vector2d v2 = new Vector2d(p[1]).sub(p[0]);
+        return v1.sub(v2);
+    }
+
+    @Override
+    public double length() {
+        Vector2d ab = new Vector2d(p[1]).sub(p[0]);
+        Vector2d br = new Vector2d(p[2]).sub(p[1]).sub(ab);
+        double abab = dotProduct(ab, ab);
+        double abbr = dotProduct(ab, br);
+        double brbr = dotProduct(br, br);
+        double abLen = Math.sqrt(abab);
+        double brLen = Math.sqrt(brbr);
+        double crs = crossProduct(ab, br);
+        double h = Math.sqrt(abab + abbr + abbr + brbr);
+        return (brLen * ((abbr + brbr) * h - abbr * abLen) +
+                crs * crs * Math.log((brLen * h + abbr + brbr) / (brLen * abLen + abbr))) /
+                (brbr * brLen);
+    }
+
+    @Override
+    public SignedDistance signedDistance(Vector2d origin, double[] param) {
+        Vector2d qa = new Vector2d(p[0]).sub(origin);
+        Vector2d ab = new Vector2d(p[1]).sub(p[0]);
+        Vector2d br = new Vector2d(p[2]).sub(p[1]).sub(ab);
+        double a = dotProduct(br, br);
+        double b = 3 * dotProduct(ab, br);
+        double c = 2 * dotProduct(ab, ab) + dotProduct(qa, br);
+        double d = dotProduct(qa, ab);
+        double[] t = new double[3];
+        int solutions = solveCubic(t, a, b, c, d);
+
+        Vector2d epDir = direction(0);
+        double minDistance = nonZeroSign(crossProduct(epDir, qa)) * qa.length();
+        param[0] = -dotProduct(qa, epDir) / dotProduct(epDir, epDir);
+        {
+            double distance = new Vector2d(p[2]).sub(origin).length();
+            if (distance < Math.abs(minDistance)) {
+                epDir = direction(1);
+                minDistance = nonZeroSign(crossProduct(epDir, new Vector2d(p[2]).sub(origin))) * distance;
+                param[0] = dotProduct(new Vector2d(origin).sub(p[1]), epDir) / dotProduct(epDir, epDir);
+            }
+        }
+        for (int i = 0; i < solutions; ++i) {
+            if (t[i] > 0 && t[i] < 1) {
+                Vector2d qe = new Vector2d(qa).add(new Vector2d(ab).mul(2 * t[i])).add(new Vector2d(br).mul(t[i] * t[i]));
+                double distance = qe.length();
+                if (distance <= Math.abs(minDistance)) {
+                    Vector2d tangent = new Vector2d(ab).add(new Vector2d(br).mul(t[i]));
+                    minDistance = nonZeroSign(crossProduct(tangent, qe)) * distance;
+                    param[0] = t[i];
+                }
+            }
+        }
+
+        if (param[0] >= 0 && param[0] <= 1)
+            return new SignedDistance(minDistance, 0);
+        if (param[0] < 0.5)
+            return new SignedDistance(minDistance, Math.abs(dotProduct(direction(0).normalize(), qa.normalize())));
+        else
+            return new SignedDistance(minDistance, Math.abs(dotProduct(direction(1).normalize(), new Vector2d(p[2]).sub(origin).normalize())));
+    }
+
+    @Override
+    public int scanlineIntersections(double[] x, int[] dy, double y) {
+        int total = 0;
+        int nextDY = y > p[0].y ? 1 : -1;
+        x[total] = p[0].x;
+        if (p[0].y == y) {
+            if (p[0].y < p[1].y || (p[0].y == p[1].y && p[0].y < p[2].y))
+                dy[total++] = 1;
+            else
+                nextDY = 1;
+        }
+        {
+            Vector2d ab = new Vector2d(p[1]).sub(p[0]);
+            Vector2d br = new Vector2d(p[2]).sub(p[1]).sub(ab);
+            double[] t = new double[2];
+            int solutions = solveQuadratic(t, br.y, 2 * ab.y, p[0].y - y);
+            // Sort solutions
+            if (solutions >= 2 && t[0] > t[1]) {
+                double tmp = t[0]; t[0] = t[1]; t[1] = tmp;
+            }
+            for (int i = 0; i < solutions && total < 2; ++i) {
+                if (t[i] >= 0 && t[i] <= 1) {
+                    x[total] = p[0].x + 2 * t[i] * ab.x + t[i] * t[i] * br.x;
+                    if (nextDY * (ab.y + t[i] * br.y) >= 0) {
+                        dy[total++] = nextDY;
+                        nextDY = -nextDY;
+                    }
+                }
+            }
+        }
+        if (p[2].y == y) {
+            if (nextDY > 0 && total > 0) {
+                --total;
+                nextDY = -1;
+            }
+            if ((p[2].y < p[1].y || (p[2].y == p[1].y && p[2].y < p[0].y)) && total < 2) {
+                x[total] = p[2].x;
+                if (nextDY < 0) {
+                    dy[total++] = -1;
+                    nextDY = 1;
+                }
+            }
+        }
+        if (nextDY != (y >= p[2].y ? 1 : -1)) {
+            if (total > 0)
+                --total;
+            else {
+                if (Math.abs(p[2].y - y) < Math.abs(p[0].y - y))
+                    x[total] = p[2].x;
+                dy[total++] = nextDY;
+            }
+        }
+        return total;
+    }
+
+    @Override
+    public void bound(Rectangle2D bounds) {
+        pointBounds(p[0], bounds);
+        pointBounds(p[2], bounds);
+        Vector2d bot = new Vector2d(p[1]).sub(p[0]).sub(new Vector2d(p[2]).sub(p[1]));
+        if (bot.x != 0) {
+            double param = (p[1].x - p[0].x) / bot.x;
+            if (param > 0 && param < 1)
+                pointBounds(point(param), bounds);
+        }
+        if (bot.y != 0) {
+            double param = (p[1].y - p[0].y) / bot.y;
+            if (param > 0 && param < 1)
+                pointBounds(point(param), bounds);
+        }
+    }
+
+    @Override
+    public void reverse() {
+        Vector2d tmp = p[0];
+        p[0] = p[2];
+        p[2] = tmp;
+    }
+
+    @Override
+    public void moveStartPoint(Vector2d to) {
+        Vector2d origSDir = new Vector2d(p[0]).sub(p[1]);
+        Vector2d origP1 = new Vector2d(p[1]);
+        Vector2d v1 = new Vector2d(p[0]).sub(p[1]);
+        Vector2d v2 = new Vector2d(to).sub(p[0]);
+        Vector2d v3 = new Vector2d(p[2]).sub(p[1]);
+        p[1].add(new Vector2d(v3).mul(crossProduct(v1, v2) / crossProduct(v1, v3)));
+        p[0] = new Vector2d(to);
+        if (dotProduct(origSDir, new Vector2d(p[0]).sub(p[1])) < 0)
+            p[1] = origP1;
+    }
+
+    @Override
+    public void moveEndPoint(Vector2d to) {
+        Vector2d origEDir = new Vector2d(p[2]).sub(p[1]);
+        Vector2d origP1 = new Vector2d(p[1]);
+        Vector2d v1 = new Vector2d(p[2]).sub(p[1]);
+        Vector2d v2 = new Vector2d(to).sub(p[2]);
+        Vector2d v3 = new Vector2d(p[0]).sub(p[1]);
+        p[1].add(new Vector2d(v3).mul(crossProduct(v1, v2) / crossProduct(v1, v3)));
+        p[2] = new Vector2d(to);
+        if (dotProduct(origEDir, new Vector2d(p[2]).sub(p[1])) < 0)
+            p[1] = origP1;
+    }
+
+    @Override
+    public void splitInThirds(EdgeSegment[] parts) {
+        parts[0] = new QuadraticSegment(p[0], mix(p[0], p[1], 1.0/3.0), point(1.0/3.0), color);
+        Vector2d midControl = mix(mix(p[0], p[1], 5.0/9.0), mix(p[1], p[2], 4.0/9.0), 0.5);
+        parts[1] = new QuadraticSegment(point(1.0/3.0), midControl, point(2.0/3.0), color);
+        parts[2] = new QuadraticSegment(point(2.0/3.0), mix(p[1], p[2], 2.0/3.0), p[2], color);
+    }
+
+    public EdgeSegment convertToCubic() {
+        return new CubicSegment(p[0], mix(p[0], p[1], 2.0/3.0), mix(p[1], p[2], 1.0/3.0), p[2], color);
+    }
+}
+
+class CubicSegment extends EdgeSegment {
+    private Vector2d[] p = new Vector2d[4];
+
+    public CubicSegment(Vector2d p0, Vector2d p1, Vector2d p2, Vector2d p3, EdgeColor edgeColor) {
+        super(edgeColor);
+        p[0] = new Vector2d(p0);
+        p[1] = new Vector2d(p1);
+        p[2] = new Vector2d(p2);
+        p[3] = new Vector2d(p3);
+    }
+
+    @Override
+    public CubicSegment clone() {
+        return new CubicSegment(p[0], p[1], p[2], p[3], color);
+    }
+
+    @Override
+    public int type() {
+        return EDGE_TYPE;
+    }
+
+    @Override
+    public Vector2d[] controlPoints() {
+        return p.clone();
+    }
+
+    @Override
+    public Vector2d point(double param) {
+        Vector2d p12 = mix(p[1], p[2], param);
+        Vector2d temp1 = mix(mix(p[0], p[1], param), p12, param);
+        Vector2d temp2 = mix(p12, mix(p[2], p[3], param), param);
+        return mix(temp1, temp2, param);
+    }
+
+    @Override
+    public Vector2d direction(double param) {
+        Vector2d v1 = new Vector2d(p[1]).sub(p[0]);
+        Vector2d v2 = new Vector2d(p[2]).sub(p[1]);
+        Vector2d v3 = new Vector2d(p[3]).sub(p[2]);
+        Vector2d tangent = mix(mix(v1, v2, param), mix(v2, v3, param), param);
+        if (tangent.lengthSquared() == 0) {
+            if (param == 0) return new Vector2d(p[2]).sub(p[0]);
+            if (param == 1) return new Vector2d(p[3]).sub(p[1]);
+        }
+        return tangent;
+    }
+
+    @Override
+    public Vector2d directionChange(double param) {
+        Vector2d v1 = new Vector2d(p[2]).sub(p[1]).sub(new Vector2d(p[1]).sub(p[0]));
+        Vector2d v2 = new Vector2d(p[3]).sub(p[2]).sub(new Vector2d(p[2]).sub(p[1]));
+        return mix(v1, v2, param);
+    }
+
+    @Override
+    public double length() {
+        // This would be a complex implementation - assuming it exists
+        return computeCubicLength(p);
+    }
+
+    @Override
+    public SignedDistance signedDistance(Vector2d origin, double[] param) {
+        Vector2d qa = new Vector2d(p[0]).sub(origin);
+        Vector2d ab = new Vector2d(p[1]).sub(p[0]);
+        Vector2d br = new Vector2d(p[2]).sub(p[1]).sub(ab);
+        Vector2d as = new Vector2d(p[3]).sub(p[2]).sub(new Vector2d(p[2]).sub(p[1])).sub(br);
+
+        Vector2d epDir = direction(0);
+        double minDistance = nonZeroSign(crossProduct(epDir, qa)) * qa.length();
+        param[0] = -dotProduct(qa, epDir) / dotProduct(epDir, epDir);
+        {
+            double distance = new Vector2d(p[3]).sub(origin).length();
+            if (distance < Math.abs(minDistance)) {
+                epDir = direction(1);
+                Vector2d temp = new Vector2d(p[3]).sub(origin);
+                minDistance = nonZeroSign(crossProduct(epDir, temp)) * distance;
+                param[0] = dotProduct(new Vector2d(epDir).sub(temp), epDir) / dotProduct(epDir, epDir);
+            }
+        }
+        // Iterative minimum distance search
+        for (int i = 0; i <= MSDFGEN_CUBIC_SEARCH_STARTS; ++i) {
+            double t = (double)i / MSDFGEN_CUBIC_SEARCH_STARTS;
+            Vector2d qe = new Vector2d(qa).add(new Vector2d(ab).mul(3 * t)).add(new Vector2d(br).mul(3 * t * t)).add(new Vector2d(as).mul(t * t * t));
+            Vector2d d1 = new Vector2d(ab).mul(3).add(new Vector2d(br).mul(6 * t)).add(new Vector2d(as).mul(3 * t * t));
+            Vector2d d2 = new Vector2d(br).mul(6).add(new Vector2d(as).mul(6 * t));
+            double improvedT = t - dotProduct(qe, d1) / (dotProduct(d1, d1) + dotProduct(qe, d2));
+            if (improvedT > 0 && improvedT < 1) {
+                int remainingSteps = MSDFGEN_CUBIC_SEARCH_STEPS;
+                do {
+                    t = improvedT;
+                    qe = new Vector2d(qa).add(new Vector2d(ab).mul(3 * t)).add(new Vector2d(br).mul(3 * t * t)).add(new Vector2d(as).mul(t * t * t));
+                    d1 = new Vector2d(ab).mul(3).add(new Vector2d(br).mul(6 * t)).add(new Vector2d(as).mul(3 * t * t));
+                    if (--remainingSteps == 0)
+                        break;
+                    d2 = new Vector2d(br).mul(6).add(new Vector2d(as).mul(6 * t));
+                    improvedT = t - dotProduct(qe, d1) / (dotProduct(d1, d1) + dotProduct(qe, d2));
+                } while (improvedT > 0 && improvedT < 1);
+                double distance = qe.length();
+                if (distance < Math.abs(minDistance)) {
+                    minDistance = nonZeroSign(crossProduct(d1, qe)) * distance;
+                    param[0] = t;
+                }
+            }
+        }
+
+        if (param[0] >= 0 && param[0] <= 1)
+            return new SignedDistance(minDistance, 0);
+        if (param[0] < 0.5)
+            return new SignedDistance(minDistance, Math.abs(dotProduct(direction(0).normalize(), qa.normalize())));
+        else
+            return new SignedDistance(minDistance, Math.abs(dotProduct(direction(1).normalize(), new Vector2d(p[3]).sub(origin).normalize())));
+    }
+
+    @Override
+    public int scanlineIntersections(double[] x, int[] dy, double y) {
+        int total = 0;
+        int nextDY = y > p[0].y ? 1 : -1;
+        x[total] = p[0].x;
+        if (p[0].y == y) {
+            if (p[0].y < p[1].y || (p[0].y == p[1].y && (p[0].y < p[2].y || (p[0].y == p[2].y && p[0].y < p[3].y))))
+                dy[total++] = 1;
+            else
+                nextDY = 1;
+        }
+        {
+            Vector2d ab = new Vector2d(p[1]).sub(p[0]);
+            Vector2d br = new Vector2d(p[2]).sub(p[1]).sub(ab);
+            Vector2d as = new Vector2d(p[3]).sub(p[2]).sub(new Vector2d(p[2]).sub(p[1])).sub(br);
+            double[] t = new double[3];
+            int solutions = solveCubic(t, as.y, 3 * br.y, 3 * ab.y, p[0].y - y);
+            // Sort solutions
+            if (solutions >= 2) {
+                if (t[0] > t[1]) {
+                    double tmp = t[0]; t[0] = t[1]; t[1] = tmp;
+                }
+                if (solutions >= 3 && t[1] > t[2]) {
+                    double tmp = t[1]; t[1] = t[2]; t[2] = tmp;
+                    if (t[0] > t[1]) {
+                        tmp = t[0]; t[0] = t[1]; t[1] = tmp;
+                    }
+                }
+            }
+            for (int i = 0; i < solutions && total < 3; ++i) {
+                if (t[i] >= 0 && t[i] <= 1) {
+                    x[total] = p[0].x + 3 * t[i] * ab.x + 3 * t[i] * t[i] * br.x + t[i] * t[i] * t[i] * as.x;
+                    if (nextDY * (ab.y + 2 * t[i] * br.y + t[i] * t[i] * as.y) >= 0) {
+                        dy[total++] = nextDY;
+                        nextDY = -nextDY;
+                    }
+                }
+            }
+        }
+        if (p[3].y == y) {
+            if (nextDY > 0 && total > 0) {
+                --total;
+                nextDY = -1;
+            }
+            if ((p[3].y < p[2].y || (p[3].y == p[2].y && (p[3].y < p[1].y || (p[3].y == p[1].y && p[3].y < p[0].y)))) && total < 3) {
+                x[total] = p[3].x;
+                if (nextDY < 0) {
+                    dy[total++] = -1;
+                    nextDY = 1;
+                }
+            }
+        }
+        if (nextDY != (y >= p[3].y ? 1 : -1)) {
+            if (total > 0)
+                --total;
+            else {
+                if (Math.abs(p[3].y - y) < Math.abs(p[0].y - y))
+                    x[total] = p[3].x;
+                dy[total++] = nextDY;
+            }
+        }
+        return total;
+    }
+
+    @Override
+    public void bound(Rectangle2D bounds) {
+        pointBounds(p[0], bounds);
+        pointBounds(p[3], bounds);
+        Vector2d a0 = new Vector2d(p[1]).sub(p[0]);
+        Vector2d a1 = new Vector2d(p[2]).sub(p[1]).sub(a0).mul(2);
+        Vector2d a2 = new Vector2d(p[3]).sub(new Vector2d(p[2]).mul(3)).add(new Vector2d(p[1]).mul(3)).sub(p[0]);
+        double[] params = new double[2];
+        int solutions;
+        solutions = solveQuadratic(params, a2.x, a1.x, a0.x);
+        for (int i = 0; i < solutions; ++i)
+            if (params[i] > 0 && params[i] < 1)
+                pointBounds(point(params[i]), bounds);
+        solutions = solveQuadratic(params, a2.y, a1.y, a0.y);
+        for (int i = 0; i < solutions; ++i)
+            if (params[i] > 0 && params[i] < 1)
+                pointBounds(point(params[i]), bounds);
+    }
+
+    @Override
+    public void reverse() {
+        Vector2d tmp = p[0];
+        p[0] = p[3];
+        p[3] = tmp;
+        tmp = p[1];
+        p[1] = p[2];
+        p[2] = tmp;
+    }
+
+    @Override
+    public void moveStartPoint(Vector2d to) {
+        Vector2d delta = new Vector2d(to).sub(p[0]);
+        p[1].add(delta);
+        p[0] = new Vector2d(to);
+    }
+
+    @Override
+    public void moveEndPoint(Vector2d to) {
+        Vector2d delta = new Vector2d(to).sub(p[3]);
+        p[2].add(delta);
+        p[3] = new Vector2d(to);
+    }
+
+    @Override
+    public void splitInThirds(EdgeSegment[] parts) {
+        Vector2d ctrl1 = p[0].equals(p[1]) ? p[0] : mix(p[0], p[1], 1.0/3.0);
+        Vector2d ctrl2 = mix(mix(p[0], p[1], 1.0/3.0), mix(p[1], p[2], 1.0/3.0), 1.0/3.0);
+        parts[0] = new CubicSegment(p[0], ctrl1, ctrl2, point(1.0/3.0), color);
+
+        Vector2d mid1 = mix(mix(mix(p[0], p[1], 1.0/3.0), mix(p[1], p[2], 1.0/3.0), 1.0/3.0),
+                mix(mix(p[1], p[2], 1.0/3.0), mix(p[2], p[3], 1.0/3.0), 1.0/3.0), 2.0/3.0);
+        Vector2d mid2 = mix(mix(mix(p[0], p[1], 2.0/3.0), mix(p[1], p[2], 2.0/3.0), 2.0/3.0),
+                mix(mix(p[1], p[2], 2.0/3.0), mix(p[2], p[3], 2.0/3.0), 2.0/3.0), 1.0/3.0);
+        parts[1] = new CubicSegment(point(1.0/3.0), mid1, mid2, point(2.0/3.0), color);
+
+        Vector2d ctrl3 = mix(mix(p[1], p[2], 2.0/3.0), mix(p[2], p[3], 2.0/3.0), 2.0/3.0);
+        Vector2d ctrl4 = p[2].equals(p[3]) ? p[3] : mix(p[2], p[3], 2.0/3.0);
+        parts[2] = new CubicSegment(point(2.0/3.0), ctrl3, ctrl4, p[3], color);
+    }
+}
