@@ -60,8 +60,9 @@ public abstract class EdgeSegment {
             }
         }
     }
-
+    private Vector2d[] p = new Vector2d[2];
     public abstract EdgeSegment clone();
+    public EdgeColor edgeColor;
     public abstract int type();
     public abstract Vector2d[] controlPoints();
     public abstract Vector2d point(double param);
@@ -128,12 +129,14 @@ class LinearSegment extends EdgeSegment {
         Vector2d eq = new Vector2d(p[param[0] > 0.5 ? 1 : 0]).sub(origin);
         double endpointDistance = eq.length();
         if (param[0] > 0 && param[0] < 1) {
-            double orthoDistance = dotProduct(ab.getOrthonormal(false), aq);
+            Vector2d abNorm = new Vector2d(ab).normalize();
+            Vector2d ortho = new Vector2d(-abNorm.y, abNorm.x); // Perpendicular vector
+            double orthoDistance = dotProduct(ortho, aq);
             if (Math.abs(orthoDistance) < endpointDistance)
                 return new SignedDistance(orthoDistance, 0);
         }
         return new SignedDistance(nonZeroSign(crossProduct(aq, ab)) * endpointDistance,
-                Math.abs(dotProduct(ab.normalize(), eq.normalize())));
+                Math.abs(dotProduct(new Vector2d(ab).normalize(), new Vector2d(eq).normalize())));
     }
 
     @Override
@@ -172,9 +175,9 @@ class LinearSegment extends EdgeSegment {
 
     @Override
     public void splitInThirds(EdgeSegment[] parts) {
-        parts[0] = new LinearSegment(p[0], point(1.0/3.0), color);
-        parts[1] = new LinearSegment(point(1.0/3.0), point(2.0/3.0), color);
-        parts[2] = new LinearSegment(point(2.0/3.0), p[1], color);
+        parts[0] = new LinearSegment(p[0], point(1.0/3.0), edgeColor);
+        parts[1] = new LinearSegment(point(1.0/3.0), point(2.0/3.0), edgeColor);
+        parts[2] = new LinearSegment(point(2.0/3.0), p[1], edgeColor);
     }
 }
 
@@ -391,10 +394,10 @@ class QuadraticSegment extends EdgeSegment {
 
     @Override
     public void splitInThirds(EdgeSegment[] parts) {
-        parts[0] = new QuadraticSegment(p[0], mix(p[0], p[1], 1.0/3.0), point(1.0/3.0), color);
+        parts[0] = new QuadraticSegment(p[0], mix(p[0], p[1], 1.0/3.0), point(1.0/3.0), edgeColor);
         Vector2d midControl = mix(mix(p[0], p[1], 5.0/9.0), mix(p[1], p[2], 4.0/9.0), 0.5);
-        parts[1] = new QuadraticSegment(point(1.0/3.0), midControl, point(2.0/3.0), color);
-        parts[2] = new QuadraticSegment(point(2.0/3.0), mix(p[1], p[2], 2.0/3.0), p[2], color);
+        parts[1] = new QuadraticSegment(point(1.0/3.0), midControl, point(2.0/3.0), edgeColor);
+        parts[2] = new QuadraticSegment(point(2.0/3.0), mix(p[1], p[2], 2.0/3.0), p[2], edgeColor);
     }
 
     public EdgeSegment convertToCubic() {
@@ -624,18 +627,26 @@ class CubicSegment extends EdgeSegment {
 
     @Override
     public void splitInThirds(EdgeSegment[] parts) {
-        Vector2d ctrl1 = p[0].equals(p[1]) ? p[0] : mix(p[0], p[1], 1.0/3.0);
-        Vector2d ctrl2 = mix(mix(p[0], p[1], 1.0/3.0), mix(p[1], p[2], 1.0/3.0), 1.0/3.0);
-        parts[0] = new CubicSegment(p[0], ctrl1, ctrl2, point(1.0/3.0), color);
+        // De Casteljau's algorithm for cubic curve subdivision
+        Vector2d p01 = mix(p[0], p[1], 1.0/3.0);
+        Vector2d p12 = mix(p[1], p[2], 1.0/3.0);
+        Vector2d p23 = mix(p[2], p[3], 1.0/3.0);
+        Vector2d p012 = mix(p01, p12, 1.0/3.0);
+        Vector2d p123 = mix(p12, p23, 1.0/3.0);
+        Vector2d p0123 = mix(p012, p123, 1.0/3.0);
 
-        Vector2d mid1 = mix(mix(mix(p[0], p[1], 1.0/3.0), mix(p[1], p[2], 1.0/3.0), 1.0/3.0),
-                mix(mix(p[1], p[2], 1.0/3.0), mix(p[2], p[3], 1.0/3.0), 1.0/3.0), 2.0/3.0);
-        Vector2d mid2 = mix(mix(mix(p[0], p[1], 2.0/3.0), mix(p[1], p[2], 2.0/3.0), 2.0/3.0),
-                mix(mix(p[1], p[2], 2.0/3.0), mix(p[2], p[3], 2.0/3.0), 2.0/3.0), 1.0/3.0);
-        parts[1] = new CubicSegment(point(1.0/3.0), mid1, mid2, point(2.0/3.0), color);
+        parts[0] = new CubicSegment(p[0], p01, p012, p0123, edgeColor);
 
-        Vector2d ctrl3 = mix(mix(p[1], p[2], 2.0/3.0), mix(p[2], p[3], 2.0/3.0), 2.0/3.0);
-        Vector2d ctrl4 = p[2].equals(p[3]) ? p[3] : mix(p[2], p[3], 2.0/3.0);
-        parts[2] = new CubicSegment(point(2.0/3.0), ctrl3, ctrl4, p[3], color);
+        // For the middle segment, we need different control points
+        Vector2d p01_2 = mix(p[0], p[1], 2.0/3.0);
+        Vector2d p12_2 = mix(p[1], p[2], 2.0/3.0);
+        Vector2d p23_2 = mix(p[2], p[3], 2.0/3.0);
+        Vector2d p012_2 = mix(p01_2, p12_2, 2.0/3.0);
+        Vector2d p123_2 = mix(p12_2, p23_2, 2.0/3.0);
+        Vector2d p0123_2 = mix(p012_2, p123_2, 2.0/3.0);
+
+        parts[1] = new CubicSegment(p0123, mix(p123, p012_2, 0.5), mix(p0123_2, p123, 0.5), p0123_2, edgeColor);
+
+        parts[2] = new CubicSegment(p0123_2, p123_2, p23_2, p[3], edgeColor);
     }
 }
