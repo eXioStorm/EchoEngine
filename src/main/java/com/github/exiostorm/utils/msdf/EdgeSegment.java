@@ -60,6 +60,19 @@ public abstract class EdgeSegment {
             }
         }
     }
+    static void pointBounds(Vector2d p, Rectangle2D bounds) {
+        double l = bounds.getMinX();
+        double b = bounds.getMinY();
+        double r = bounds.getMaxX();
+        double t = bounds.getMaxY();
+
+        if (p.x < l) l = p.x;
+        if (p.y < b) b = p.y;
+        if (p.x > r) r = p.x;
+        if (p.y > t) t = p.y;
+
+        bounds.setRect(l, b, r - l, t - b);
+    }
     private Vector2d[] p = new Vector2d[2];
     public abstract EdgeSegment clone();
     public EdgeColor edgeColor;
@@ -103,7 +116,7 @@ class LinearSegment extends EdgeSegment {
 
     @Override
     public Vector2d point(double param) {
-        return mix(p[0], p[1], param);
+        return new Vector2d(p[0]).lerp(p[1], param);
     }
 
     @Override
@@ -138,12 +151,11 @@ class LinearSegment extends EdgeSegment {
         return new SignedDistance(nonZeroSign(crossProduct(aq, ab)) * endpointDistance,
                 Math.abs(dotProduct(new Vector2d(ab).normalize(), new Vector2d(eq).normalize())));
     }
-
     @Override
     public int scanlineIntersections(double[] x, int[] dy, double y) {
         if ((y >= p[0].y && y < p[1].y) || (y >= p[1].y && y < p[0].y)) {
             double param = (y - p[0].y) / (p[1].y - p[0].y);
-            x[0] = mix(p[0].x, p[1].x, param);
+            x[0] = p[0].x * (1.0 - param) + p[1].x * param; // manual lerp for scalar
             dy[0] = sign(p[1].y - p[0].y);
             return 1;
         }
@@ -208,14 +220,16 @@ class QuadraticSegment extends EdgeSegment {
 
     @Override
     public Vector2d point(double param) {
-        return mix(mix(p[0], p[1], param), mix(p[1], p[2], param), param);
+        Vector2d temp1 = new Vector2d(p[0]).lerp(p[1], param);
+        Vector2d temp2 = new Vector2d(p[1]).lerp(p[2], param);
+        return temp1.lerp(temp2, param);
     }
 
     @Override
     public Vector2d direction(double param) {
         Vector2d v1 = new Vector2d(p[1]).sub(p[0]);
         Vector2d v2 = new Vector2d(p[2]).sub(p[1]);
-        Vector2d tangent = mix(v1, v2, param);
+        Vector2d tangent = new Vector2d(v1).lerp(v2, param);
         if (tangent.lengthSquared() == 0)
             return new Vector2d(p[2]).sub(p[0]);
         return tangent;
@@ -394,14 +408,20 @@ class QuadraticSegment extends EdgeSegment {
 
     @Override
     public void splitInThirds(EdgeSegment[] parts) {
-        parts[0] = new QuadraticSegment(p[0], mix(p[0], p[1], 1.0/3.0), point(1.0/3.0), edgeColor);
-        Vector2d midControl = mix(mix(p[0], p[1], 5.0/9.0), mix(p[1], p[2], 4.0/9.0), 0.5);
+        Vector2d control1 = new Vector2d(p[0]).lerp(p[1], 1.0/3.0);
+        Vector2d midControl = new Vector2d(p[0]).lerp(p[1], 5.0/9.0).lerp(
+                new Vector2d(p[1]).lerp(p[2], 4.0/9.0), 0.5);
+        Vector2d control2 = new Vector2d(p[1]).lerp(p[2], 2.0/3.0);
+
+        parts[0] = new QuadraticSegment(p[0], control1, point(1.0/3.0), edgeColor);
         parts[1] = new QuadraticSegment(point(1.0/3.0), midControl, point(2.0/3.0), edgeColor);
-        parts[2] = new QuadraticSegment(point(2.0/3.0), mix(p[1], p[2], 2.0/3.0), p[2], edgeColor);
+        parts[2] = new QuadraticSegment(point(2.0/3.0), control2, p[2], edgeColor);
     }
 
     public EdgeSegment convertToCubic() {
-        return new CubicSegment(p[0], mix(p[0], p[1], 2.0/3.0), mix(p[1], p[2], 1.0/3.0), p[2], color);
+        Vector2d control1 = new Vector2d(p[0]).lerp(p[1], 2.0/3.0);
+        Vector2d control2 = new Vector2d(p[1]).lerp(p[2], 1.0/3.0);
+        return new CubicSegment(p[0], control1, control2, p[2], color);
     }
 }
 
@@ -433,10 +453,10 @@ class CubicSegment extends EdgeSegment {
 
     @Override
     public Vector2d point(double param) {
-        Vector2d p12 = mix(p[1], p[2], param);
-        Vector2d temp1 = mix(mix(p[0], p[1], param), p12, param);
-        Vector2d temp2 = mix(p12, mix(p[2], p[3], param), param);
-        return mix(temp1, temp2, param);
+        Vector2d p12 = new Vector2d(p[1]).lerp(p[2], param);
+        Vector2d temp1 = new Vector2d(p[0]).lerp(p[1], param).lerp(p12, param);
+        Vector2d temp2 = p12.lerp(new Vector2d(p[2]).lerp(p[3], param), param);
+        return temp1.lerp(temp2, param);
     }
 
     @Override
@@ -444,7 +464,8 @@ class CubicSegment extends EdgeSegment {
         Vector2d v1 = new Vector2d(p[1]).sub(p[0]);
         Vector2d v2 = new Vector2d(p[2]).sub(p[1]);
         Vector2d v3 = new Vector2d(p[3]).sub(p[2]);
-        Vector2d tangent = mix(mix(v1, v2, param), mix(v2, v3, param), param);
+        Vector2d tangent = new Vector2d(v1).lerp(v2, param).lerp(
+                new Vector2d(v2).lerp(v3, param), param);
         if (tangent.lengthSquared() == 0) {
             if (param == 0) return new Vector2d(p[2]).sub(p[0]);
             if (param == 1) return new Vector2d(p[3]).sub(p[1]);
@@ -456,7 +477,7 @@ class CubicSegment extends EdgeSegment {
     public Vector2d directionChange(double param) {
         Vector2d v1 = new Vector2d(p[2]).sub(p[1]).sub(new Vector2d(p[1]).sub(p[0]));
         Vector2d v2 = new Vector2d(p[3]).sub(p[2]).sub(new Vector2d(p[2]).sub(p[1]));
-        return mix(v1, v2, param);
+        return new Vector2d(v1).lerp(v2, param);
     }
 
     @Override
@@ -628,24 +649,27 @@ class CubicSegment extends EdgeSegment {
     @Override
     public void splitInThirds(EdgeSegment[] parts) {
         // De Casteljau's algorithm for cubic curve subdivision
-        Vector2d p01 = mix(p[0], p[1], 1.0/3.0);
-        Vector2d p12 = mix(p[1], p[2], 1.0/3.0);
-        Vector2d p23 = mix(p[2], p[3], 1.0/3.0);
-        Vector2d p012 = mix(p01, p12, 1.0/3.0);
-        Vector2d p123 = mix(p12, p23, 1.0/3.0);
-        Vector2d p0123 = mix(p012, p123, 1.0/3.0);
+        Vector2d p01 = new Vector2d(p[0]).lerp(p[1], 1.0/3.0);
+        Vector2d p12 = new Vector2d(p[1]).lerp(p[2], 1.0/3.0);
+        Vector2d p23 = new Vector2d(p[2]).lerp(p[3], 1.0/3.0);
+        Vector2d p012 = new Vector2d(p01).lerp(p12, 1.0/3.0);
+        Vector2d p123 = new Vector2d(p12).lerp(p23, 1.0/3.0);
+        Vector2d p0123 = new Vector2d(p012).lerp(p123, 1.0/3.0);
 
         parts[0] = new CubicSegment(p[0], p01, p012, p0123, edgeColor);
 
         // For the middle segment, we need different control points
-        Vector2d p01_2 = mix(p[0], p[1], 2.0/3.0);
-        Vector2d p12_2 = mix(p[1], p[2], 2.0/3.0);
-        Vector2d p23_2 = mix(p[2], p[3], 2.0/3.0);
-        Vector2d p012_2 = mix(p01_2, p12_2, 2.0/3.0);
-        Vector2d p123_2 = mix(p12_2, p23_2, 2.0/3.0);
-        Vector2d p0123_2 = mix(p012_2, p123_2, 2.0/3.0);
+        Vector2d p01_2 = new Vector2d(p[0]).lerp(p[1], 2.0/3.0);
+        Vector2d p12_2 = new Vector2d(p[1]).lerp(p[2], 2.0/3.0);
+        Vector2d p23_2 = new Vector2d(p[2]).lerp(p[3], 2.0/3.0);
+        Vector2d p012_2 = new Vector2d(p01_2).lerp(p12_2, 2.0/3.0);
+        Vector2d p123_2 = new Vector2d(p12_2).lerp(p23_2, 2.0/3.0);
+        Vector2d p0123_2 = new Vector2d(p012_2).lerp(p123_2, 2.0/3.0);
 
-        parts[1] = new CubicSegment(p0123, mix(p123, p012_2, 0.5), mix(p0123_2, p123, 0.5), p0123_2, edgeColor);
+        Vector2d mid1 = new Vector2d(p123).lerp(p012_2, 0.5);
+        Vector2d mid2 = new Vector2d(p0123_2).lerp(p123, 0.5);
+
+        parts[1] = new CubicSegment(p0123, mid1, mid2, p0123_2, edgeColor);
 
         parts[2] = new CubicSegment(p0123_2, p123_2, p23_2, p[3], edgeColor);
     }
