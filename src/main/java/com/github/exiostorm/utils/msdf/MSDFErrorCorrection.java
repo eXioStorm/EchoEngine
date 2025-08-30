@@ -67,10 +67,10 @@ public class MSDFErrorCorrection {
     private static class ShapeDistanceChecker<N extends Number> {
 
         public static class ArtifactClassifier extends BaseArtifactClassifier {
-            private final ShapeDistanceChecker<?> parent;
+            private final ShapeDistanceChecker parent;
             private final Vector2d direction;
 
-            public ArtifactClassifier(ShapeDistanceChecker<?> parent, Vector2d direction, double span) {
+            public ArtifactClassifier(ShapeDistanceChecker parent, Vector2d direction, double span) {
                 super(span, parent.protectedFlag);
                 this.parent = parent;
                 this.direction = new Vector2d(direction);
@@ -160,8 +160,11 @@ public class MSDFErrorCorrection {
         this.transformation = transformation;
         this.minDeviationRatio = ErrorCorrectionConfig.DEFAULT_MIN_DEVIATION_RATIO;
         this.minImproveRatio = ErrorCorrectionConfig.DEFAULT_MIN_IMPROVE_RATIO;
+
         // Clear the stencil
-        Arrays.fill(stencil.getPixels(), (byte)0);
+        if (stencil != null && stencil.getPixels() != null) {
+            Arrays.fill(stencil.getPixels(), (byte)0);
+        }
     }
 
     /// Sets the minimum ratio between the actual and maximum expected distance delta to be considered an error.
