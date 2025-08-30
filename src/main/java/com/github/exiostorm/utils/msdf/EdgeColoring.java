@@ -1,6 +1,13 @@
 package com.github.exiostorm.utils.msdf;
 
+import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
 import org.joml.Vector2d;
+import org.joml.Vector2f;
+
+import java.awt.*;
+import java.awt.geom.PathIterator;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.github.exiostorm.utils.msdf.enums.EdgeColorEnum.*;
 
@@ -24,11 +31,91 @@ public class EdgeColoring {
         return v;
     }
     static int initColor(SeedHolder seedHolder) {
-        final int[] colors = { CYAN.getValue(), MAGENTA.getValue(), YELLOW.getValue() };
+        final int[] colors = { CYAN.getValue().color, MAGENTA.getValue().color, YELLOW.getValue().color };
         return colors[seedExtract3(seedHolder)];
     }
+    public static List<Contours.Contour> extractContours(Shape shape) {
+        List<Contours.Contour> contours = new ArrayList<>();
+        Contours.Contour currentContour = null;
 
-    void edgeColoringSimple(java.util.List<Contours.Contour> contours, double angleThreshold, SeedHolder seedHolder) {
+        float[] coords = new float[6];
+        Vector2d currentPoint = null;  // Changed to Vector2d
+        Vector2d startPoint = null;    // Changed to Vector2d
+
+        PathIterator pathIterator = shape.getPathIterator(null);
+
+        while (!pathIterator.isDone()) {
+            int type = pathIterator.currentSegment(coords);
+
+            switch (type) {
+                case PathIterator.SEG_MOVETO:
+                    if (currentContour != null && !currentContour.edges.isEmpty()) {
+                        contours.add(currentContour);
+                    }
+                    currentContour = new Contours.Contour();
+                    currentPoint = new Vector2d(coords[0], coords[1]);
+                    startPoint = new Vector2d(currentPoint);
+                    break;
+
+                case PathIterator.SEG_LINETO:
+                    if (currentContour != null && currentPoint != null) {
+                        Vector2d endPoint = new Vector2d(coords[0], coords[1]);
+                        // Use static factory method with EdgeColor parameter
+                        EdgeSegment edge = EdgeSegment.create(currentPoint, endPoint, EdgeColorEnum.WHITE.getValue());
+                        currentContour.edges.add(new EdgeHolder(edge));
+                        currentPoint = endPoint;
+                    }
+                    break;
+
+                case PathIterator.SEG_QUADTO:
+                    if (currentContour != null && currentPoint != null) {
+                        Vector2d controlPoint = new Vector2d(coords[0], coords[1]);
+                        Vector2d endPoint = new Vector2d(coords[2], coords[3]);
+                        // Use static factory method for quadratic
+                        EdgeSegment edge = EdgeSegment.create(currentPoint, controlPoint, endPoint, EdgeColorEnum.WHITE.getValue());
+                        currentContour.edges.add(new EdgeHolder(edge));
+                        currentPoint = endPoint;
+                    }
+                    break;
+
+                case PathIterator.SEG_CUBICTO:
+                    if (currentContour != null && currentPoint != null) {
+                        Vector2d controlPoint1 = new Vector2d(coords[0], coords[1]);
+                        Vector2d controlPoint2 = new Vector2d(coords[2], coords[3]);
+                        Vector2d endPoint = new Vector2d(coords[4], coords[5]);
+                        // Use static factory method for cubic
+                        EdgeSegment edge = EdgeSegment.create(currentPoint, controlPoint1, controlPoint2, endPoint, EdgeColorEnum.WHITE.getValue());
+                        currentContour.edges.add(new EdgeHolder(edge));
+                        currentPoint = endPoint;
+                    }
+                    break;
+
+                case PathIterator.SEG_CLOSE:
+                    if (currentContour != null && currentPoint != null && startPoint != null) {
+                        // Check if points are different (using a small epsilon for double comparison)
+                        if (Math.abs(currentPoint.x - startPoint.x) > 0.001 ||
+                                Math.abs(currentPoint.y - startPoint.y) > 0.001) {
+                            EdgeSegment edge = EdgeSegment.create(currentPoint, startPoint, EdgeColorEnum.WHITE.getValue());
+                            currentContour.edges.add(new EdgeHolder(edge));
+                        }
+                        contours.add(currentContour);
+                        currentContour = null;
+                    }
+                    break;
+            }
+
+            pathIterator.next();
+        }
+
+        // Add the last contour if it wasn't closed
+        if (currentContour != null && !currentContour.edges.isEmpty()) {
+            contours.add(currentContour);
+        }
+
+        return contours;
+    }
+
+    public static void edgeColoringSimple(java.util.List<Contours.Contour> contours, double angleThreshold, SeedHolder seedHolder) {
         double crossThreshold = Math.sin(angleThreshold);
         ColorHolder colorHolder =  new ColorHolder(initColor(seedHolder));
         java.util.List<Integer> corners = new java.util.ArrayList<>();
@@ -63,7 +150,7 @@ public class EdgeColoring {
                 ColorHolder[] colors = new ColorHolder[3];
                 switchColor(colorHolder, seedHolder);
                 colors[0].color = colorHolder.color;
-                colors[1].color = WHITE.getValue();
+                colors[1].color = WHITE.getValue().color;
                 switchColor(colorHolder, seedHolder);
                 colors[2].color = colorHolder.color;
 
@@ -125,12 +212,12 @@ public class EdgeColoring {
     }
     private static void switchColor(ColorHolder ColorHolder, SeedHolder seedHolder) {
         int shifted = ColorHolder.color << (1 + seedExtract2(seedHolder));
-        ColorHolder.color = (shifted | (shifted >> 3)) & WHITE.getValue(); // Now WHITE = 7, so this works correctly
+        ColorHolder.color = (shifted | (shifted >> 3)) & WHITE.getValue().color; // Now WHITE = 7, so this works correctly
     }
     private static void switchColor(ColorHolder ColorHolder, SeedHolder seedHolder, int banned) {
         int combined = ColorHolder.color & banned;
-        if (combined == RED.getValue() || combined == GREEN.getValue() || combined == BLUE.getValue()) {
-            ColorHolder.color = combined ^ WHITE.getValue();
+        if (combined == RED.getValue().color || combined == GREEN.getValue().color || combined == BLUE.getValue().color) {
+            ColorHolder.color = combined ^ WHITE.getValue().color;
         } else {
             switchColor(ColorHolder, seedHolder);
         }

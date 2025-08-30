@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 //TODO woohoo! class done?
 public class Contours {
-    public class Contour {
+    public static class Contour {
 
         public List<EdgeHolder> edges = new ArrayList<>();
         private static double shoelace(Vector2d a, Vector2d b) {

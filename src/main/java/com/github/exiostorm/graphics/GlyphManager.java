@@ -2,7 +2,11 @@ package com.github.exiostorm.graphics;
 
 //import sun.util.locale.BaseLocale;
 
-import com.github.exiostorm.utils.MSDFGenExt;
+//import com.github.exiostorm.utils.MSDFGenExt;
+
+import com.github.exiostorm.utils.msdf.Contours;
+import com.github.exiostorm.utils.msdf.EdgeColoring;
+import com.github.exiostorm.utils.msdf.SeedHolder;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -135,7 +139,7 @@ public class GlyphManager {
             }
 
             // Extract contours from the shape
-            List<MSDFGenExt.Contour> contours = MSDFGenExt.extractContours(glyphShape);
+            List<Contours.Contour> contours = EdgeColoring.extractContours(glyphShape);
             if (contours.isEmpty()) {
                 System.err.println("No contours found for unicode: " + unicode);
                 return null;
@@ -144,8 +148,7 @@ public class GlyphManager {
             // visual "bug" might have to do with the seed that's set here. might not be a bug.
 
             // Apply edge coloring
-            contours = MSDFGenExt.edgeColoringSimple(glyphShape, Math.toRadians(3.0),
-                    System.currentTimeMillis() % 1000);
+            EdgeColoring.edgeColoringSimple(contours, Math.toRadians(3.0), new SeedHolder(0));
 
             // Generate the MSDF
             BufferedImage msdfImage = MSDFGenExt.generateMSDF(contours, GLYPH_SIZE, RANGE);

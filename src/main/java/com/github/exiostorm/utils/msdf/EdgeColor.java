@@ -1,9 +1,9 @@
 package com.github.exiostorm.utils.msdf;
 
 public class EdgeColor {
-        int color;
+        public int color;
 
-        EdgeColor(int color) {
+        public EdgeColor(int color) {
             this.color = color;
         }
 }

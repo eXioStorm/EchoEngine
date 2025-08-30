@@ -1,25 +1,27 @@
 package com.github.exiostorm.utils.msdf.enums;
 
-public enum EdgeColorEnum {
-    BLACK(0),
-    RED(1),
-    GREEN(2),
-    YELLOW(3),
-    BLUE(4),
-    MAGENTA(5),
-    CYAN(6),
-    WHITE(7);
-    private final int value;
+import com.github.exiostorm.utils.msdf.EdgeColor;
 
-    EdgeColorEnum(int value) {
+public enum EdgeColorEnum {
+    BLACK(new EdgeColor(0)),
+    RED(new EdgeColor(1)),
+    GREEN(new EdgeColor(2)),
+    YELLOW(new EdgeColor(3)),
+    BLUE(new EdgeColor(4)),
+    MAGENTA(new EdgeColor(5)),
+    CYAN(new EdgeColor(6)),
+    WHITE(new EdgeColor(7));
+    private final EdgeColor value;
+
+    EdgeColorEnum(EdgeColor value) {
         this.value = value;
     }
-    public int getValue() {
+    public EdgeColor getValue() {
         return value;
     }
     public static EdgeColorEnum fromValue(int value) {
         for (EdgeColorEnum color : EdgeColorEnum.values()) {
-            if (color.value == value) {
+            if (color.getValue().color == value) {
                 return color;
             }
         }

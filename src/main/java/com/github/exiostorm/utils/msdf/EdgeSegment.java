@@ -8,6 +8,10 @@ import static com.github.exiostorm.utils.msdf.EquationSolver.*;
 
 //TODO hoorah! another class done!
 public abstract class EdgeSegment {
+    public static final int LINE = 0;
+    public static final int QUADRATIC = 1;
+    public static final int CUBIC = 2;
+
     public EdgeSegment(EdgeColor edgeColor) {
         this.edgeColor = edgeColor;
     }
@@ -112,7 +116,7 @@ class LinearSegment extends EdgeSegment {
 
     public LinearSegment(Vector2d p0, Vector2d p1, EdgeColor edgeColor) {
         super(edgeColor);
-        EDGE_TYPE = 1;
+        EDGE_TYPE = 0;
         p[0] = new Vector2d(p0);
         p[1] = new Vector2d(p1);
     }
@@ -216,7 +220,7 @@ class QuadraticSegment extends EdgeSegment {
 
     public QuadraticSegment(Vector2d p0, Vector2d p1, Vector2d p2, EdgeColor edgeColor) {
         super(edgeColor);
-        EDGE_TYPE = 2;
+        EDGE_TYPE = 1;
         p[0] = new Vector2d(p0);
         p[1] = new Vector2d(p1);
         p[2] = new Vector2d(p2);
@@ -449,7 +453,7 @@ class CubicSegment extends EdgeSegment {
 
     public CubicSegment(Vector2d p0, Vector2d p1, Vector2d p2, Vector2d p3, EdgeColor edgeColor) {
         super(edgeColor);
-        EDGE_TYPE = 3;
+        EDGE_TYPE = 2;
         p[0] = new Vector2d(p0);
         p[1] = new Vector2d(p1);
         p[2] = new Vector2d(p2);
