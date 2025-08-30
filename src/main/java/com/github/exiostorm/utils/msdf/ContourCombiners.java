@@ -21,7 +21,7 @@ public class ContourCombiners {
     /**
      * Simply selects the nearest contour.
      */
-    public static class SimpleContourCombiner {
+    public static class SimpleContourCombiner implements ContourCombiner {
 
         private EdgeSelectors.TrueDistanceSelector shapeEdgeSelector;
 

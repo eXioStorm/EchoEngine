@@ -284,12 +284,12 @@ public class msdfgen {
         DistanceMapping distanceMapping = new DistanceMapping(range);
 
         for (int y = 0; y < output.getHeight(); y++) {
-            int row = shape.isInverseYAxis() ? output.getHeight() - y - 1 : y;
+            int row = shape.inverseYAxis ? output.getHeight() - y - 1 : y;
             for (int x = 0; x < output.getWidth(); x++) {
                 Vector2d p = new Vector2d(x + 0.5, y + 0.5).div(scale).sub(translate);
                 SignedDistance minDistance = new SignedDistance();
 
-                for (Contours.Contour contour : shape.getContours()) {
+                for (Contours.Contour contour : shape.contours) {
                     for (EdgeHolder edge : contour.edges) {
                         DoubleReference dummy = new DoubleReference();
                         SignedDistance distance = edge.edge.signedDistance(p, new double[] {dummy.getValue()});
@@ -309,7 +309,7 @@ public class msdfgen {
         DistanceMapping distanceMapping = new DistanceMapping(range);
 
         for (int y = 0; y < output.getHeight(); y++) {
-            int row = shape.isInverseYAxis() ? output.getHeight() - y - 1 : y;
+            int row = shape.inverseYAxis ? output.getHeight() - y - 1 : y;
             for (int x = 0; x < output.getWidth(); x++) {
                 Vector2d p = new Vector2d(x + 0.5, y + 0.5).div(scale).sub(translate);
                 SignedDistance minDistance = new SignedDistance();
@@ -348,7 +348,7 @@ public class msdfgen {
         DistanceMapping distanceMapping = new DistanceMapping(range);
 
         for (int y = 0; y < output.getHeight(); y++) {
-            int row = shape.isInverseYAxis() ? output.getHeight() - y - 1 : y;
+            int row = shape.inverseYAxis ? output.getHeight() - y - 1 : y;
             for (int x = 0; x < output.getWidth(); x++) {
                 Vector2d p = new Vector2d(x + 0.5, y + 0.5).div(scale).sub(translate);
 
@@ -422,7 +422,7 @@ public class msdfgen {
         DistanceMapping distanceMapping = new DistanceMapping(range);
 
         for (int y = 0; y < output.getHeight(); y++) {
-            int row = shape.isInverseYAxis() ? output.getHeight() - y - 1 : y;
+            int row = shape.inverseYAxis ? output.getHeight() - y - 1 : y;
             for (int x = 0; x < output.getWidth(); x++) {
                 Vector2d p = new Vector2d(x + 0.5, y + 0.5).div(scale).sub(translate);
 

@@ -61,7 +61,7 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
     /**
      * Finds the distance between shape and origin. Does not allocate result cache used to optimize performance of multiple queries.
      */
-    public static double oneShotDistance(Shape shape, Vector2d origin, ContourCombiners.ContourCombiner contourCombiner) {
+    public static Object oneShotDistance(Shape shape, Vector2d origin, ContourCombiners.ContourCombiner contourCombiner) {
         contourCombiner.reset(origin);
 
         for (Contours.Contour contour : shape.contours) {
@@ -77,7 +77,19 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
                 for (EdgeHolder edgeHolder : edges) {
                     EdgeSegment nextEdge = edgeHolder.edge;
                     EdgeHolder dummy = new EdgeHolder();
-                    edgeSelector.addEdge(dummy, prevEdge, curEdge, nextEdge);
+
+                    // Call addEdge based on the selector type
+                    if (edgeSelector instanceof EdgeSelectors.TrueDistanceSelector) {
+                        ((EdgeSelectors.TrueDistanceSelector) edgeSelector).addEdge(
+                                dummy, prevEdge, curEdge, nextEdge);
+                    } else if (edgeSelector instanceof EdgeSelectors.MultiDistanceSelector) {
+                        ((EdgeSelectors.MultiDistanceSelector) edgeSelector).addEdge(
+                                dummy, prevEdge, curEdge, nextEdge);
+                    } else if (edgeSelector instanceof EdgeSelectors.MultiAndTrueDistanceSelector) {
+                        ((EdgeSelectors.MultiAndTrueDistanceSelector) edgeSelector).addEdge(
+                                dummy, prevEdge, curEdge, nextEdge);
+                    }
+
                     prevEdge = curEdge;
                     curEdge = nextEdge;
                 }
@@ -111,6 +123,6 @@ class SimpleTrueShapeDistanceFinder extends ShapeDistanceFinder<ContourCombiners
      */
     public static double oneShotDistance(Shape shape, Vector2d origin) {
         ContourCombiners.SimpleContourCombiner combiner = new ContourCombiners.SimpleContourCombiner(shape);
-        return ShapeDistanceFinder.oneShotDistance(shape, origin, combiner);
+        return (double) ShapeDistanceFinder.oneShotDistance(shape, origin, combiner);
     }
 }

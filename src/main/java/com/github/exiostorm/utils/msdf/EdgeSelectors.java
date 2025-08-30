@@ -2,7 +2,6 @@ package com.github.exiostorm.utils.msdf;
 
 import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
 import org.joml.Vector2d;
-import java.awt.geom.Rectangle2D;
 
 public class EdgeSelectors {
 
@@ -16,16 +15,6 @@ public class EdgeSelectors {
 
     /// Selects the nearest edge by its true distance.
     public static class TrueDistanceSelector {
-
-        public static class EdgeCache {
-            public Vector2d point;
-            public double absDistance;
-
-            public EdgeCache() {
-                this.point = new Vector2d();
-                this.absDistance = 0.0;
-            }
-        }
 
         private Vector2d p;
         private SignedDistance minDistance;
@@ -41,7 +30,7 @@ public class EdgeSelectors {
             this.p.set(p);
         }
 
-        public void addEdge(EdgeCache cache, EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
+        public void addEdge(EdgeHolder cache, EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
             double delta = 1.001 * p.sub(cache.point, new Vector2d()).length();
             if (cache.absDistance - delta <= Math.abs(minDistance.distance)) {
                 double[] dummy = new double[1];
@@ -117,7 +106,7 @@ public class EdgeSelectors {
             nearEdgeParam = 0;
         }
 
-        public boolean isEdgeRelevant(EdgeCache cache, EdgeSegment edge, Vector2d p) {
+        public boolean isEdgeRelevant(EdgeHolder cache, EdgeSegment edge, Vector2d p) {
             double delta = 1.001 * p.sub(cache.point, new Vector2d()).length();
             return (
                     cache.absDistance - delta <= Math.abs(minTrueDistance.distance) ||
@@ -193,7 +182,7 @@ public class EdgeSelectors {
             this.p.set(p);
         }
 
-        public void addEdge(EdgeCache cache, EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
+        public void addEdge(EdgeHolder cache, EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
             if (isEdgeRelevant(cache, edge, p)) {
                 double[] param = new double[1];
                 SignedDistance distance = edge.signedDistance(p, param);
@@ -259,7 +248,7 @@ public class EdgeSelectors {
             b.reset(delta);
             this.p.set(p);
         }
-        public void addEdge(PerpendicularDistanceSelectorBase.EdgeCache cache,
+        public void addEdge(EdgeHolder cache,
                             EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
             boolean redRelevant = (edge.edgeColor.color & EdgeColorEnum.RED.getValue().color) != 0 &&
                     r.isEdgeRelevant(cache, edge, p);
@@ -372,10 +361,10 @@ public class EdgeSelectors {
 
         /**
          * Called while collecting edges for a single contour.
-         * Each concrete selector uses its own EdgeCache type; use Object if you prefer,
+         * Each concrete selector uses its own EdgeHolder type; use Object if you prefer,
          * but typed caches are better (see examples below).
          */
-        void addEdge(Object edgeCache, EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge);
+        void addEdge(Object EdgeHolder, EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge);
 
         /** Merge another selector (same concrete type) into this one. */
         void merge(EdgeSelector<D> other);
