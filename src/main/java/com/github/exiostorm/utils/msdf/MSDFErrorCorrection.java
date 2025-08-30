@@ -1,6 +1,7 @@
 package com.github.exiostorm.utils.msdf;
 
 import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
+import static com.github.exiostorm.utils.msdf.MathUtils.*;
 import org.joml.Vector2d;
 import java.util.Arrays;
 
@@ -419,12 +420,6 @@ public class MSDFErrorCorrection {
     /// Returns the stencil in its current state (see Flags).
     public BitmapRef getStencil() {
         return stencil;
-    }
-
-    // Helper methods
-
-    private static float median(float a, float b, float c) {
-        return Math.max(Math.min(a, b), Math.min(Math.max(a, b), c));
     }
 
     private static float mix(float a, float b, double t) {

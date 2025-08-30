@@ -31,7 +31,7 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
     /**
      * Finds the distance from origin. Not thread-safe! Is fastest when subsequent queries are close together.
      */
-    public double distance(Vector2d origin) {
+    public Object distance(Vector2d origin) {
         contourCombiner.reset(origin);
 
         int EdgeHolderIndex = 0;

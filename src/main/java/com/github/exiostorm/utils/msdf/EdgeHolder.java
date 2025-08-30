@@ -1,17 +1,11 @@
 package com.github.exiostorm.utils.msdf;
 
-import org.joml.Vector2d;
-
 import java.awt.geom.Rectangle2D;
 
 public class EdgeHolder {
-    public Vector2d point;
     public CubicSegment edge;
     public int color;
     private EdgeSegment edgeSegment;
-    public double absDistance;
-    public double aDomainDistance, bDomainDistance;
-    public double aPerpendicularDistance, bPerpendicularDistance;
 
     // Static swap method
     public static void swap(EdgeHolder a, EdgeHolder b) {
@@ -28,12 +22,6 @@ public class EdgeHolder {
     // Default constructor (not in original C++ but commonly needed in Java)
     public EdgeHolder() {
         this.edgeSegment = null;
-        this.point = new Vector2d();
-        this.absDistance = 0;
-        this.aDomainDistance = 0;
-        this.bDomainDistance = 0;
-        this.aPerpendicularDistance = 0;
-        this.bPerpendicularDistance = 0;
     }
 
     // Constructor with EdgeSegment
