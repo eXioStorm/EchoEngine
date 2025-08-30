@@ -65,7 +65,7 @@ public class msdfgen {
             boolean rightToLeft = false;
 
             for (int y = 0; y < output.getHeight(); y++) {
-                int row = shape.isInverseYAxis() ? output.getHeight() - y - 1 : y;
+                int row = shape.inverseYAxis ? output.getHeight() - y - 1 : y;
                 for (int col = 0; col < output.getWidth(); col++) {
                     int x = rightToLeft ? output.getWidth() - col - 1 : col;
                     Vector2d p = transformation.unproject(new Vector2d(x + 0.5, y + 0.5));
