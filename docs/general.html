@@ -98,32 +98,36 @@
         </li>
     </ul>
 </nav>
-<h1 style="text-align: center;">General things to keep an eye on and correct</h1>
-<h4 id="modularity">Modularity</h4>
-<ul>
-    <li>Need to continously watch code and re-structure when it starts to web with other classes. This was already done multiple times, once with the GamePanel class, and our <strong>main()</strong> classes.</li>
-    <li>Try to look at multiple ways of achieving the same goal, for example immediate mode rendering vs retained mode rendering both take in a file path to load an image, immediate mode was using a method to initialize our Texture with that path, and then had direct draw calls when that texture was used. Retained mode rendering isn&#39;t too much different besides having many extra internal steps, and needing extra methods for data management which is entirely unused when we used immediate mode. <strong>(could still have data management, it just wouldn&#39;t effect the performance enough to bother with when we&#39;re already being so inefficient... perhaps this behaviour could be isolated to a different class that could work with both methods?)</strong> try thinking of ways to bridge these differences and isolating functional behavior so that it&#39;s within the rendering class itself instead of webbing between multiple classes.<h4 id="documentation-legibility">Documentation &amp; legibility</h4>
-    </li>
-    <li>When our code is cleaned up, modular, and fairly feature-rich, We should work on a java doc to provide detailed explanations for methods used and class summary. Additionally, lets keep code open-source and no use of obfuscation tools.<h4 id="compatibility">Compatibility</h4>
-    </li>
-    <li>For example we&#39;re using OpenGL instead of Vulkan, even though Vulkan would give us a massive performance potential. Like Java, OpenGL keeps us compatible with many systems. Unfortunately we&#39;ll be violating this rule with our non-virtualized multi-keyboard support on Linux.<h4 id="dynamic-assets">Dynamic Assets</h4>
-    </li>
-    <li>When we&#39;re loading assets we should try to keep an eye on <em>how</em> we load those assets and if it would make sense for them to automatically be loaded when in the program directory. For example we&#39;re treating gamestates / maps as an asset and we use a class factory to detect and load these assets. yeah yeah security risk, I&#39;m sure it is... I&#39;m open to ideas, but I&#39;m not wavering from having this feature.</li>
-</ul>
-<h1 id="general-learning-curve-stuff-">General learning curve stuff~</h1>
-<h4 id="encapsulation">Encapsulation</h4>
-<ul>
-    <li>hiding information from being accessed(for example say we have something that must stay the same value, we don&#39;t want anything accidentally broken by someone changing that value.)</li>
-    <li>hiding system internals so our IDE doesn&#39;t fill with bloat when we look for a method inside a class</li>
-    <li>and controlling how that data is managed.<h4 id="naming-conventions">Naming conventions</h4>
-    </li>
-    <li>Packages are all lowercase(all).</li>
-    <li>Classes and Interfaces are all uppercase(UpperCamelCase).</li>
-    <li>Methods are lowerCamelCase.</li>
-    <li><p>Variables should be lowerCamelCase, while Constants should be ALL_UPPERCASE using underscores.</p>
-    </li>
-    <li><p>Avoid &quot;magic numbers&quot;, use Constants in this case instead. e.g. instead of <code>if (i &lt; 10)</code>, use a constant <code>if (i &lt; MAX_VALUE)</code>.</p>
-    </li>
-</ul>
+    <main>
+        <div class="container">
+            <h1 style="text-align: center;">General things to keep an eye on and correct</h1>
+            <h4 id="modularity">Modularity</h4>
+            <ul>
+                <li>Need to continously watch code and re-structure when it starts to web with other classes. This was already done multiple times, once with the GamePanel class, and our <strong>main()</strong> classes.</li>
+                <li>Try to look at multiple ways of achieving the same goal, for example immediate mode rendering vs retained mode rendering both take in a file path to load an image, immediate mode was using a method to initialize our Texture with that path, and then had direct draw calls when that texture was used. Retained mode rendering isn&#39;t too much different besides having many extra internal steps, and needing extra methods for data management which is entirely unused when we used immediate mode. <strong>(could still have data management, it just wouldn&#39;t effect the performance enough to bother with when we&#39;re already being so inefficient... perhaps this behaviour could be isolated to a different class that could work with both methods?)</strong> try thinking of ways to bridge these differences and isolating functional behavior so that it&#39;s within the rendering class itself instead of webbing between multiple classes.<h4 id="documentation-legibility">Documentation &amp; legibility</h4>
+                </li>
+                <li>When our code is cleaned up, modular, and fairly feature-rich, We should work on a java doc to provide detailed explanations for methods used and class summary. Additionally, lets keep code open-source and no use of obfuscation tools.<h4 id="compatibility">Compatibility</h4>
+                </li>
+                <li>For example we&#39;re using OpenGL instead of Vulkan, even though Vulkan would give us a massive performance potential. Like Java, OpenGL keeps us compatible with many systems. Unfortunately we&#39;ll be violating this rule with our non-virtualized multi-keyboard support on Linux.<h4 id="dynamic-assets">Dynamic Assets</h4>
+                </li>
+                <li>When we&#39;re loading assets we should try to keep an eye on <em>how</em> we load those assets and if it would make sense for them to automatically be loaded when in the program directory. For example we&#39;re treating gamestates / maps as an asset and we use a class factory to detect and load these assets. yeah yeah security risk, I&#39;m sure it is... I&#39;m open to ideas, but I&#39;m not wavering from having this feature.</li>
+            </ul>
+            <h1 id="general-learning-curve-stuff-">General learning curve stuff~</h1>
+            <h4 id="encapsulation">Encapsulation</h4>
+            <ul>
+                <li>hiding information from being accessed(for example say we have something that must stay the same value, we don&#39;t want anything accidentally broken by someone changing that value.)</li>
+                <li>hiding system internals so our IDE doesn&#39;t fill with bloat when we look for a method inside a class</li>
+                <li>and controlling how that data is managed.<h4 id="naming-conventions">Naming conventions</h4>
+                </li>
+                <li>Packages are all lowercase(all).</li>
+                <li>Classes and Interfaces are all uppercase(UpperCamelCase).</li>
+                <li>Methods are lowerCamelCase.</li>
+                <li><p>Variables should be lowerCamelCase, while Constants should be ALL_UPPERCASE using underscores.</p>
+                </li>
+                <li><p>Avoid &quot;magic numbers&quot;, use Constants in this case instead. e.g. instead of <code>if (i &lt; 10)</code>, use a constant <code>if (i &lt; MAX_VALUE)</code>.</p>
+                </li>
+            </ul>
+        </div>
+    </main>
 </body>
 </html>
