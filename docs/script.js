@@ -2,7 +2,7 @@ const toggleButton = document.getElementById('toggle-btn')
 const sidebar = document.getElementById('sidebar')
 
 function toggleSidebar(){
-  sidebar.classList.toggle('close')
+  sidebar.classList.toggle('show')
   toggleButton.classList.toggle('rotate')
 
   closeAllSubMenus()
