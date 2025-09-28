@@ -4,6 +4,11 @@
 [![Discord](https://discordapp.com/api/guilds/431382619595210752/widget.png)][discord-invite]
 
 [ ![FAQ] ](https://github.com/eXioStorm/EchoEngine)
+# Notice
+I just discovered GitHub Pages.
+<br>GitHub pages load separate pages far quicker than native markdown files from the project page.
+<br> Therefor I am moving all notes to github pages instead.
+You can reach our pages url [here](https://exiostorm.github.io/EchoEngine/).
 # Echo Engine
 an attempt to create a platformer with extensive modding capabilities.
 
