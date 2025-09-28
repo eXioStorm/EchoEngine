@@ -2,9 +2,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-image: url('github-pattern.png'); /* Path to your pattern image */
-    background-repeat: repeat;
-    background-color: #f6f8fa; /* Fallback color */
+    background: linear-gradient(to bottom, #f6f8fa, #e1e4e8); /* Light gray gradient */
     color: #24292e;
 }
 
@@ -25,7 +23,7 @@ header {
     background-color: #24292e; /* Darker header for contrast */
     color: #ffffff;
     border-radius: 6px 6px 0 0;
-    box-shadow: none; /* No shadow on header if it's full width */
+    box-shadow: none;
 }
 
 footer {
