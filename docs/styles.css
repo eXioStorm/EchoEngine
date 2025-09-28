@@ -1,33 +1,37 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: linear-gradient(to bottom, #f6f8fa, #e1e4e8); /* Light gray gradient */
-    color: #24292e;
-}
+/* Basic reset and layout */
+* { box-sizing: border-box; }
+html,body{ height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; }
 
-header, main, footer {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #ffffff; /* White background for content areas */
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(27,31,35,.1);
-    margin-bottom: 20px;
-}
 
-header {
-    text-align: center;
-    padding-top: 40px;
-    padding-bottom: 20px;
-    background-color: #24292e; /* Darker header for contrast */
-    color: #ffffff;
-    border-radius: 6px 6px 0 0;
-    box-shadow: none;
-}
+.nav { background: #0f172a; color: white; padding: 0.5rem 1rem; }
+.nav-inner { display:flex; align-items:center; justify-content:space-between; max-width:1100px; margin:0 auto; }
+.brand { color: white; text-decoration:none; font-weight:600; }
 
-footer {
-    text-align: center;
-    font-size: 0.8em;
-    color: #586069;
+
+.menu-wrapper { position: relative; }
+.menu-button {
+background: #111827; color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 0.5rem 0.9rem; border-radius:8px; cursor:pointer;
+display:inline-flex; gap:0.5rem; align-items:center; font-size:1rem;
+}
+.menu-button:focus { outline: 3px solid rgba(99,102,241,0.25); }
+
+
+.chev { font-size:0.75rem; opacity:0.9 }
+
+
+.menu-list {
+position: absolute; right: 0; margin-top:0.5rem; list-style:none; padding:0.25rem; min-width:160px; display:none;
+background: white; color: #0b1220; border-radius:8px; box-shadow: 0 8px 24px rgba(2,6,23,0.35); border:1px solid rgba(2,6,23,0.06);
+}
+.menu-list.show { display:block; }
+.menu-list li { margin:0; }
+.menu-list a {
+display:block; padding:0.6rem 0.9rem; text-decoration:none; color:inherit; border-radius:6px;
+}
+.menu-list a:hover, .menu-list a:focus { background: rgba(2,6,23,0.06); outline: none; }
+
+
+/* Small responsive tweak */
+@media (max-width:420px){
+.menu-list { left:0; right:auto; min-width:140px; }
 }
