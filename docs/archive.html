@@ -120,6 +120,7 @@
     <div class="container">
         <h1 style="text-align: center;">Milestone History</h1>
         <div id="Page1">
+            <a href="#" onclick="return show('Page2','Page1');">Page 2</a>
             <div class="container">
                 <h3 style="text-align: center;">[category]-[yyyymmdd]</h3>
                 <p style="text-align: center;">Frame Buffer Objects are now functional!</p>
@@ -135,9 +136,9 @@
                 <p style="text-align: center;">example declaration text</p>
                 <p style="text-align: center;">example description text</p>
             </div>
-            <a href="#" onclick="return show('Page2','Page1');">Show page 2</a>
         </div>
         <div id="Page2" style="display:none;">
+            <a href="#" onclick="return show('Page1','Page2');">Page 1</a>
             <div class="container">
                 <h3 style="text-align: center;">example-20250930</h3>
                 <p style="text-align: center;">example declaration text</p>
@@ -154,7 +155,6 @@
                 <p style="text-align: center;">example declaration text</p>
                 <p style="text-align: center;">example description text</p>
             </div>
-            <a href="#" onclick="return show('Page1','Page2');">Show page 1</a>
         </div>
     </div>
 </main>
