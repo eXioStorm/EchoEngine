@@ -1,6 +1,12 @@
 const toggleButton = document.getElementById('toggle-btn')
 const sidebar = document.getElementById('sidebar')
 
+function show(shown, hidden) {
+  document.getElementById(shown).style.display='block';
+  document.getElementById(hidden).style.display='none';
+  return false;
+}
+
 function toggleSidebar(){
   sidebar.classList.toggle('close')
   toggleButton.classList.toggle('rotate')
