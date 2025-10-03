@@ -1,4 +1,5 @@
   # General things to keep an eye on and correct
+  # <center>Test</center>
 
 #### Modularity
 * Need to continously watch code and re-structure when it starts to web with other classes. This was already done multiple times, once with the GamePanel class, and our **main()** classes.
