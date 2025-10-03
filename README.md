@@ -5,6 +5,7 @@
 
 [ ![FAQ] ](https://github.com/eXioStorm/EchoEngine)
 # Notice
+[2025-Sep-28]
 I just discovered GitHub Pages.
 <br>GitHub pages load separate pages far quicker than native markdown files from the project page.
 <br> Therefor I am moving all notes to github pages instead.
