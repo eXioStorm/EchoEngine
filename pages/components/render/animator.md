@@ -1,3 +1,4 @@
+<p hidden>If you can see this text, you are viewing the wrong page. please go to : https://exiostorm.github.io/EchoEngine/renderer.html#animator</p>
 animator? spriteAnimator? idfk man. will work on naming conventions later.
 
 * For animating our textures we'll have yet another setup where our gimp plugin saves a data / json file with our relative file paths, frame numbers, frame lengths, etc.
