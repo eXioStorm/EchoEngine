@@ -1,3 +1,4 @@
+<p hidden>If you can see this text, you are viewing the wrong page. please go to : https://exiostorm.github.io/EchoEngine/devices.html</p>
 #### Keyboard & mouse
   * As much as I want to allow multi-keyboard support, from what I've been able to find is that people only accomplish this via OS virtualization which also requires your hardware to support it. 
     the windows operating system has only ever been designed to have one user at a time, and despite many people requesting for this to be resolved microsoft has not made any progress.

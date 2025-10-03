@@ -1,5 +1,5 @@
   # General things to keep an eye on and correct
-<p hidden style="text-align: center">If you can see this text, you are viewing the wrong page. please go to : https://exiostorm.github.io/EchoEngine/general.html</p>
+<p hidden>If you can see this text, you are viewing the wrong page. please go to : https://exiostorm.github.io/EchoEngine/general.html</p>
 
 #### Modularity
 * Need to continously watch code and re-structure when it starts to web with other classes. This was already done multiple times, once with the GamePanel class, and our **main()** classes.
