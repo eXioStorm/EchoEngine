@@ -33,7 +33,7 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
     /**
      * Finds the distance from origin. Not thread-safe! Is fastest when subsequent queries are close together.
      */
-    public Object distance(Vector2d origin) {
+    public T distance(Vector2d origin) {
         contourCombiner.reset(origin);
 
         int edgeCacheIndex = 0;
@@ -65,7 +65,7 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
             }
         }
 
-        return contourCombiner.distance();
+        return contourCombiner;
     }
     public List<Object> getShapeEdgeCache() {
         return Collections.singletonList(shapeEdgeCache);

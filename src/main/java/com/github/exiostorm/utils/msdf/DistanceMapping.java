@@ -53,7 +53,7 @@ public class DistanceMapping {
     }
 
     // Private constructor for internal use
-    private DistanceMapping(double scale, double translate) {
+    DistanceMapping(double scale, double translate) {
         this.scale = scale;
         this.translate = translate;
     }

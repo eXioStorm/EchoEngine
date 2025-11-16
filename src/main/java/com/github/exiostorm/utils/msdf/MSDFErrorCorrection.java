@@ -124,12 +124,12 @@ public class MSDFErrorCorrection {
         public boolean protectedFlag;
 
         private final SimpleTrueShapeDistanceFinder distanceFinder;
-        private final BitmapConstRef sdf;
+        private final BitmapRef sdf;
         private final DistanceMapping distanceMapping;
         private Vector2d texelSize;
         private final double minImproveRatio;
 
-        public ShapeDistanceChecker(BitmapConstRef sdf, Shape shape, Projection projection,
+        public ShapeDistanceChecker(BitmapRef sdf, Shape shape, Projection projection,
                                     DistanceMapping distanceMapping, double minImproveRatio) {
             this.distanceFinder = new SimpleTrueShapeDistanceFinder(shape);
             this.sdf = sdf;
@@ -145,7 +145,7 @@ public class MSDFErrorCorrection {
             return new ArtifactClassifier(this, direction, span);
         }
 
-        private static void interpolate(float[] result, BitmapConstRef bitmap, Vector2d coord) {
+        private static void interpolate(float[] result, BitmapRef bitmap, Vector2d coord) {
             // Bilinear interpolation implementation
             // This would need to be implemented based on your bitmap interpolation logic
             // For now, this is a placeholder
@@ -229,7 +229,7 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags all texels that contribute to edges as protected.
-    public void protectEdges(BitmapConstRef sdf) {
+    public void protectEdges(BitmapRef sdf) {
         float radius;
 
         // Horizontal texel pairs
@@ -346,7 +346,7 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF only.
-    public void findErrors(BitmapConstRef sdf) {
+    public void findErrors(BitmapRef sdf) {
         // Compute the expected deltas between values of horizontally, vertically, and diagonally adjacent texels.
         double hSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length();
@@ -441,7 +441,7 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF and comparison with the exact shape distance.
-    public void findErrorsWithShape(BitmapConstRef sdf, Shape shape) {
+    public void findErrorsWithShape(BitmapRef sdf, Shape shape) {
         // Compute the expected deltas between values of horizontally, vertically, and diagonally adjacent texels.
         double hSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length();

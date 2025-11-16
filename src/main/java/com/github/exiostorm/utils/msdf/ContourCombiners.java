@@ -12,16 +12,17 @@ public class ContourCombiners {
     /**
      * Base interface for all contour combiners
      */
-    public interface ContourCombiner {
+    public interface ContourCombiner<T> {
         void reset(Vector2d p);
-        Object edgeSelector(int contourIndex);
-        Object distance();
+        Object edgeSelector(int contourIndex); // use Object or a generic bound if needed
+        T distance();
     }
+
 
     /**
      * Simply selects the nearest contour.
      */
-    public static class SimpleContourCombiner implements ContourCombiner {
+    public static class SimpleContourCombiner implements ContourCombiner<Double> {
 
         private EdgeSelectors.TrueDistanceSelector shapeEdgeSelector;
 
@@ -37,7 +38,7 @@ public class ContourCombiners {
             return shapeEdgeSelector;
         }
 
-        public double distance() {
+        public Double distance() {
             return shapeEdgeSelector.distance();
         }
     }
@@ -45,7 +46,7 @@ public class ContourCombiners {
     /**
      * Multi-distance version of SimpleContourCombiner
      */
-    public static class SimpleMultiContourCombiner {
+    public static class SimpleMultiContourCombiner implements ContourCombiner<EdgeSelectors.MultiDistance> {
 
         private EdgeSelectors.MultiDistanceSelector shapeEdgeSelector;
 
@@ -69,7 +70,7 @@ public class ContourCombiners {
     /**
      * Multi and true distance version of SimpleContourCombiner
      */
-    public static class SimpleMultiAndTrueContourCombiner {
+    public static class SimpleMultiAndTrueContourCombiner implements ContourCombiner<EdgeSelectors.MultiAndTrueDistance> {
 
         private EdgeSelectors.MultiAndTrueDistanceSelector shapeEdgeSelector;
 
@@ -93,7 +94,7 @@ public class ContourCombiners {
     /**
      * Selects the nearest contour that actually forms a border between filled and unfilled area.
      */
-    public static class OverlappingContourCombiner {
+    public static class OverlappingContourCombiner implements ContourCombiner<Double> {
 
         private Vector2d p;
         private List<Integer> windings;
@@ -122,7 +123,7 @@ public class ContourCombiners {
             return edgeSelectors.get(i);
         }
 
-        public double distance() {
+        public Double distance() {
             int contourCount = edgeSelectors.size();
 
             if (contourCount == 0) {
@@ -201,7 +202,7 @@ public class ContourCombiners {
     /**
      * Multi-distance version of OverlappingContourCombiner
      */
-    public static class OverlappingMultiContourCombiner {
+    public static class OverlappingMultiContourCombiner implements ContourCombiner<EdgeSelectors.MultiDistance> {
 
         private Vector2d p;
         private List<Integer> windings;
@@ -324,7 +325,7 @@ public class ContourCombiners {
     /**
      * Multi and true distance version of OverlappingContourCombiner
      */
-    public static class OverlappingMultiAndTrueContourCombiner {
+    public static class OverlappingMultiAndTrueContourCombiner implements ContourCombiner<EdgeSelectors.MultiAndTrueDistance> {
 
         private Vector2d p;
         private List<Integer> windings;
