@@ -8,23 +8,21 @@ import java.util.ArrayList;
 
 /**
  * Finds the distance between a point and a Shape. ContourCombiner dictates the distance metric and its data type.
- * @param <T> The ContourCombiner type that determines the distance calculation method
+ * @param <C> The ContourCombiner type that determines the distance calculation method
  */
-public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
+public class ShapeDistanceFinder<C extends ContourCombiners.ContourCombiner<D>, D> {
 
     private final Shape shape;
-    private final T contourCombiner;
+    private final C contourCombiner;
     private final List<EdgeHolder> shapeEdgeCache;
 
     /**
      * Constructor - Passed shape object must persist until the distance finder is destroyed!
      */
-    public ShapeDistanceFinder(Shape shape, T contourCombiner) {
+    public ShapeDistanceFinder(Shape shape, C contourCombiner) {
         this.shape = shape;
         this.contourCombiner = contourCombiner;
         this.shapeEdgeCache = new ArrayList<>(shape.edgeCount());
-
-        // Initialize edge cache
         for (int i = 0; i < shape.edgeCount(); i++) {
             this.shapeEdgeCache.add(new EdgeHolder());
         }
@@ -33,7 +31,7 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
     /**
      * Finds the distance from origin. Not thread-safe! Is fastest when subsequent queries are close together.
      */
-    public T distance(Vector2d origin) {
+    public D distance(Vector2d origin) {
         contourCombiner.reset(origin);
 
         int edgeCacheIndex = 0;
@@ -65,7 +63,7 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
             }
         }
 
-        return contourCombiner;
+        return contourCombiner.distance();
     }
     public List<Object> getShapeEdgeCache() {
         return Collections.singletonList(shapeEdgeCache);
@@ -97,25 +95,22 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
     /**
      * Finds the distance between shape and origin. Does not allocate result cache used to optimize performance of multiple queries.
      */
-    public static <U extends ContourCombiners.ContourCombiner> Object oneShotDistance(Shape shape, Vector2d origin, U contourCombiner) {
+    public static <C extends ContourCombiners.ContourCombiner<D>, D>
+    D oneShotDistance(Shape shape, Vector2d origin, C contourCombiner) {
         contourCombiner.reset(origin);
-
         for (int contourIndex = 0; contourIndex < shape.contours.size(); contourIndex++) {
             Contours.Contour contour = shape.contours.get(contourIndex);
             if (!contour.edges.isEmpty()) {
                 Object edgeSelector = contourCombiner.edgeSelector(contourIndex);
-
                 List<EdgeHolder> edges = contour.edges;
                 EdgeSegment prevEdge = edges.size() >= 2 ?
                         edges.get(edges.size() - 2).getEdgeSegment() :
                         edges.get(0).getEdgeSegment();
                 EdgeSegment curEdge = edges.get(edges.size() - 1).getEdgeSegment();
-
                 for (EdgeHolder edgeHolder : edges) {
                     EdgeSegment nextEdge = edgeHolder.getEdgeSegment();
-
-                    // Create appropriate temporary cache based on selector type
                     Object tempCache = null;
+
                     if (edgeSelector instanceof EdgeSelectors.TrueDistanceSelector) {
                         tempCache = new EdgeSelectors.TrueDistanceSelector.EdgeCache();
                         ((EdgeSelectors.TrueDistanceSelector) edgeSelector).addEdge(
@@ -133,30 +128,30 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
                         ((EdgeSelectors.PerpendicularDistanceSelector) edgeSelector).addEdge(
                                 (EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache) tempCache, prevEdge, curEdge, nextEdge);
                     }
-
                     prevEdge = curEdge;
                     curEdge = nextEdge;
                 }
             }
         }
-
         return contourCombiner.distance();
     }
+
 
     // Getters
     public Shape getShape() {
         return shape;
     }
 
-    public T getContourCombiner() {
-        return contourCombiner;
+    public D getContourCombiner() {
+        return contourCombiner.distance();
     }
 }
 
 /**
  * Specialized ShapeDistanceFinder for simple true distance calculations
  */
-class SimpleTrueShapeDistanceFinder extends ShapeDistanceFinder<ContourCombiners.SimpleContourCombiner> {
+class SimpleTrueShapeDistanceFinder
+        extends ShapeDistanceFinder<ContourCombiners.SimpleContourCombiner, Double> {
 
     public SimpleTrueShapeDistanceFinder(Shape shape) {
         super(shape, new ContourCombiners.SimpleContourCombiner(shape));

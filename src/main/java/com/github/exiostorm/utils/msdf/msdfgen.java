@@ -8,20 +8,20 @@ import java.util.Arrays;
 public class msdfgen {
 
     // Generic distance field generation
-    //TODO 20251116@3:51am
-    private static <T, C extends ContourCombiners.ContourCombiner>
+    private static <D, C extends ContourCombiners.ContourCombiner<D>>
     void generateDistanceField(
             BitmapRef<Float> output,
             Shape shape,
             SDFTransformation transformation,
             Class<C> combinerClass,
-            DistancePixelConversion<T> converter)
+            DistancePixelConversion<D> converter)
     {
         try {
             // Construct combiner instance with (Shape) constructor
             C combiner = combinerClass.getConstructor(Shape.class).newInstance(shape);
 
-            ShapeDistanceFinder<C> distanceFinder = new ShapeDistanceFinder<>(shape, combiner);
+            ShapeDistanceFinder<C, D> distanceFinder =
+                    new ShapeDistanceFinder<>(shape, combiner);
 
             boolean rightToLeft = false;
             final int width = output.getWidth();
@@ -41,8 +41,7 @@ public class msdfgen {
                     Vector2d p = transformation.unproject(new Vector2d(x + 0.5, y + 0.5));
 
                     // compute distance (distanceFinder.distance returns Object)
-                    //TODO 20251116@3:51am
-                    T distance = (T) distanceFinder.distance(p);
+                    D distance = distanceFinder.distance(p);
 
                     // Note: conversion writes into the provided float[].
                     // Make sure the converter expects at most 'channels' entries.
