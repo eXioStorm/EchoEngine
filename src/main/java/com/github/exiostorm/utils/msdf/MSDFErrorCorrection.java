@@ -129,14 +129,14 @@ public class MSDFErrorCorrection {
         private Vector2d texelSize;
         private final double minImproveRatio;
 
-        public ShapeDistanceChecker(BitmapRef sdf, Shape shape, Projection projection,
+        public ShapeDistanceChecker(BitmapRef sdf, MsdfShape msdfShape, Projection projection,
                                     DistanceMapping distanceMapping, double minImproveRatio) {
-            this.distanceFinder = new SimpleTrueShapeDistanceFinder(shape);
+            this.distanceFinder = new SimpleTrueShapeDistanceFinder(msdfShape);
             this.sdf = sdf;
             this.distanceMapping = distanceMapping;
             this.minImproveRatio = minImproveRatio;
             this.texelSize = projection.unprojectVector(new Vector2d(1.0, 1.0));
-            if (shape.inverseYAxis) {
+            if (msdfShape.inverseYAxis) {
                 this.texelSize.y = -this.texelSize.y;
             }
         }
@@ -185,8 +185,8 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags all texels that are interpolated at corners as protected.
-    public void protectCorners(Shape shape) {
-        for (Contours.Contour contour : shape.contours) {
+    public void protectCorners(MsdfShape msdfShape) {
+        for (Contours.Contour contour : msdfShape.contours) {
             if (!contour.edges.isEmpty()) {
                 EdgeSegment prevEdge = contour.edges.get(contour.edges.size() - 1).edge;
                 for (EdgeHolder edge : contour.edges) {
@@ -197,7 +197,7 @@ public class MSDFErrorCorrection {
                         Vector2d p = transformation.project(edge.edge.point(0));
                         int l = (int) Math.floor(p.x - 0.5);
                         int b = (int) Math.floor(p.y - 0.5);
-                        if (shape.inverseYAxis) {
+                        if (msdfShape.inverseYAxis) {
                             b = stencil.getHeight() - b - 2;
                         }
                         int r = l + 1;
@@ -441,7 +441,7 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF and comparison with the exact shape distance.
-    public void findErrorsWithShape(BitmapRef sdf, Shape shape) {
+    public void findErrorsWithShape(BitmapRef sdf, MsdfShape msdfShape) {
         // Compute the expected deltas between values of horizontally, vertically, and diagonally adjacent texels.
         double hSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length();
@@ -450,12 +450,12 @@ public class MSDFErrorCorrection {
         double dSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length();
 
-        ShapeDistanceChecker shapeDistanceChecker = new ShapeDistanceChecker(sdf, shape, transformation,
+        ShapeDistanceChecker shapeDistanceChecker = new ShapeDistanceChecker(sdf, msdfShape, transformation,
                 transformation.getDistanceMapping(), minImproveRatio);
 
         // Inspect all texels.
         for (int y = 0; y < sdf.getHeight(); ++y) {
-            int row = shape.inverseYAxis ? sdf.getHeight() - y - 1 : y;
+            int row = msdfShape.inverseYAxis ? sdf.getHeight() - y - 1 : y;
             for (int x = 0; x < sdf.getWidth(); ++x) {
                 if (((Byte) stencil.getPixel(x, row, 0) & Flags.ERROR) != 0) {
                     continue;

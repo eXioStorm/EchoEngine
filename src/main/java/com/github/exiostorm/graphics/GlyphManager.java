@@ -4,9 +4,8 @@ package com.github.exiostorm.graphics;
 
 //import com.github.exiostorm.utils.MSDFGenExt;
 
-import com.github.exiostorm.utils.msdf.Contours;
-import com.github.exiostorm.utils.msdf.EdgeColoring;
-import com.github.exiostorm.utils.msdf.SeedHolder;
+import com.github.exiostorm.utils.msdf.*;
+import org.joml.Vector2d;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -119,6 +118,7 @@ public class GlyphManager {
      * @param outputFile The file to save the glyph to
      * @return The path to the created texture file
      */
+    /*
     public String createGlyph(int unicode, String fontName, File outputFile) {
         try {
             //TODO [!][!!][!!!][20250819@12:45am][1:07am ran out of LLM prompts... will continue later.]
@@ -167,7 +167,7 @@ public class GlyphManager {
             return null;
         }
     }
-
+     */
     /**
      * Load a font from the resources folder
      */
@@ -225,6 +225,62 @@ public class GlyphManager {
     /**
      * Create a Shape from a font glyph
      */
+    public String createGlyph(int unicode, String fontName, File outputFile) {
+        try {
+            Font font = getFont(fontName);
+            if (font == null) {
+                System.err.println("Font not found: " + fontName);
+                return null;
+            }
+
+            // 1. Java2D shape
+            Shape awtShape = createGlyphShape(font, unicode);
+            if (awtShape == null) {
+                System.err.println("Could not create glyph shape for unicode: " + unicode);
+                return null;
+            }
+
+            // 2. Convert Java2D PathIterator → msdfgen.Shape
+            com.github.exiostorm.utils.msdf.MsdfShape msdfShape = ShapeConverter.fromAwtShape(awtShape);
+
+            // IMPORTANT
+            msdfShape.normalize();
+
+            // 3. Create output bitmap
+            BitmapRef<float[]> bitmap = new BitmapRef<>(
+                    new float[GLYPH_SIZE * GLYPH_SIZE * 3],
+                    GLYPH_SIZE,
+                    GLYPH_SIZE,
+                    3
+            );
+
+            // 4. Projection + Range (match your constants)
+            Projection projection = new Projection(
+                    new Vector2d(1, 1),
+                    new Vector2d(0, 0)
+            );
+            Range range = new Range(RANGE);
+
+            // 5. Generate MSDF
+            MSDFGeneratorConfig config = new MSDFGeneratorConfig();
+            msdfgen.generateMSDF(bitmap, msdfShape, projection, range, config);
+
+            // 6. Convert to BufferedImage (utility function)
+            BufferedImage msdfImage = BitmapUtil.toBufferedImage(bitmap);
+
+            // 7. Save PNG
+            outputFile.getParentFile().mkdirs();
+            ImageIO.write(msdfImage, "PNG", outputFile);
+
+            return outputFile.getPath();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
     private Shape createGlyphShape(Font font, int unicode) {
         try {
             FontRenderContext frc = new FontRenderContext(null, true, true);

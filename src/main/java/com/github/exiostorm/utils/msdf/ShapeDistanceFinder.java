@@ -12,18 +12,18 @@ import java.util.ArrayList;
  */
 public class ShapeDistanceFinder<C extends ContourCombiners.ContourCombiner<D>, D> {
 
-    private final Shape shape;
+    private final MsdfShape msdfShape;
     private final C contourCombiner;
     private final List<EdgeHolder> shapeEdgeCache;
 
     /**
      * Constructor - Passed shape object must persist until the distance finder is destroyed!
      */
-    public ShapeDistanceFinder(Shape shape, C contourCombiner) {
-        this.shape = shape;
+    public ShapeDistanceFinder(MsdfShape msdfShape, C contourCombiner) {
+        this.msdfShape = msdfShape;
         this.contourCombiner = contourCombiner;
-        this.shapeEdgeCache = new ArrayList<>(shape.edgeCount());
-        for (int i = 0; i < shape.edgeCount(); i++) {
+        this.shapeEdgeCache = new ArrayList<>(msdfShape.edgeCount());
+        for (int i = 0; i < msdfShape.edgeCount(); i++) {
             this.shapeEdgeCache.add(new EdgeHolder());
         }
     }
@@ -36,8 +36,8 @@ public class ShapeDistanceFinder<C extends ContourCombiners.ContourCombiner<D>, 
 
         int edgeCacheIndex = 0;
 
-        for (int contourIndex = 0; contourIndex < shape.contours.size(); contourIndex++) {
-            Contours.Contour contour = shape.contours.get(contourIndex);
+        for (int contourIndex = 0; contourIndex < msdfShape.contours.size(); contourIndex++) {
+            Contours.Contour contour = msdfShape.contours.get(contourIndex);
             if (!contour.edges.isEmpty()) {
                 Object edgeSelector = contourCombiner.edgeSelector(contourIndex);
 
@@ -96,10 +96,10 @@ public class ShapeDistanceFinder<C extends ContourCombiners.ContourCombiner<D>, 
      * Finds the distance between shape and origin. Does not allocate result cache used to optimize performance of multiple queries.
      */
     public static <C extends ContourCombiners.ContourCombiner<D>, D>
-    D oneShotDistance(Shape shape, Vector2d origin, C contourCombiner) {
+    D oneShotDistance(MsdfShape msdfShape, Vector2d origin, C contourCombiner) {
         contourCombiner.reset(origin);
-        for (int contourIndex = 0; contourIndex < shape.contours.size(); contourIndex++) {
-            Contours.Contour contour = shape.contours.get(contourIndex);
+        for (int contourIndex = 0; contourIndex < msdfShape.contours.size(); contourIndex++) {
+            Contours.Contour contour = msdfShape.contours.get(contourIndex);
             if (!contour.edges.isEmpty()) {
                 Object edgeSelector = contourCombiner.edgeSelector(contourIndex);
                 List<EdgeHolder> edges = contour.edges;
@@ -138,8 +138,8 @@ public class ShapeDistanceFinder<C extends ContourCombiners.ContourCombiner<D>, 
 
 
     // Getters
-    public Shape getShape() {
-        return shape;
+    public MsdfShape getShape() {
+        return msdfShape;
     }
 
     public D getContourCombiner() {
@@ -153,15 +153,15 @@ public class ShapeDistanceFinder<C extends ContourCombiners.ContourCombiner<D>, 
 class SimpleTrueShapeDistanceFinder
         extends ShapeDistanceFinder<ContourCombiners.SimpleContourCombiner, Double> {
 
-    public SimpleTrueShapeDistanceFinder(Shape shape) {
-        super(shape, new ContourCombiners.SimpleContourCombiner(shape));
+    public SimpleTrueShapeDistanceFinder(MsdfShape msdfShape) {
+        super(msdfShape, new ContourCombiners.SimpleContourCombiner(msdfShape));
     }
 
     /**
      * Static convenience method for one-shot distance calculations
      */
-    public static double oneShotDistance(Shape shape, Vector2d origin) {
-        ContourCombiners.SimpleContourCombiner combiner = new ContourCombiners.SimpleContourCombiner(shape);
-        return (double) ShapeDistanceFinder.oneShotDistance(shape, origin, combiner);
+    public static double oneShotDistance(MsdfShape msdfShape, Vector2d origin) {
+        ContourCombiners.SimpleContourCombiner combiner = new ContourCombiners.SimpleContourCombiner(msdfShape);
+        return (double) ShapeDistanceFinder.oneShotDistance(msdfShape, origin, combiner);
     }
 }

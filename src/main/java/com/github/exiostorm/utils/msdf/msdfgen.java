@@ -1,8 +1,7 @@
 package com.github.exiostorm.utils.msdf;
 
-import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
 import org.joml.Vector2d;
-import java.awt.geom.Rectangle2D;
+
 import java.util.Arrays;
 
 public class msdfgen {
@@ -10,18 +9,18 @@ public class msdfgen {
     // Generic distance field generation
     private static <D, C extends ContourCombiners.ContourCombiner<D>>
     void generateDistanceField(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             SDFTransformation transformation,
             Class<C> combinerClass,
             DistancePixelConversion<D> converter)
     {
         try {
             // Construct combiner instance with (Shape) constructor
-            C combiner = combinerClass.getConstructor(Shape.class).newInstance(shape);
+            C combiner = combinerClass.getConstructor(MsdfShape.class).newInstance(msdfShape);
 
             ShapeDistanceFinder<C, D> distanceFinder =
-                    new ShapeDistanceFinder<>(shape, combiner);
+                    new ShapeDistanceFinder<>(msdfShape, combiner);
 
             boolean rightToLeft = false;
             final int width = output.getWidth();
@@ -32,7 +31,7 @@ public class msdfgen {
             float[] pixelChannels = new float[channels];
 
             for (int y = 0; y < height; y++) {
-                int row = shape.inverseYAxis ? height - y - 1 : y;
+                int row = msdfShape.inverseYAxis ? height - y - 1 : y;
 
                 for (int col = 0; col < width; col++) {
                     int x = rightToLeft ? width - col - 1 : col;
@@ -69,13 +68,13 @@ public class msdfgen {
     }
     // SDF Generation
     public static void generateSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             SDFTransformation transformation) {
-        generateSDF(output, shape, transformation, new GeneratorConfig());
+        generateSDF(output, msdfShape, transformation, new GeneratorConfig());
     }
-    public static void generateSDF(BitmapRef<Float> output,
-                                   Shape shape,
+    public static void generateSDF(BitmapRef<float[]> output,
+                                   MsdfShape msdfShape,
                                    SDFTransformation transformation,
                                    GeneratorConfig config) {
         if (config == null) {
@@ -89,21 +88,21 @@ public class msdfgen {
         if (config.isOverlapSupport) {
             // OverlappingContourCombiner uses TrueDistanceSelector internally (single-distance)
             generateDistanceField(output,
-                    shape,
+                    msdfShape,
                     transformation,
                     ContourCombiners.OverlappingContourCombiner.class,
                     converter);
         } else {
             generateDistanceField(output,
-                    shape,
+                    msdfShape,
                     transformation,
                     ContourCombiners.SimpleContourCombiner.class,
                     converter);
         }
     }
     public static void generateSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             Projection projection,
             Range range,
             GeneratorConfig config) {
@@ -114,7 +113,7 @@ public class msdfgen {
         if (config.isOverlapSupport) {
             generateDistanceField(
                     output,
-                    shape,
+                    msdfShape,
                     transformation,
                     ContourCombiners.OverlappingContourCombiner.class,
                     new SingleDistancePixelConversion(mapping)
@@ -122,7 +121,7 @@ public class msdfgen {
         } else {
             generateDistanceField(
                     output,
-                    shape,
+                    msdfShape,
                     transformation,
                     ContourCombiners.SimpleContourCombiner.class,
                     new SingleDistancePixelConversion(mapping)
@@ -131,8 +130,8 @@ public class msdfgen {
     }
 
     public static void generateSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             Range range,
             Vector2d scale,
             Vector2d translate,
@@ -141,13 +140,13 @@ public class msdfgen {
         // Wrap scale/translate into a Projection, then delegate to main method
         Projection proj = new Projection(scale, translate);
         GeneratorConfig config = new GeneratorConfig(overlapSupport);
-        generateSDF(output, shape, proj, range, config);
+        generateSDF(output, msdfShape, proj, range, config);
     }
 
     // PSDF Generation
     public static void generatePSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             SDFTransformation transformation,
             GeneratorConfig config) {
         // Use a default DistanceMapping instance here; replace if you have a specific mapping.
@@ -158,27 +157,27 @@ public class msdfgen {
 
         if (config != null && config.isOverlapSupport) {
             // Overlapping combiner
-            generateDistanceField(output, shape, transformation,
+            generateDistanceField(output, msdfShape, transformation,
                     ContourCombiners.OverlappingContourCombiner.class,
                     converter);
         } else {
             // Simple combiner
-            generateDistanceField(output, shape, transformation,
+            generateDistanceField(output, msdfShape, transformation,
                     ContourCombiners.SimpleContourCombiner.class,
                     converter);
         }
     }
 
     public static void generatePSDF(
-        BitmapRef<Float> output,
-        Shape shape,
+        BitmapRef<float[]> output,
+        MsdfShape msdfShape,
         SDFTransformation transformation) {
-    generatePSDF(output, shape, transformation, new GeneratorConfig());
+    generatePSDF(output, msdfShape, transformation, new GeneratorConfig());
 }
 
     public static void generatePSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             Range range,
             Vector2d scale,
             Vector2d translate,
@@ -188,12 +187,12 @@ public class msdfgen {
         // Wrap it in a GeneratorConfig
         GeneratorConfig config = new GeneratorConfig(overlapSupport);
         // Call the main overloaded method
-        generatePSDF(output, shape, projection, range, config);
+        generatePSDF(output, msdfShape, projection, range, config);
     }
 
     public static void generatePSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             Projection projection,
             Range range,
             GeneratorConfig config) {
@@ -208,12 +207,12 @@ public class msdfgen {
         SingleDistancePixelConversion converter = new SingleDistancePixelConversion(mapping);
 
         if (config != null && config.isOverlapSupport) {
-            generateDistanceField(output, shape,
+            generateDistanceField(output, msdfShape,
                     transformation,
                     ContourCombiners.OverlappingContourCombiner.class,
                     converter);
         } else {
-            generateDistanceField(output, shape,
+            generateDistanceField(output, msdfShape,
                     transformation,
                     ContourCombiners.SimpleContourCombiner.class,
                     converter);
@@ -224,8 +223,8 @@ public class msdfgen {
 
     // MSDF Generation
     public static void generateMSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             SDFTransformation transformation,
             MSDFGeneratorConfig config) {
 
@@ -234,7 +233,7 @@ public class msdfgen {
         if (config.isOverlapSupport) {
             generateDistanceField(
                     output,
-                    shape,
+                    msdfShape,
                     transformation,
                     ContourCombiners.OverlappingMultiContourCombiner.class,
                     converter
@@ -242,7 +241,7 @@ public class msdfgen {
         } else {
             generateDistanceField(
                     output,
-                    shape,
+                    msdfShape,
                     transformation,
                     ContourCombiners.SimpleMultiContourCombiner.class,
                     converter
@@ -255,20 +254,20 @@ public class msdfgen {
         errorCorrection.setMinImproveRatio(ErrorCorrectionConfig.DEFAULT_MIN_IMPROVE_RATIO);
 
         // If shape info is needed for better correction
-        errorCorrection.findErrorsWithShape(output, shape);
+        errorCorrection.findErrorsWithShape(output, msdfShape);
 
         // Apply the corrections to the MSDF bitmap
         errorCorrection.apply(output);
     }
 
-    public static void generateMSDF(BitmapRef<Float> output, Shape shape,
+    public static void generateMSDF(BitmapRef<float[]> output, MsdfShape msdfShape,
                                     SDFTransformation transformation) {
-        generateMSDF(output, shape, transformation, new MSDFGeneratorConfig());
+        generateMSDF(output, msdfShape, transformation, new MSDFGeneratorConfig());
     }
 
     public static void generateMSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             Projection projection,
             Range range,
             MSDFGeneratorConfig config) {
@@ -283,7 +282,7 @@ public class msdfgen {
         if (config.isOverlapSupport) {
             generateDistanceField(
                     output,
-                    shape,
+                    msdfShape,
                     transformation,
                     ContourCombiners.OverlappingMultiContourCombiner.class,
                     converter
@@ -291,7 +290,7 @@ public class msdfgen {
         } else {
             generateDistanceField(
                     output,
-                    shape,
+                    msdfShape,
                     transformation,
                     ContourCombiners.SimpleMultiContourCombiner.class,
                     converter
@@ -304,13 +303,13 @@ public class msdfgen {
         errorCorrection.setMinDeviationRatio(config.errorCorrection.minDeviationRatio);
         errorCorrection.setMinImproveRatio(config.errorCorrection.minImproveRatio);
 
-        errorCorrection.findErrorsWithShape(output, shape);
+        errorCorrection.findErrorsWithShape(output, msdfShape);
         errorCorrection.apply(output);
     }
 
     public static void generateMSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             Range range,
             Vector2d scale,
             Vector2d translate,
@@ -322,13 +321,13 @@ public class msdfgen {
         MSDFGeneratorConfig config =
                 new MSDFGeneratorConfig(overlapSupport, errorCorrectionConfig);
 
-        generateMSDF(output, shape, projection, range, config);
+        generateMSDF(output, msdfShape, projection, range, config);
     }
 
     // MTSDF Generation
     public static void generateMTSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             SDFTransformation transformation,
             MSDFGeneratorConfig config
     ) {
@@ -340,7 +339,7 @@ public class msdfgen {
         if (config.isOverlapSupport) {
             generateDistanceField(
                     output,
-                    shape,
+                    msdfShape,
                     transformation,
                     ContourCombiners.OverlappingMultiAndTrueContourCombiner.class,
                     converter
@@ -348,7 +347,7 @@ public class msdfgen {
         } else {
             generateDistanceField(
                     output,
-                    shape,
+                    msdfShape,
                     transformation,
                     ContourCombiners.SimpleMultiAndTrueContourCombiner.class,
                     converter
@@ -366,9 +365,9 @@ public class msdfgen {
         errorCorrection.apply(output);
     }
 
-    public static void generateMTSDF(BitmapRef<Float> output, Shape shape,
+    public static void generateMTSDF(BitmapRef<float[]> output, MsdfShape msdfShape,
                                      SDFTransformation transformation) {
-        generateMTSDF(output, shape, transformation, new MSDFGeneratorConfig());
+        generateMTSDF(output, msdfShape, transformation, new MSDFGeneratorConfig());
     }
     /**
      * Java equivalent of:
@@ -376,8 +375,8 @@ public class msdfgen {
      *                    const Projection &projection, Range range, const MSDFGeneratorConfig &config)
      */
     public static void generateMTSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             Projection projection,
             Range range,
             MSDFGeneratorConfig config
@@ -388,7 +387,7 @@ public class msdfgen {
         SDFTransformation transformation = new SDFTransformation(projection, mapping);
 
         // Delegate to your already-converted implementation
-        generateMTSDF(output, shape, transformation, config);
+        generateMTSDF(output, msdfShape, transformation, config);
     }
 
     /**
@@ -398,8 +397,8 @@ public class msdfgen {
      *                    const ErrorCorrectionConfig &errorCorrectionConfig, bool overlapSupport)
      */
     public static void generateMTSDF(
-            BitmapRef<Float> output,
-            Shape shape,
+            BitmapRef<float[]> output,
+            MsdfShape msdfShape,
             Range range,
             Vector2d scale,
             Vector2d translate,
@@ -413,7 +412,7 @@ public class msdfgen {
         MSDFGeneratorConfig genConfig = new MSDFGeneratorConfig(overlapSupport, errorCorrectionConfig);
 
         // Call the other overload
-        generateMTSDF(output, shape, projection, range, genConfig);
+        generateMTSDF(output, msdfShape, projection, range, genConfig);
     }
 
 

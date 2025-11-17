@@ -26,7 +26,7 @@ public class ContourCombiners {
 
         private EdgeSelectors.TrueDistanceSelector shapeEdgeSelector;
 
-        public SimpleContourCombiner(Shape shape) {
+        public SimpleContourCombiner(MsdfShape msdfShape) {
             this.shapeEdgeSelector = new EdgeSelectors.TrueDistanceSelector();
         }
 
@@ -50,7 +50,7 @@ public class ContourCombiners {
 
         private EdgeSelectors.MultiDistanceSelector shapeEdgeSelector;
 
-        public SimpleMultiContourCombiner(Shape shape) {
+        public SimpleMultiContourCombiner(MsdfShape msdfShape) {
             this.shapeEdgeSelector = new EdgeSelectors.MultiDistanceSelector();
         }
 
@@ -74,7 +74,7 @@ public class ContourCombiners {
 
         private EdgeSelectors.MultiAndTrueDistanceSelector shapeEdgeSelector;
 
-        public SimpleMultiAndTrueContourCombiner(Shape shape) {
+        public SimpleMultiAndTrueContourCombiner(MsdfShape msdfShape) {
             this.shapeEdgeSelector = new EdgeSelectors.MultiAndTrueDistanceSelector();
         }
 
@@ -100,13 +100,13 @@ public class ContourCombiners {
         private List<Integer> windings;
         private List<EdgeSelectors.TrueDistanceSelector> edgeSelectors;
 
-        public OverlappingContourCombiner(Shape shape) {
+        public OverlappingContourCombiner(MsdfShape msdfShape) {
             this.p = new Vector2d();
             this.windings = new ArrayList<>();
             this.edgeSelectors = new ArrayList<>();
 
             // Initialize windings from contours
-            for (Contours.Contour contour : shape.contours) {
+            for (Contours.Contour contour : msdfShape.contours) {
                 windings.add(contour.winding());
                 edgeSelectors.add(new EdgeSelectors.TrueDistanceSelector());
             }
@@ -208,12 +208,12 @@ public class ContourCombiners {
         private List<Integer> windings;
         private List<EdgeSelectors.MultiDistanceSelector> edgeSelectors;
 
-        public OverlappingMultiContourCombiner(Shape shape) {
+        public OverlappingMultiContourCombiner(MsdfShape msdfShape) {
             this.p = new Vector2d();
             this.windings = new ArrayList<>();
             this.edgeSelectors = new ArrayList<>();
 
-            for (Contours.Contour contour : shape.contours) {
+            for (Contours.Contour contour : msdfShape.contours) {
                 windings.add(contour.winding());
                 edgeSelectors.add(new EdgeSelectors.MultiDistanceSelector());
             }
@@ -331,12 +331,12 @@ public class ContourCombiners {
         private List<Integer> windings;
         private List<EdgeSelectors.MultiAndTrueDistanceSelector> edgeSelectors;
 
-        public OverlappingMultiAndTrueContourCombiner(Shape shape) {
+        public OverlappingMultiAndTrueContourCombiner(MsdfShape msdfShape) {
             this.p = new Vector2d();
             this.windings = new ArrayList<>();
             this.edgeSelectors = new ArrayList<>();
 
-            for (Contours.Contour contour : shape.contours) {
+            for (Contours.Contour contour : msdfShape.contours) {
                 windings.add(contour.winding());
                 edgeSelectors.add(new EdgeSelectors.MultiAndTrueDistanceSelector());
             }
@@ -382,7 +382,7 @@ public class ContourCombiners {
             return result;
         }
 
-        private Shape createShapeFromSelectors() {
+        private MsdfShape createShapeFromSelectors() {
             // This is a helper method that would need to be implemented based on your Shape class
             // For now, returning null as a placeholder
             return null;
