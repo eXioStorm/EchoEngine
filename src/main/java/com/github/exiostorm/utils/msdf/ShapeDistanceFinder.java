@@ -8,24 +8,22 @@ import java.util.ArrayList;
 
 /**
  * Finds the distance between a point and a Shape. ContourCombiner dictates the distance metric and its data type.
- * @param <T> The ContourCombiner type that determines the distance calculation method
+ * @param <C> The ContourCombiner type that determines the distance calculation method
  */
-public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
+public class ShapeDistanceFinder<C extends ContourCombiners.ContourCombiner<D>, D> {
 
-    private final Shape shape;
-    private final T contourCombiner;
+    private final MsdfShape msdfShape;
+    private final C contourCombiner;
     private final List<EdgeHolder> shapeEdgeCache;
 
     /**
      * Constructor - Passed shape object must persist until the distance finder is destroyed!
      */
-    public ShapeDistanceFinder(Shape shape, T contourCombiner) {
-        this.shape = shape;
+    public ShapeDistanceFinder(MsdfShape msdfShape, C contourCombiner) {
+        this.msdfShape = msdfShape;
         this.contourCombiner = contourCombiner;
-        this.shapeEdgeCache = new ArrayList<>(shape.edgeCount());
-
-        // Initialize edge cache
-        for (int i = 0; i < shape.edgeCount(); i++) {
+        this.shapeEdgeCache = new ArrayList<>(msdfShape.edgeCount());
+        for (int i = 0; i < msdfShape.edgeCount(); i++) {
             this.shapeEdgeCache.add(new EdgeHolder());
         }
     }
@@ -33,13 +31,13 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
     /**
      * Finds the distance from origin. Not thread-safe! Is fastest when subsequent queries are close together.
      */
-    public Object distance(Vector2d origin) {
+    public D distance(Vector2d origin) {
         contourCombiner.reset(origin);
 
         int edgeCacheIndex = 0;
 
-        for (int contourIndex = 0; contourIndex < shape.contours.size(); contourIndex++) {
-            Contours.Contour contour = shape.contours.get(contourIndex);
+        for (int contourIndex = 0; contourIndex < msdfShape.contours.size(); contourIndex++) {
+            Contours.Contour contour = msdfShape.contours.get(contourIndex);
             if (!contour.edges.isEmpty()) {
                 Object edgeSelector = contourCombiner.edgeSelector(contourIndex);
 
@@ -72,21 +70,21 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
     }
     private void addEdgeToSelector(Object edgeSelector, Object edgeCache, EdgeSegment prevEdge, EdgeSegment curEdge, EdgeSegment nextEdge) {
         if (edgeSelector instanceof EdgeSelectors.TrueDistanceSelector &&
-                edgeCache instanceof EdgeSelectors.TrueDistanceSelector.EdgeCache) {
+                edgeCache instanceof EdgeHolder) {
             ((EdgeSelectors.TrueDistanceSelector) edgeSelector).addEdge(
-                    (EdgeSelectors.TrueDistanceSelector.EdgeCache) edgeCache, prevEdge, curEdge, nextEdge);
+                    (EdgeHolder) edgeCache, prevEdge, curEdge, nextEdge);
         } else if (edgeSelector instanceof EdgeSelectors.MultiDistanceSelector &&
-                edgeCache instanceof EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache) {
+                edgeCache instanceof EdgeHolder) {
             ((EdgeSelectors.MultiDistanceSelector) edgeSelector).addEdge(
-                    (EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache) edgeCache, prevEdge, curEdge, nextEdge);
+                    (EdgeHolder) edgeCache, prevEdge, curEdge, nextEdge);
         } else if (edgeSelector instanceof EdgeSelectors.MultiAndTrueDistanceSelector &&
-                edgeCache instanceof EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache) {
+                edgeCache instanceof EdgeHolder) {
             ((EdgeSelectors.MultiAndTrueDistanceSelector) edgeSelector).addEdge(
-                    (EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache) edgeCache, prevEdge, curEdge, nextEdge);
+                    (EdgeHolder) edgeCache, prevEdge, curEdge, nextEdge);
         } else if (edgeSelector instanceof EdgeSelectors.PerpendicularDistanceSelector &&
-                edgeCache instanceof EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache) {
+                edgeCache instanceof EdgeHolder) {
             ((EdgeSelectors.PerpendicularDistanceSelector) edgeSelector).addEdge(
-                    (EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache) edgeCache, prevEdge, curEdge, nextEdge);
+                    (EdgeHolder) edgeCache, prevEdge, curEdge, nextEdge);
         } else {
             System.err.println("Warning: Unsupported edge selector/cache combination: " +
                     edgeSelector.getClass().getSimpleName() + " with cache " +
@@ -97,76 +95,73 @@ public class ShapeDistanceFinder<T extends ContourCombiners.ContourCombiner> {
     /**
      * Finds the distance between shape and origin. Does not allocate result cache used to optimize performance of multiple queries.
      */
-    public static <U extends ContourCombiners.ContourCombiner> Object oneShotDistance(Shape shape, Vector2d origin, U contourCombiner) {
+    public static <C extends ContourCombiners.ContourCombiner<D>, D>
+    D oneShotDistance(MsdfShape msdfShape, Vector2d origin, C contourCombiner) {
         contourCombiner.reset(origin);
-
-        for (int contourIndex = 0; contourIndex < shape.contours.size(); contourIndex++) {
-            Contours.Contour contour = shape.contours.get(contourIndex);
+        for (int contourIndex = 0; contourIndex < msdfShape.contours.size(); contourIndex++) {
+            Contours.Contour contour = msdfShape.contours.get(contourIndex);
             if (!contour.edges.isEmpty()) {
                 Object edgeSelector = contourCombiner.edgeSelector(contourIndex);
-
                 List<EdgeHolder> edges = contour.edges;
                 EdgeSegment prevEdge = edges.size() >= 2 ?
                         edges.get(edges.size() - 2).getEdgeSegment() :
                         edges.get(0).getEdgeSegment();
                 EdgeSegment curEdge = edges.get(edges.size() - 1).getEdgeSegment();
-
                 for (EdgeHolder edgeHolder : edges) {
                     EdgeSegment nextEdge = edgeHolder.getEdgeSegment();
-
-                    // Create appropriate temporary cache based on selector type
                     Object tempCache = null;
-                    if (edgeSelector instanceof EdgeSelectors.TrueDistanceSelector) {
-                        tempCache = new EdgeSelectors.TrueDistanceSelector.EdgeCache();
-                        ((EdgeSelectors.TrueDistanceSelector) edgeSelector).addEdge(
-                                (EdgeSelectors.TrueDistanceSelector.EdgeCache) tempCache, prevEdge, curEdge, nextEdge);
-                    } else if (edgeSelector instanceof EdgeSelectors.MultiDistanceSelector) {
-                        tempCache = new EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache();
-                        ((EdgeSelectors.MultiDistanceSelector) edgeSelector).addEdge(
-                                (EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache) tempCache, prevEdge, curEdge, nextEdge);
-                    } else if (edgeSelector instanceof EdgeSelectors.MultiAndTrueDistanceSelector) {
-                        tempCache = new EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache();
-                        ((EdgeSelectors.MultiAndTrueDistanceSelector) edgeSelector).addEdge(
-                                (EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache) tempCache, prevEdge, curEdge, nextEdge);
-                    } else if (edgeSelector instanceof EdgeSelectors.PerpendicularDistanceSelector) {
-                        tempCache = new EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache();
-                        ((EdgeSelectors.PerpendicularDistanceSelector) edgeSelector).addEdge(
-                                (EdgeSelectors.PerpendicularDistanceSelectorBase.EdgeCache) tempCache, prevEdge, curEdge, nextEdge);
-                    }
 
+                    if (edgeSelector instanceof EdgeSelectors.TrueDistanceSelector) {
+                        tempCache = new EdgeHolder();
+                        ((EdgeSelectors.TrueDistanceSelector) edgeSelector).addEdge(
+                                (EdgeHolder) tempCache, prevEdge, curEdge, nextEdge);
+                    } else if (edgeSelector instanceof EdgeSelectors.MultiDistanceSelector) {
+                        tempCache = new EdgeHolder();
+                        ((EdgeSelectors.MultiDistanceSelector) edgeSelector).addEdge(
+                                (EdgeHolder) tempCache, prevEdge, curEdge, nextEdge);
+                    } else if (edgeSelector instanceof EdgeSelectors.MultiAndTrueDistanceSelector) {
+                        tempCache = new EdgeHolder();
+                        ((EdgeSelectors.MultiAndTrueDistanceSelector) edgeSelector).addEdge(
+                                (EdgeHolder) tempCache, prevEdge, curEdge, nextEdge);
+                    } else if (edgeSelector instanceof EdgeSelectors.PerpendicularDistanceSelector) {
+                        tempCache = new EdgeHolder();
+                        ((EdgeSelectors.PerpendicularDistanceSelector) edgeSelector).addEdge(
+                                (EdgeHolder) tempCache, prevEdge, curEdge, nextEdge);
+                    }
                     prevEdge = curEdge;
                     curEdge = nextEdge;
                 }
             }
         }
-
         return contourCombiner.distance();
     }
 
+
     // Getters
-    public Shape getShape() {
-        return shape;
+    public MsdfShape getShape() {
+        return msdfShape;
     }
 
-    public T getContourCombiner() {
-        return contourCombiner;
+    public D getContourCombiner() {
+        return contourCombiner.distance();
     }
 }
 
 /**
  * Specialized ShapeDistanceFinder for simple true distance calculations
  */
-class SimpleTrueShapeDistanceFinder extends ShapeDistanceFinder<ContourCombiners.SimpleContourCombiner> {
+class SimpleTrueShapeDistanceFinder
+        extends ShapeDistanceFinder<ContourCombiners.SimpleContourCombiner, Double> {
 
-    public SimpleTrueShapeDistanceFinder(Shape shape) {
-        super(shape, new ContourCombiners.SimpleContourCombiner(shape));
+    public SimpleTrueShapeDistanceFinder(MsdfShape msdfShape) {
+        super(msdfShape, new ContourCombiners.SimpleContourCombiner(msdfShape));
     }
 
     /**
      * Static convenience method for one-shot distance calculations
      */
-    public static double oneShotDistance(Shape shape, Vector2d origin) {
-        ContourCombiners.SimpleContourCombiner combiner = new ContourCombiners.SimpleContourCombiner(shape);
-        return (double) ShapeDistanceFinder.oneShotDistance(shape, origin, combiner);
+    public static double oneShotDistance(MsdfShape msdfShape, Vector2d origin) {
+        ContourCombiners.SimpleContourCombiner combiner = new ContourCombiners.SimpleContourCombiner(msdfShape);
+        return (double) ShapeDistanceFinder.oneShotDistance(msdfShape, origin, combiner);
     }
 }

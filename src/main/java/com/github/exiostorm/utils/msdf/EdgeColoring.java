@@ -5,6 +5,7 @@ import org.joml.Vector2d;
 import org.joml.Vector2f;
 
 import java.awt.*;
+import java.awt.Shape;
 import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class EdgeColoring {
         float[] coords = new float[6];
         Vector2d currentPoint = null;  // Changed to Vector2d
         Vector2d startPoint = null;    // Changed to Vector2d
-
+        //TODO 20251118 might be a bug here with it getting confused between our own Shape class, and awt.Shape
         PathIterator pathIterator = shape.getPathIterator(null);
 
         while (!pathIterator.isDone()) {

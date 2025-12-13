@@ -8,7 +8,6 @@ import java.util.List;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
-//TODO woohoo! class done?
 public class Contours {
     public static class Contour {
 
@@ -18,10 +17,6 @@ public class Contours {
         }
         public void addEdge(EdgeHolder edge) {
             edges.add(edge);
-        }
-        public EdgeHolder addEdge() {
-            edges.add(null); // placeholder for resize behavior
-            return edges.get(edges.size() - 1);
         }
 
         private static void boundPoint(Rectangle2D.Double bounds, Vector2d p) {

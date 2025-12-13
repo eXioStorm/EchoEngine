@@ -4,7 +4,6 @@ import org.joml.Vector2d;
 
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -14,7 +13,7 @@ import static com.github.exiostorm.utils.msdf.EdgeSegment.*;
 /**
  * Vector shape representation.
  */
-public class Shape {
+public class MsdfShape {
 
     // Threshold of the dot product of adjacent edge directions to be considered convergent.
     public static final double CORNER_DOT_EPSILON = 0.000001;
@@ -48,7 +47,7 @@ public class Shape {
     /** Specifies whether the shape uses bottom-to-top (false) or top-to-bottom (true) Y coordinates. */
     public boolean inverseYAxis;
 
-    public Shape() {
+    public MsdfShape() {
         this.contours = new ArrayList<>();
         this.inverseYAxis = false;
     }

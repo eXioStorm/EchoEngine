@@ -12,19 +12,7 @@ public class EdgeSelectors {
     public static class MultiAndTrueDistance extends MultiDistance {
         public double a;
     }
-
-    /// Selects the nearest edge by its true distance.
     public static class TrueDistanceSelector {
-
-        public static class EdgeCache {
-            public Vector2d point;
-            public double absDistance;
-
-            public EdgeCache() {
-                this.point = new Vector2d();
-                this.absDistance = 0.0;
-            }
-        }
 
         private Vector2d p;
         private SignedDistance minDistance;
@@ -40,7 +28,7 @@ public class EdgeSelectors {
             this.p.set(p);
         }
 
-        public void addEdge(EdgeCache cache, EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
+        public void addEdge(EdgeHolder cache, EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
             double delta = 1.001 * p.sub(cache.point, new Vector2d()).length();
             if (cache.absDistance - delta <= Math.abs(minDistance.distance)) {
                 double[] dummy = new double[1];
@@ -65,22 +53,6 @@ public class EdgeSelectors {
     }
 
     public static class PerpendicularDistanceSelectorBase {
-
-        public static class EdgeCache {
-            public Vector2d point;
-            public double absDistance;
-            public double aDomainDistance, bDomainDistance;
-            public double aPerpendicularDistance, bPerpendicularDistance;
-
-            public EdgeCache() {
-                this.point = new Vector2d();
-                this.absDistance = 0;
-                this.aDomainDistance = 0;
-                this.bDomainDistance = 0;
-                this.aPerpendicularDistance = 0;
-                this.bPerpendicularDistance = 0;
-            }
-        }
 
         protected SignedDistance minTrueDistance;
         protected double minNegativePerpendicularDistance;
@@ -116,7 +88,7 @@ public class EdgeSelectors {
             nearEdgeParam = 0;
         }
 
-        public boolean isEdgeRelevant(EdgeCache cache, EdgeSegment edge, Vector2d p) {
+        public boolean isEdgeRelevant(EdgeHolder cache, EdgeSegment edge, Vector2d p) {
             double delta = 1.001 * p.sub(cache.point, new Vector2d()).length();
             return (
                     cache.absDistance - delta <= Math.abs(minTrueDistance.distance) ||
@@ -192,7 +164,7 @@ public class EdgeSelectors {
             this.p.set(p);
         }
 
-        public void addEdge(EdgeCache cache, EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
+        public void addEdge(EdgeHolder cache, EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
             if (isEdgeRelevant(cache, edge, p)) {
                 double[] param = new double[1];
                 SignedDistance distance = edge.signedDistance(p, param);
@@ -258,7 +230,7 @@ public class EdgeSelectors {
             b.reset(delta);
             this.p.set(p);
         }
-        public void addEdge(PerpendicularDistanceSelectorBase.EdgeCache cache,
+        public void addEdge(EdgeHolder cache,
                             EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
             boolean redRelevant = (edge.edgeColor.color & EdgeColorEnum.RED.getValue().color) != 0 &&
                     r.isEdgeRelevant(cache, edge, p);

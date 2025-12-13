@@ -124,19 +124,19 @@ public class MSDFErrorCorrection {
         public boolean protectedFlag;
 
         private final SimpleTrueShapeDistanceFinder distanceFinder;
-        private final BitmapConstRef sdf;
+        private final BitmapRef sdf;
         private final DistanceMapping distanceMapping;
         private Vector2d texelSize;
         private final double minImproveRatio;
 
-        public ShapeDistanceChecker(BitmapConstRef sdf, Shape shape, Projection projection,
+        public ShapeDistanceChecker(BitmapRef sdf, MsdfShape msdfShape, Projection projection,
                                     DistanceMapping distanceMapping, double minImproveRatio) {
-            this.distanceFinder = new SimpleTrueShapeDistanceFinder(shape);
+            this.distanceFinder = new SimpleTrueShapeDistanceFinder(msdfShape);
             this.sdf = sdf;
             this.distanceMapping = distanceMapping;
             this.minImproveRatio = minImproveRatio;
             this.texelSize = projection.unprojectVector(new Vector2d(1.0, 1.0));
-            if (shape.inverseYAxis) {
+            if (msdfShape.inverseYAxis) {
                 this.texelSize.y = -this.texelSize.y;
             }
         }
@@ -145,7 +145,7 @@ public class MSDFErrorCorrection {
             return new ArtifactClassifier(this, direction, span);
         }
 
-        private static void interpolate(float[] result, BitmapConstRef bitmap, Vector2d coord) {
+        private static void interpolate(float[] result, BitmapRef bitmap, Vector2d coord) {
             // Bilinear interpolation implementation
             // This would need to be implemented based on your bitmap interpolation logic
             // For now, this is a placeholder
@@ -185,8 +185,8 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags all texels that are interpolated at corners as protected.
-    public void protectCorners(Shape shape) {
-        for (Contours.Contour contour : shape.contours) {
+    public void protectCorners(MsdfShape msdfShape) {
+        for (Contours.Contour contour : msdfShape.contours) {
             if (!contour.edges.isEmpty()) {
                 EdgeSegment prevEdge = contour.edges.get(contour.edges.size() - 1).edge;
                 for (EdgeHolder edge : contour.edges) {
@@ -197,7 +197,7 @@ public class MSDFErrorCorrection {
                         Vector2d p = transformation.project(edge.edge.point(0));
                         int l = (int) Math.floor(p.x - 0.5);
                         int b = (int) Math.floor(p.y - 0.5);
-                        if (shape.inverseYAxis) {
+                        if (msdfShape.inverseYAxis) {
                             b = stencil.getHeight() - b - 2;
                         }
                         int r = l + 1;
@@ -229,7 +229,7 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags all texels that contribute to edges as protected.
-    public void protectEdges(BitmapConstRef sdf) {
+    public void protectEdges(BitmapRef sdf) {
         float radius;
 
         // Horizontal texel pairs
@@ -346,14 +346,15 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF only.
-    public void findErrors(BitmapConstRef sdf) {
+    public void findErrors(BitmapRef sdf) {
         // Compute the expected deltas between values of horizontally, vertically, and diagonally adjacent texels.
         double hSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length();
         double vSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(0, transformation.getDistanceMapping().map(1.0))).length();
         double dSpan = minDeviationRatio * transformation.unprojectVector(
-                new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length();
+                new Vector2d(transformation.getDistanceMapping().map(1.0),
+                        transformation.getDistanceMapping().map(1.0))).length();
 
         // Inspect all texels.
         for (int y = 0; y < sdf.getHeight(); ++y) {
@@ -430,7 +431,73 @@ public class MSDFErrorCorrection {
                         hasError = true;
                     }
                 }
-                // Additional diagonal checks...
+                // Diagonal checks (after the existing x > 0 && y > 0 check)
+
+                if (x < sdf.getWidth() - 1 && y > 0) {
+                    // Recreate r and b arrays for this scope
+                    float r0 = (Float) sdf.getPixel(x + 1, y, 0);
+                    float r1 = (Float) sdf.getPixel(x + 1, y, 1);
+                    float r2 = (Float) sdf.getPixel(x + 1, y, 2);
+                    float[] r = {r0, r1, r2};
+
+                    float b0 = (Float) sdf.getPixel(x, y - 1, 0);
+                    float b1 = (Float) sdf.getPixel(x, y - 1, 1);
+                    float b2 = (Float) sdf.getPixel(x, y - 1, 2);
+                    float[] b = {b0, b1, b2};
+
+                    float rb0 = (Float) sdf.getPixel(x + 1, y - 1, 0);
+                    float rb1 = (Float) sdf.getPixel(x + 1, y - 1, 1);
+                    float rb2 = (Float) sdf.getPixel(x + 1, y - 1, 2);
+                    float[] rb = {rb0, rb1, rb2};
+
+                    if (hasDiagonalArtifact(new BaseArtifactClassifier(dSpan, protectedFlag), cm, c, r, b, rb)) {
+                        hasError = true;
+                    }
+                }
+
+                if (x > 0 && y < sdf.getHeight() - 1) {
+                    // Recreate l and get t
+                    float l0 = (Float) sdf.getPixel(x - 1, y, 0);
+                    float l1 = (Float) sdf.getPixel(x - 1, y, 1);
+                    float l2 = (Float) sdf.getPixel(x - 1, y, 2);
+                    float[] l = {l0, l1, l2};
+
+                    float t0 = (Float) sdf.getPixel(x, y + 1, 0);
+                    float t1 = (Float) sdf.getPixel(x, y + 1, 1);
+                    float t2 = (Float) sdf.getPixel(x, y + 1, 2);
+                    float[] t = {t0, t1, t2};
+
+                    float lt0 = (Float) sdf.getPixel(x - 1, y + 1, 0);
+                    float lt1 = (Float) sdf.getPixel(x - 1, y + 1, 1);
+                    float lt2 = (Float) sdf.getPixel(x - 1, y + 1, 2);
+                    float[] lt = {lt0, lt1, lt2};
+
+                    if (hasDiagonalArtifact(new BaseArtifactClassifier(dSpan, protectedFlag), cm, c, l, t, lt)) {
+                        hasError = true;
+                    }
+                }
+
+                if (x < sdf.getWidth() - 1 && y < sdf.getHeight() - 1) {
+                    // Get r and t
+                    float r0 = (Float) sdf.getPixel(x + 1, y, 0);
+                    float r1 = (Float) sdf.getPixel(x + 1, y, 1);
+                    float r2 = (Float) sdf.getPixel(x + 1, y, 2);
+                    float[] r = {r0, r1, r2};
+
+                    float t0 = (Float) sdf.getPixel(x, y + 1, 0);
+                    float t1 = (Float) sdf.getPixel(x, y + 1, 1);
+                    float t2 = (Float) sdf.getPixel(x, y + 1, 2);
+                    float[] t = {t0, t1, t2};
+
+                    float rt0 = (Float) sdf.getPixel(x + 1, y + 1, 0);
+                    float rt1 = (Float) sdf.getPixel(x + 1, y + 1, 1);
+                    float rt2 = (Float) sdf.getPixel(x + 1, y + 1, 2);
+                    float[] rt = {rt0, rt1, rt2};
+
+                    if (hasDiagonalArtifact(new BaseArtifactClassifier(dSpan, protectedFlag), cm, c, r, t, rt)) {
+                        hasError = true;
+                    }
+                }
 
                 if (hasError) {
                     byte currentValue = (Byte) stencil.getPixel(x, y, 0);
@@ -441,56 +508,167 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF and comparison with the exact shape distance.
-    public void findErrorsWithShape(BitmapConstRef sdf, Shape shape) {
-        // Compute the expected deltas between values of horizontally, vertically, and diagonally adjacent texels.
+    public void findErrorsWithShape(BitmapRef sdf, MsdfShape msdfShape) {
         double hSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length();
         double vSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(0, transformation.getDistanceMapping().map(1.0))).length();
         double dSpan = minDeviationRatio * transformation.unprojectVector(
-                new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length();
+                new Vector2d(transformation.getDistanceMapping().map(1.0),
+                        transformation.getDistanceMapping().map(1.0))).length();
 
-        ShapeDistanceChecker shapeDistanceChecker = new ShapeDistanceChecker(sdf, shape, transformation,
+        ShapeDistanceChecker shapeDistanceChecker = new ShapeDistanceChecker(sdf, msdfShape, transformation,
                 transformation.getDistanceMapping(), minImproveRatio);
 
-        // Inspect all texels.
         for (int y = 0; y < sdf.getHeight(); ++y) {
-            int row = shape.inverseYAxis ? sdf.getHeight() - y - 1 : y;
+            int row = msdfShape.inverseYAxis ? sdf.getHeight() - y - 1 : y;
             for (int x = 0; x < sdf.getWidth(); ++x) {
-                if (((Byte) stencil.getPixel(x, row, 0) & Flags.ERROR) != 0) {
+                // Fix: Cast to Number first, then get byte value
+                byte stencilValue = ((Number) stencil.getPixel(x, row, 0)).byteValue();
+                if ((stencilValue & Flags.ERROR) != 0) {
                     continue;
                 }
 
                 // Get all 3 channels for the current pixel
                 float[] c = new float[] {
-                        (Float) sdf.getPixel(x, row, 0),
-                        (Float) sdf.getPixel(x, row, 1),
-                        (Float) sdf.getPixel(x, row, 2)
+                        ((Number) sdf.getPixel(x, row, 0)).floatValue(),
+                        ((Number) sdf.getPixel(x, row, 1)).floatValue(),
+                        ((Number) sdf.getPixel(x, row, 2)).floatValue()
                 };
 
                 shapeDistanceChecker.shapeCoord = transformation.unproject(new Vector2d(x + 0.5, y + 0.5));
                 shapeDistanceChecker.sdfCoord = new Vector2d(x + 0.5, row + 0.5);
                 shapeDistanceChecker.msd = c;
-                shapeDistanceChecker.protectedFlag = ((Byte) stencil.getPixel(x, row, 0) & Flags.PROTECTED) != 0;
+                shapeDistanceChecker.protectedFlag = (((Number) stencil.getPixel(x, row, 0)).byteValue() & Flags.PROTECTED) != 0;
                 float cm = median(c[0], c[1], c[2]);
 
                 boolean hasError = false;
 
-                // Check all 8 neighbors with shape distance checker
                 if (x > 0) {
                     float[] l = new float[] {
-                            (Float) sdf.getPixel(x - 1, row, 0),
-                            (Float) sdf.getPixel(x - 1, row, 1),
-                            (Float) sdf.getPixel(x - 1, row, 2)
+                            ((Number) sdf.getPixel(x - 1, row, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, row, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, row, 2)).floatValue()
                     };
                     if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(-1, 0), hSpan), cm, c, l)) {
                         hasError = true;
                     }
                 }
-                // Additional neighbor checks...
+                if (y > 0) {
+                    float[] b = new float[] {
+                            ((Number) sdf.getPixel(x, row - 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x, row - 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x, row - 1, 2)).floatValue()
+                    };
+                    if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(0, -1), vSpan), cm, c, b)) {
+                        hasError = true;
+                    }
+                }
+                if (x < sdf.getWidth() - 1) {
+                    float[] r = new float[] {
+                            ((Number) sdf.getPixel(x + 1, row, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, row, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, row, 2)).floatValue()
+                    };
+                    if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(+1, 0), hSpan), cm, c, r)) {
+                        hasError = true;
+                    }
+                }
+                if (y < sdf.getHeight() - 1) {
+                    float[] t = new float[] {
+                            ((Number) sdf.getPixel(x, row + 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x, row + 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x, row + 1, 2)).floatValue()
+                    };
+                    if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(0, +1), vSpan), cm, c, t)) {
+                        hasError = true;
+                    }
+                }
+
+// Diagonal checks
+                if (x > 0 && y > 0) {
+                    float[] l = new float[] {
+                            ((Number) sdf.getPixel(x - 1, row, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, row, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, row, 2)).floatValue()
+                    };
+                    float[] b = new float[] {
+                            ((Number) sdf.getPixel(x, row - 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x, row - 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x, row - 1, 2)).floatValue()
+                    };
+                    float[] lb = new float[] {
+                            ((Number) sdf.getPixel(x - 1, row - 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, row - 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, row - 1, 2)).floatValue()
+                    };
+                    if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(-1, -1), dSpan), cm, c, l, b, lb)) {
+                        hasError = true;
+                    }
+                }
+                if (x < sdf.getWidth() - 1 && y > 0) {
+                    float[] r = new float[] {
+                            ((Number) sdf.getPixel(x + 1, row, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, row, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, row, 2)).floatValue()
+                    };
+                    float[] b = new float[] {
+                            ((Number) sdf.getPixel(x, row - 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x, row - 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x, row - 1, 2)).floatValue()
+                    };
+                    float[] rb = new float[] {
+                            ((Number) sdf.getPixel(x + 1, row - 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, row - 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, row - 1, 2)).floatValue()
+                    };
+                    if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(+1, -1), dSpan), cm, c, r, b, rb)) {
+                        hasError = true;
+                    }
+                }
+                if (x > 0 && y < sdf.getHeight() - 1) {
+                    float[] l = new float[] {
+                            ((Number) sdf.getPixel(x - 1, row, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, row, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, row, 2)).floatValue()
+                    };
+                    float[] t = new float[] {
+                            ((Number) sdf.getPixel(x, row + 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x, row + 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x, row + 1, 2)).floatValue()
+                    };
+                    float[] lt = new float[] {
+                            ((Number) sdf.getPixel(x - 1, row + 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, row + 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, row + 1, 2)).floatValue()
+                    };
+                    if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(-1, +1), dSpan), cm, c, l, t, lt)) {
+                        hasError = true;
+                    }
+                }
+                if (x < sdf.getWidth() - 1 && y < sdf.getHeight() - 1) {
+                    float[] r = new float[] {
+                            ((Number) sdf.getPixel(x + 1, row, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, row, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, row, 2)).floatValue()
+                    };
+                    float[] t = new float[] {
+                            ((Number) sdf.getPixel(x, row + 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x, row + 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x, row + 1, 2)).floatValue()
+                    };
+                    float[] rt = new float[] {
+                            ((Number) sdf.getPixel(x + 1, row + 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, row + 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, row + 1, 2)).floatValue()
+                    };
+                    if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(+1, +1), dSpan), cm, c, r, t, rt)) {
+                        hasError = true;
+                    }
+                }
 
                 if (hasError) {
-                    byte currentValue = (Byte) stencil.getPixel(x, row, 0);
+                    byte currentValue = ((Number) stencil.getPixel(x, row, 0)).byteValue();
                     stencil.setPixel(x, row, 0, (byte)(currentValue | Flags.ERROR));
                 }
             }
@@ -501,11 +679,13 @@ public class MSDFErrorCorrection {
     public void apply(BitmapRef sdf) {
         for (int y = 0; y < sdf.getHeight(); ++y) {
             for (int x = 0; x < sdf.getWidth(); ++x) {
-                if (((Byte) stencil.getPixel(x, y, 0) & Flags.ERROR) != 0) {
-                    // Get the three channel values
-                    float ch0 = (Float) sdf.getPixel(x, y, 0);
-                    float ch1 = (Float) sdf.getPixel(x, y, 1);
-                    float ch2 = (Float) sdf.getPixel(x, y, 2);
+                // Fix: Cast to Number first, then get byte value
+                byte stencilValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
+                if ((stencilValue & Flags.ERROR) != 0) {
+                    // Get the three channel values - cast to Number then get float value
+                    float ch0 = ((Number) sdf.getPixel(x, y, 0)).floatValue();
+                    float ch1 = ((Number) sdf.getPixel(x, y, 1)).floatValue();
+                    float ch2 = ((Number) sdf.getPixel(x, y, 2)).floatValue();
 
                     // Calculate median
                     float m = median(ch0, ch1, ch2);

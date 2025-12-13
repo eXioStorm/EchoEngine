@@ -12,20 +12,21 @@ public class ContourCombiners {
     /**
      * Base interface for all contour combiners
      */
-    public interface ContourCombiner {
+    public interface ContourCombiner<T> {
         void reset(Vector2d p);
-        Object edgeSelector(int contourIndex);
-        Object distance();
+        Object edgeSelector(int contourIndex); // use Object or a generic bound if needed
+        T distance();
     }
+
 
     /**
      * Simply selects the nearest contour.
      */
-    public static class SimpleContourCombiner implements ContourCombiner {
+    public static class SimpleContourCombiner implements ContourCombiner<Double> {
 
         private EdgeSelectors.TrueDistanceSelector shapeEdgeSelector;
 
-        public SimpleContourCombiner(Shape shape) {
+        public SimpleContourCombiner(MsdfShape msdfShape) {
             this.shapeEdgeSelector = new EdgeSelectors.TrueDistanceSelector();
         }
 
@@ -37,7 +38,7 @@ public class ContourCombiners {
             return shapeEdgeSelector;
         }
 
-        public double distance() {
+        public Double distance() {
             return shapeEdgeSelector.distance();
         }
     }
@@ -45,11 +46,11 @@ public class ContourCombiners {
     /**
      * Multi-distance version of SimpleContourCombiner
      */
-    public static class SimpleMultiContourCombiner {
+    public static class SimpleMultiContourCombiner implements ContourCombiner<EdgeSelectors.MultiDistance> {
 
         private EdgeSelectors.MultiDistanceSelector shapeEdgeSelector;
 
-        public SimpleMultiContourCombiner(Shape shape) {
+        public SimpleMultiContourCombiner(MsdfShape msdfShape) {
             this.shapeEdgeSelector = new EdgeSelectors.MultiDistanceSelector();
         }
 
@@ -69,11 +70,11 @@ public class ContourCombiners {
     /**
      * Multi and true distance version of SimpleContourCombiner
      */
-    public static class SimpleMultiAndTrueContourCombiner {
+    public static class SimpleMultiAndTrueContourCombiner implements ContourCombiner<EdgeSelectors.MultiAndTrueDistance> {
 
         private EdgeSelectors.MultiAndTrueDistanceSelector shapeEdgeSelector;
 
-        public SimpleMultiAndTrueContourCombiner(Shape shape) {
+        public SimpleMultiAndTrueContourCombiner(MsdfShape msdfShape) {
             this.shapeEdgeSelector = new EdgeSelectors.MultiAndTrueDistanceSelector();
         }
 
@@ -93,19 +94,19 @@ public class ContourCombiners {
     /**
      * Selects the nearest contour that actually forms a border between filled and unfilled area.
      */
-    public static class OverlappingContourCombiner {
+    public static class OverlappingContourCombiner implements ContourCombiner<Double> {
 
         private Vector2d p;
         private List<Integer> windings;
         private List<EdgeSelectors.TrueDistanceSelector> edgeSelectors;
 
-        public OverlappingContourCombiner(Shape shape) {
+        public OverlappingContourCombiner(MsdfShape msdfShape) {
             this.p = new Vector2d();
             this.windings = new ArrayList<>();
             this.edgeSelectors = new ArrayList<>();
 
             // Initialize windings from contours
-            for (Contours.Contour contour : shape.contours) {
+            for (Contours.Contour contour : msdfShape.contours) {
                 windings.add(contour.winding());
                 edgeSelectors.add(new EdgeSelectors.TrueDistanceSelector());
             }
@@ -122,7 +123,7 @@ public class ContourCombiners {
             return edgeSelectors.get(i);
         }
 
-        public double distance() {
+        public Double distance() {
             int contourCount = edgeSelectors.size();
 
             if (contourCount == 0) {
@@ -201,18 +202,18 @@ public class ContourCombiners {
     /**
      * Multi-distance version of OverlappingContourCombiner
      */
-    public static class OverlappingMultiContourCombiner {
+    public static class OverlappingMultiContourCombiner implements ContourCombiner<EdgeSelectors.MultiDistance> {
 
         private Vector2d p;
         private List<Integer> windings;
         private List<EdgeSelectors.MultiDistanceSelector> edgeSelectors;
 
-        public OverlappingMultiContourCombiner(Shape shape) {
+        public OverlappingMultiContourCombiner(MsdfShape msdfShape) {
             this.p = new Vector2d();
             this.windings = new ArrayList<>();
             this.edgeSelectors = new ArrayList<>();
 
-            for (Contours.Contour contour : shape.contours) {
+            for (Contours.Contour contour : msdfShape.contours) {
                 windings.add(contour.winding());
                 edgeSelectors.add(new EdgeSelectors.MultiDistanceSelector());
             }
@@ -324,18 +325,18 @@ public class ContourCombiners {
     /**
      * Multi and true distance version of OverlappingContourCombiner
      */
-    public static class OverlappingMultiAndTrueContourCombiner {
+    public static class OverlappingMultiAndTrueContourCombiner implements ContourCombiner<EdgeSelectors.MultiAndTrueDistance> {
 
         private Vector2d p;
         private List<Integer> windings;
         private List<EdgeSelectors.MultiAndTrueDistanceSelector> edgeSelectors;
 
-        public OverlappingMultiAndTrueContourCombiner(Shape shape) {
+        public OverlappingMultiAndTrueContourCombiner(MsdfShape msdfShape) {
             this.p = new Vector2d();
             this.windings = new ArrayList<>();
             this.edgeSelectors = new ArrayList<>();
 
-            for (Contours.Contour contour : shape.contours) {
+            for (Contours.Contour contour : msdfShape.contours) {
                 windings.add(contour.winding());
                 edgeSelectors.add(new EdgeSelectors.MultiAndTrueDistanceSelector());
             }
@@ -381,7 +382,7 @@ public class ContourCombiners {
             return result;
         }
 
-        private Shape createShapeFromSelectors() {
+        private MsdfShape createShapeFromSelectors() {
             // This is a helper method that would need to be implemented based on your Shape class
             // For now, returning null as a placeholder
             return null;

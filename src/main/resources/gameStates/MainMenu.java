@@ -320,9 +320,6 @@ public class MainMenu implements State {
     }
     private static void testSingleGlyph(GlyphManager manager, int unicode) {
         System.out.println("=== Testing Single Glyph Generation ===");
-
-        // Test generating the letter 'A'
-        //int unicode = 'A';
         String font = "Calligraserif"; // System font
 
         System.out.println("Generating glyph for: " + (char)unicode + " (Unicode: " + unicode + ")");

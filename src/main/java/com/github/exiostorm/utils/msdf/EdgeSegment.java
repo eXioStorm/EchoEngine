@@ -6,7 +6,6 @@ import java.awt.geom.Rectangle2D;
 
 import static com.github.exiostorm.utils.msdf.EquationSolver.*;
 
-//TODO hoorah! another class done!
 public abstract class EdgeSegment {
     public static final int LINE = 0;
     public static final int QUADRATIC = 1;
