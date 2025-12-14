@@ -11,6 +11,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,6 +45,7 @@ public class GlyphManager {
     //TODO [!][!!][!!!][20250819@12:33am]
     // these values were added by prompt. they're not dynamic... need to analyze their usage and how to work with them.
     private static final int GLYPH_SIZE = 64; // Output texture size
+    //TODO 20251213 appears that when we change RANGE, lower gives us a finer detail, while larger gives us an effect as if we're zooming out
     private static final double RANGE = 4.0; // Distance field range in pixels
     private static final double SCALE = 32.0; // Font scale for rendering
     //TODO [0] need to set something up to detect OS and load a font file from the OS directory.
@@ -244,8 +246,39 @@ public class GlyphManager {
             com.github.exiostorm.utils.msdf.MsdfShape msdfShape = ShapeConverter.fromAwtShape(awtShape);
 
             // IMPORTANT
+            //msdfShape.inverseYAxis = true;
             msdfShape.normalize();
 
+
+            EdgeColoring.edgeColoringSimple(
+                    msdfShape.contours,
+                    3.0,  // angleThreshold - determines what counts as a corner
+                    new SeedHolder(0)  // seed for deterministic color assignment
+            );
+            System.err.println("=== Shape edge data ===");
+            if (!msdfShape.contours.isEmpty()) {
+                Contours.Contour firstContour = msdfShape.contours.get(0);
+                System.err.printf("First contour has %d edges%n", firstContour.edges.size());
+
+                for (int i = 0; i < Math.min(3, firstContour.edges.size()); i++) {
+                    EdgeSegment edge = firstContour.edges.get(i).edge;
+                    Vector2d p0 = edge.point(0);
+                    Vector2d p1 = edge.point(1);
+                    System.err.printf("Edge %d: type=%d, p0=(%.3f, %.3f), p1=(%.3f, %.3f)%n",
+                            i, edge.type(), p0.x, p0.y, p1.x, p1.y);
+                }
+            }
+            /*
+            System.out.println("=== After edgeColoringSimple ===");
+            for (int i = 0; i < msdfShape.contours.size(); i++) {
+                Contours.Contour contour = msdfShape.contours.get(i);
+                System.out.printf("Contour %d:%n", i);
+                for (int j = 0; j < contour.edges.size(); j++) {
+                    EdgeHolder holder = contour.edges.get(j);
+                    System.out.printf("  Edge %d: holder.color=0x%x, edge.edgeColor.color=0x%x%n",
+                            j, holder.color, holder.edge.edgeColor.color);
+                }
+            }*/
             // 3. Create output bitmap
             BitmapRef<float[]> bitmap = new BitmapRef<>(
                     new float[GLYPH_SIZE * GLYPH_SIZE * 3],
@@ -253,19 +286,83 @@ public class GlyphManager {
                     GLYPH_SIZE,
                     3
             );
+            //TODO !!!!! 20251213
+            Rectangle2D.Double bounds = new Rectangle2D.Double();
+            msdfShape.bound(bounds);
+            double padding = RANGE * 1.0;  // Increase padding
+            double availableWidth = GLYPH_SIZE - 2 * padding;
+            double availableHeight = GLYPH_SIZE - 2 * padding;
+            double scale = Math.min(
+                    availableWidth / bounds.width,
+                    availableHeight / bounds.height
+            );
+            double frameLeft = bounds.x - (availableWidth / scale - bounds.width) / 2.0;
+            double frameBottom = bounds.y - (availableHeight / scale - bounds.height) / 2.0;
+            double shapeCenterX = bounds.x + bounds.width / 2.0;
+            double shapeCenterY = bounds.y + bounds.height / 2.0;
+            double textureCenterX = GLYPH_SIZE / (2.0 * scale);
+            double textureCenterY = GLYPH_SIZE / (2.0 * scale);
 
+            Range range = new Range(RANGE);
+            Vector2d translate = new Vector2d(
+                    textureCenterX - shapeCenterX,
+                    textureCenterY - shapeCenterY  // Back to minus
+            );
+            Projection projection = new Projection(
+                    new Vector2d(scale, scale),
+                    translate
+            );
+            System.out.printf("Shape bounds: x=%.3f, y=%.3f, w=%.3f, h=%.3f%n",
+                    bounds.x, bounds.y, bounds.width, bounds.height);
+            System.out.printf("Scale: %.3f%n", scale);
+            System.out.printf("Translate: x=%.3f, y=%.3f%n", translate.x, translate.y);
+            /*
             // 4. Projection + Range (match your constants)
             Projection projection = new Projection(
                     new Vector2d(1, 1),
                     new Vector2d(0, 0)
             );
-            Range range = new Range(RANGE);
+            */
 
             // 5. Generate MSDF
             MSDFGeneratorConfig config = new MSDFGeneratorConfig();
 
+            // Manually verify the first edge has colors
+            /*
+            if (!msdfShape.contours.isEmpty() && !msdfShape.contours.get(0).edges.isEmpty()) {
+                EdgeHolder firstEdge = msdfShape.contours.get(0).edges.get(0);
+                System.out.println("First edge color before generateMSDF: 0x" + Integer.toHexString(firstEdge.color));
+                System.out.println("First edge object: " + firstEdge);
+            }*/
+            // Verify edge colors one more time
+            /*
+            System.out.println("=== Pre-generation edge color check ===");
+            for (int i = 0; i < Math.min(5, msdfShape.contours.get(0).edges.size()); i++) {
+                EdgeHolder holder = msdfShape.contours.get(0).edges.get(i);
+                System.out.printf("Edge %d: holder.color=0x%x, segment.edgeColor.color=0x%x%n",
+                        i, holder.color, holder.edge.edgeColor.color);
+            }*/
             //TODO !!!!! 20251213 fixed most of the bugs, still need to locate where our color channels get flattened
             msdfgen.generateMSDF(bitmap, msdfShape, projection, range, config);
+            // After generateMSDF, before toBufferedImage:
+            //System.out.println("Sampling bitmap data:");
+            float[] data = bitmap.getPixels();
+            for (int y = 0; y < 5; y++) {  // Check first 5 rows
+                for (int x = 0; x < 5; x++) {  // Check first 5 columns
+                    int idx = (y * GLYPH_SIZE + x) * 3;
+                    float r = data[idx + 0];
+                    float g = data[idx + 1];
+                    float b = data[idx + 2];
+                    //System.out.printf("  [%d,%d]: R=%.3f G=%.3f B=%.3f%n", x, y, r, g, b);
+
+                    // Check if all channels are identical (would indicate flattening)
+                    /*
+                    if (Math.abs(r - g) < 0.001f && Math.abs(g - b) < 0.001f) {
+                        System.out.println("    ^ WARNING: All channels identical!");
+                    }
+                     */
+                }
+            }
             // 6. Convert to BufferedImage (utility function)
             BufferedImage msdfImage = BitmapUtil.toBufferedImage(bitmap);
 
@@ -300,11 +397,27 @@ public class GlyphManager {
                                         GLYPH_SIZE,
                                         1
                         );
+                    Rectangle2D.Double bounds = new Rectangle2D.Double();
+                    sdfShape.bound(bounds);
+                    double padding = RANGE; // Use range as padding
+                    double scale = Math.min(
+                            (GLYPH_SIZE - 2 * padding) / bounds.width,
+                            (GLYPH_SIZE - 2 * padding) / bounds.height
+                    );
+                    Range range = new Range(RANGE);
+                    Vector2d translate = new Vector2d(
+                            -bounds.x + (GLYPH_SIZE / scale - bounds.width) / 2.0,
+                            -bounds.y + (GLYPH_SIZE / scale - bounds.height) / 2.0
+                    );
+                    Projection projection = new Projection(
+                            new Vector2d(scale, scale),
+                            translate
+                    );
+                        /*
                         Projection projection = new Projection(
                                         new Vector2d(1, 1),
                                         new Vector2d(0, 0)
-                        );
-                        Range range = new Range(RANGE);
+                        );*/
                         GeneratorConfig config = new GeneratorConfig(); // Assuming you have an SDFGeneratorConfig class
                         msdfgen.generateSDF(bitmap, sdfShape, projection, range, config); // Assuming generateSDF is the method for SDF generation
 

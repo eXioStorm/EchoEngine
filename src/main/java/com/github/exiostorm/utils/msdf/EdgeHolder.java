@@ -1,9 +1,10 @@
 package com.github.exiostorm.utils.msdf;
 
+import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
 import org.joml.Vector2d;
 
 import java.awt.geom.Rectangle2D;
-
+//TODO 20251214 after updating this class to not use it's own color variable everything breaks.
 public class EdgeHolder {
     // public to match original C++ usage (code expects .edge)
     public Vector2d point;
@@ -11,7 +12,6 @@ public class EdgeHolder {
     public double aDomainDistance, bDomainDistance;
     public double aPerpendicularDistance, bPerpendicularDistance;
     public EdgeSegment edge;
-    public int color;
 
     public EdgeHolder() {
         this.edge = null;
@@ -24,24 +24,31 @@ public class EdgeHolder {
     }
 
     public EdgeHolder(EdgeSegment edge) {
+        this();
         this.edge = edge;
     }
 
     // copy constructor
     public EdgeHolder(EdgeHolder orig) {
         this.edge = (orig != null && orig.edge != null) ? orig.edge : null;
-        this.color = (orig != null) ? orig.color : 0;
+    }/*
+    public ColorHolder getColor() {
+        return edge != null ? edge.edgeColor : null;
     }
+
+    public void setColor(int colorValue) {
+            if (this.edge.edgeColor == null) {
+                this.edge.edgeColor = new ColorHolder(colorValue);
+            } else {
+                this.edge.edgeColor.color = colorValue;
+            }
+    }*/
 
     // swap utility
     public static void swap(EdgeHolder a, EdgeHolder b) {
         EdgeSegment tmp = a.edge;
         a.edge = b.edge;
         b.edge = tmp;
-
-        int tc = a.color;
-        a.color = b.color;
-        b.color = tc;
     }
 
     // getter / setter for code that used edgeSegment methods
@@ -65,8 +72,6 @@ public class EdgeHolder {
             edge.reverse();
         }
     }
-
-    // optional convenience: if some code expects get()/toEdgeSegment()
     public EdgeSegment get() { return edge; }
     public EdgeSegment toEdgeSegment() { return edge; }
 }

@@ -6,7 +6,7 @@ import org.joml.Vector2d;
 public class EdgeSelectors {
 
     public static class MultiDistance {
-        public double r, g, b;
+        public double c, m, y;
     }
 
     public static class MultiAndTrueDistance extends MultiDistance {
@@ -214,43 +214,43 @@ public class EdgeSelectors {
 
     public static class MultiDistanceSelector {
         private Vector2d p;
-        private PerpendicularDistanceSelectorBase r, g, b;
+        private PerpendicularDistanceSelectorBase c, m, y;
 
         public MultiDistanceSelector() {
             this.p = new Vector2d();
-            this.r = new PerpendicularDistanceSelectorBase();
-            this.g = new PerpendicularDistanceSelectorBase();
-            this.b = new PerpendicularDistanceSelectorBase();
+            this.c = new PerpendicularDistanceSelectorBase();
+            this.m = new PerpendicularDistanceSelectorBase();
+            this.y = new PerpendicularDistanceSelectorBase();
         }
 
         public void reset(Vector2d p) {
             double delta = 1.001 * p.sub(this.p, new Vector2d()).length();
-            r.reset(delta);
-            g.reset(delta);
-            b.reset(delta);
+            c.reset(delta);
+            m.reset(delta);
+            y.reset(delta);
             this.p.set(p);
         }
         public void addEdge(EdgeHolder cache,
                             EdgeSegment prevEdge, EdgeSegment edge, EdgeSegment nextEdge) {
-            boolean redRelevant = (edge.edgeColor.color & EdgeColorEnum.RED.getValue().color) != 0 &&
-                    r.isEdgeRelevant(cache, edge, p);
-            boolean greenRelevant = (edge.edgeColor.color & EdgeColorEnum.GREEN.getValue().color) != 0 &&
-                    g.isEdgeRelevant(cache, edge, p);
-            boolean blueRelevant = (edge.edgeColor.color & EdgeColorEnum.BLUE.getValue().color) != 0 &&
-                    b.isEdgeRelevant(cache, edge, p);
+            boolean cyanRelevant = (edge.edgeColor & EdgeColorEnum.CYAN.getValue().color) != 0 &&
+                    c.isEdgeRelevant(cache, edge, p);
+            boolean magentaRelevant = (edge.edgeColor & EdgeColorEnum.MAGENTA.getValue().color) != 0 &&
+                    m.isEdgeRelevant(cache, edge, p);
+            boolean yellowRelevant = (edge.edgeColor & EdgeColorEnum.YELLOW.getValue().color) != 0 &&
+                    y.isEdgeRelevant(cache, edge, p);
 
-            if (redRelevant || greenRelevant || blueRelevant) {
+            if (cyanRelevant || magentaRelevant || yellowRelevant) {
                 DoubleReference param = new DoubleReference();
                 SignedDistance distance = edge.signedDistance(p, new double[] {param.getValue()});
 
-                if ((edge.edgeColor.color & EdgeColorEnum.RED.getValue().color) != 0) {
-                    r.addEdgeTrueDistance(edge, distance, param.getValue());
+                if ((edge.edgeColor & EdgeColorEnum.CYAN.getValue().color) != 0) {
+                    c.addEdgeTrueDistance(edge, distance, param.getValue());
                 }
-                if ((edge.edgeColor.color & EdgeColorEnum.GREEN.getValue().color) != 0) {
-                    g.addEdgeTrueDistance(edge, distance, param.getValue());
+                if ((edge.edgeColor & EdgeColorEnum.MAGENTA.getValue().color) != 0) {
+                    m.addEdgeTrueDistance(edge, distance, param.getValue());
                 }
-                if ((edge.edgeColor.color & EdgeColorEnum.BLUE.getValue().color) != 0) {
-                    b.addEdgeTrueDistance(edge, distance, param.getValue());
+                if ((edge.edgeColor & EdgeColorEnum.YELLOW.getValue().color) != 0) {
+                    y.addEdgeTrueDistance(edge, distance, param.getValue());
                 }
 
                 cache.point.set(p);
@@ -270,14 +270,14 @@ public class EdgeSelectors {
                     DoubleReference pd = new DoubleReference(distance.distance);
                     if (PerpendicularDistanceSelectorBase.getPerpendicularDistance(new double[] {pd.getValue()}, ap, new Vector2d(aDir).negate())) {
                         pd.setValue(-pd.getValue());
-                        if ((edge.edgeColor.color & EdgeColorEnum.RED.getValue().color) != 0) {
-                            r.addEdgePerpendicularDistance(pd.getValue());
+                        if ((edge.edgeColor & EdgeColorEnum.CYAN.getValue().color) != 0) {
+                            c.addEdgePerpendicularDistance(pd.getValue());
                         }
-                        if ((edge.edgeColor.color & EdgeColorEnum.GREEN.getValue().color) != 0) {
-                            g.addEdgePerpendicularDistance(pd.getValue());
+                        if ((edge.edgeColor & EdgeColorEnum.MAGENTA.getValue().color) != 0) {
+                            m.addEdgePerpendicularDistance(pd.getValue());
                         }
-                        if ((edge.edgeColor.color & EdgeColorEnum.BLUE.getValue().color) != 0) {
-                            b.addEdgePerpendicularDistance(pd.getValue());
+                        if ((edge.edgeColor & EdgeColorEnum.YELLOW.getValue().color) != 0) {
+                            y.addEdgePerpendicularDistance(pd.getValue());
                         }
                     }
                     cache.aPerpendicularDistance = pd.getValue();
@@ -286,14 +286,14 @@ public class EdgeSelectors {
                 if (bdd > 0) {
                     DoubleReference pd = new DoubleReference(distance.distance);
                     if (PerpendicularDistanceSelectorBase.getPerpendicularDistance(new double[] {pd.getValue()}, bp, bDir)) {
-                        if ((edge.edgeColor.color & EdgeColorEnum.RED.getValue().color) != 0) {
-                            r.addEdgePerpendicularDistance(pd.getValue());
+                        if ((edge.edgeColor & EdgeColorEnum.CYAN.getValue().color) != 0) {
+                            c.addEdgePerpendicularDistance(pd.getValue());
                         }
-                        if ((edge.edgeColor.color & EdgeColorEnum.GREEN.getValue().color) != 0) {
-                            g.addEdgePerpendicularDistance(pd.getValue());
+                        if ((edge.edgeColor & EdgeColorEnum.MAGENTA.getValue().color) != 0) {
+                            m.addEdgePerpendicularDistance(pd.getValue());
                         }
-                        if ((edge.edgeColor.color & EdgeColorEnum.BLUE.getValue().color) != 0) {
-                            b.addEdgePerpendicularDistance(pd.getValue());
+                        if ((edge.edgeColor & EdgeColorEnum.YELLOW.getValue().color) != 0) {
+                            y.addEdgePerpendicularDistance(pd.getValue());
                         }
                     }
                     cache.bPerpendicularDistance = pd.getValue();
@@ -305,23 +305,23 @@ public class EdgeSelectors {
         }
 
         public void merge(MultiDistanceSelector other) {
-            r.merge(other.r);
-            g.merge(other.g);
-            b.merge(other.b);
+            c.merge(other.c);
+            m.merge(other.m);
+            y.merge(other.y);
         }
 
         public MultiDistance distance() {
             MultiDistance md = new MultiDistance();
-            md.r = r.computeDistance(p);
-            md.g = g.computeDistance(p);
-            md.b = b.computeDistance(p);
+            md.c = c.computeDistance(p);
+            md.m = m.computeDistance(p);
+            md.y = y.computeDistance(p);
             return md;
         }
 
         public SignedDistance trueDistance() {
-            SignedDistance d = r.trueDistance();
-            if (g.trueDistance().compareTo(d) < 0) d = g.trueDistance();
-            if (b.trueDistance().compareTo(d) < 0) d = b.trueDistance();
+            SignedDistance d = c.trueDistance();
+            if (m.trueDistance().compareTo(d) < 0) d = m.trueDistance();
+            if (y.trueDistance().compareTo(d) < 0) d = y.trueDistance();
             return d;
         }
     }
@@ -330,9 +330,9 @@ public class EdgeSelectors {
         public MultiAndTrueDistance distance() {
             MultiDistance base = super.distance();
             MultiAndTrueDistance mtd = new MultiAndTrueDistance();
-            mtd.r = base.r;
-            mtd.g = base.g;
-            mtd.b = base.b;
+            mtd.c = base.c;
+            mtd.m = base.m;
+            mtd.y = base.y;
             mtd.a = super.trueDistance().distance;
             return mtd;
         }

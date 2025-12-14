@@ -34,7 +34,7 @@ public class ContourCombiners {
             shapeEdgeSelector.reset(p);
         }
 
-        public EdgeSelectors.TrueDistanceSelector edgeSelector(int i) {
+        public Object edgeSelector(int i) {
             return shapeEdgeSelector;
         }
 
@@ -58,7 +58,7 @@ public class ContourCombiners {
             shapeEdgeSelector.reset(p);
         }
 
-        public EdgeSelectors.MultiDistanceSelector edgeSelector(int i) {
+        public Object edgeSelector(int i) {
             return shapeEdgeSelector;
         }
 
@@ -82,7 +82,7 @@ public class ContourCombiners {
             shapeEdgeSelector.reset(p);
         }
 
-        public EdgeSelectors.MultiAndTrueDistanceSelector edgeSelector(int i) {
+        public Object edgeSelector(int i) {
             return shapeEdgeSelector;
         }
 
@@ -119,7 +119,7 @@ public class ContourCombiners {
             }
         }
 
-        public EdgeSelectors.TrueDistanceSelector edgeSelector(int i) {
+        public Object edgeSelector(int i) {
             return edgeSelectors.get(i);
         }
 
@@ -127,7 +127,7 @@ public class ContourCombiners {
             int contourCount = edgeSelectors.size();
 
             if (contourCount == 0) {
-                return -Double.MAX_VALUE;
+                return -Double.MAX_VALUE; // Changed from -Double.MAX_VALUE
             }
 
             EdgeSelectors.TrueDistanceSelector shapeEdgeSelector = new EdgeSelectors.TrueDistanceSelector();
@@ -153,7 +153,7 @@ public class ContourCombiners {
             double shapeDistance = shapeEdgeSelector.distance();
             double innerDistance = innerEdgeSelector.distance();
             double outerDistance = outerEdgeSelector.distance();
-            double distance = -Double.MAX_VALUE;
+            double distance;
 
             int winding = 0;
             if (innerDistance >= 0 && Math.abs(innerDistance) <= Math.abs(outerDistance)) {
@@ -191,6 +191,7 @@ public class ContourCombiners {
                 }
             }
 
+
             if (distance == shapeDistance) {
                 distance = shapeDistance;
             }
@@ -226,7 +227,7 @@ public class ContourCombiners {
             }
         }
 
-        public EdgeSelectors.MultiDistanceSelector edgeSelector(int i) {
+        public Object edgeSelector(int i) {
             return edgeSelectors.get(i);
         }
 
@@ -235,7 +236,7 @@ public class ContourCombiners {
 
             if (contourCount == 0) {
                 EdgeSelectors.MultiDistance md = new EdgeSelectors.MultiDistance();
-                md.r = md.g = md.b = -Double.MAX_VALUE;
+                md.c = md.m = md.y = -Double.MAX_VALUE; // changed from -Double.MAX_VALUE
                 return md;
             }
 
@@ -251,7 +252,7 @@ public class ContourCombiners {
                 EdgeSelectors.MultiDistance edgeDistance = edgeSelectors.get(i).distance();
                 shapeEdgeSelector.merge(edgeSelectors.get(i));
 
-                double resolvedDistance = median(edgeDistance.r, edgeDistance.g, edgeDistance.b);
+                double resolvedDistance = median(edgeDistance.c, edgeDistance.m, edgeDistance.y);
                 if (windings.get(i) > 0 && resolvedDistance >= 0) {
                     innerEdgeSelector.merge(edgeSelectors.get(i));
                 }
@@ -264,11 +265,10 @@ public class ContourCombiners {
             EdgeSelectors.MultiDistance innerDistance = innerEdgeSelector.distance();
             EdgeSelectors.MultiDistance outerDistance = outerEdgeSelector.distance();
 
-            double innerScalarDistance = median(innerDistance.r, innerDistance.g, innerDistance.b);
-            double outerScalarDistance = median(outerDistance.r, outerDistance.g, outerDistance.b);
+            double innerScalarDistance = median(innerDistance.c, innerDistance.m, innerDistance.y);
+            double outerScalarDistance = median(outerDistance.c, outerDistance.m, outerDistance.y);
 
-            EdgeSelectors.MultiDistance distance = new EdgeSelectors.MultiDistance();
-            distance.r = distance.g = distance.b = -Double.MAX_VALUE;
+            EdgeSelectors.MultiDistance distance;
 
             int winding = 0;
             if (innerScalarDistance >= 0 && Math.abs(innerScalarDistance) <= Math.abs(outerScalarDistance)) {
@@ -277,8 +277,8 @@ public class ContourCombiners {
                 for (int i = 0; i < contourCount; i++) {
                     if (windings.get(i) > 0) {
                         EdgeSelectors.MultiDistance contourDistance = edgeSelectors.get(i).distance();
-                        double contourScalar = median(contourDistance.r, contourDistance.g, contourDistance.b);
-                        double distanceScalar = median(distance.r, distance.g, distance.b);
+                        double contourScalar = median(contourDistance.c, contourDistance.m, contourDistance.y);
+                        double distanceScalar = median(distance.c, distance.m, distance.y);
                         if (Math.abs(contourScalar) < Math.abs(outerScalarDistance) && contourScalar > distanceScalar) {
                             distance = contourDistance;
                         }
@@ -290,8 +290,8 @@ public class ContourCombiners {
                 for (int i = 0; i < contourCount; i++) {
                     if (windings.get(i) < 0) {
                         EdgeSelectors.MultiDistance contourDistance = edgeSelectors.get(i).distance();
-                        double contourScalar = median(contourDistance.r, contourDistance.g, contourDistance.b);
-                        double distanceScalar = median(distance.r, distance.g, distance.b);
+                        double contourScalar = median(contourDistance.c, contourDistance.m, contourDistance.y);
+                        double distanceScalar = median(distance.c, distance.m, distance.y);
                         if (Math.abs(contourScalar) < Math.abs(innerScalarDistance) && contourScalar < distanceScalar) {
                             distance = contourDistance;
                         }
@@ -301,11 +301,11 @@ public class ContourCombiners {
                 return shapeDistance;
             }
 
-            double distanceScalar = median(distance.r, distance.g, distance.b);
+            double distanceScalar = median(distance.c, distance.m, distance.y);
             for (int i = 0; i < contourCount; i++) {
                 if (windings.get(i) != winding) {
                     EdgeSelectors.MultiDistance contourDistance = edgeSelectors.get(i).distance();
-                    double contourScalar = median(contourDistance.r, contourDistance.g, contourDistance.b);
+                    double contourScalar = median(contourDistance.c, contourDistance.m, contourDistance.y);
                     if (contourScalar * distanceScalar >= 0 && Math.abs(contourScalar) < Math.abs(distanceScalar)) {
                         distance = contourDistance;
                         distanceScalar = contourScalar;
@@ -313,7 +313,7 @@ public class ContourCombiners {
                 }
             }
 
-            double shapeScalar = median(shapeDistance.r, shapeDistance.g, shapeDistance.b);
+            double shapeScalar = median(shapeDistance.c, shapeDistance.m, shapeDistance.y);
             if (distanceScalar == shapeScalar) {
                 distance = shapeDistance;
             }
@@ -349,37 +349,97 @@ public class ContourCombiners {
             }
         }
 
-        public EdgeSelectors.MultiAndTrueDistanceSelector edgeSelector(int i) {
+        public Object edgeSelector(int i) {
             return edgeSelectors.get(i);
         }
 
         public EdgeSelectors.MultiAndTrueDistance distance() {
-            // Similar logic to OverlappingMultiContourCombiner but returns MultiAndTrueDistance
-            OverlappingMultiContourCombiner multiCombiner = new OverlappingMultiContourCombiner(createShapeFromSelectors());
+            int contourCount = edgeSelectors.size();
 
-            // Copy state
-            multiCombiner.p.set(this.p);
-            multiCombiner.windings.clear();
-            multiCombiner.windings.addAll(this.windings);
+            if (contourCount == 0) {
+                EdgeSelectors.MultiAndTrueDistance md = new EdgeSelectors.MultiAndTrueDistance();
+                md.c = md.m = md.y = md.a = -Double.MAX_VALUE;  // Changed from -Double.MAX_VALUE
+                return md;
+            }
 
-            // Convert selectors (this is a simplification - in practice you'd need proper conversion)
-            EdgeSelectors.MultiDistance multiDist = multiCombiner.distance();
-            EdgeSelectors.MultiAndTrueDistance result = new EdgeSelectors.MultiAndTrueDistance();
-            result.r = multiDist.r;
-            result.g = multiDist.g;
-            result.b = multiDist.b;
+            EdgeSelectors.MultiAndTrueDistanceSelector shapeEdgeSelector = new EdgeSelectors.MultiAndTrueDistanceSelector();
+            EdgeSelectors.MultiAndTrueDistanceSelector innerEdgeSelector = new EdgeSelectors.MultiAndTrueDistanceSelector();
+            EdgeSelectors.MultiAndTrueDistanceSelector outerEdgeSelector = new EdgeSelectors.MultiAndTrueDistanceSelector();
 
-            // Calculate true distance
-            double minTrueDistance = Double.MAX_VALUE;
-            for (EdgeSelectors.MultiAndTrueDistanceSelector selector : edgeSelectors) {
-                EdgeSelectors.MultiAndTrueDistance dist = selector.distance();
-                if (Math.abs(dist.a) < Math.abs(minTrueDistance)) {
-                    minTrueDistance = dist.a;
+            shapeEdgeSelector.reset(p);
+            innerEdgeSelector.reset(p);
+            outerEdgeSelector.reset(p);
+
+            for (int i = 0; i < contourCount; i++) {
+                EdgeSelectors.MultiAndTrueDistance edgeDistance = edgeSelectors.get(i).distance();
+                shapeEdgeSelector.merge(edgeSelectors.get(i));
+
+                double resolvedDistance = MathUtils.median(edgeDistance.c, edgeDistance.m, edgeDistance.y);
+                if (windings.get(i) > 0 && resolvedDistance >= 0) {
+                    innerEdgeSelector.merge(edgeSelectors.get(i));
+                }
+                if (windings.get(i) < 0 && resolvedDistance <= 0) {
+                    outerEdgeSelector.merge(edgeSelectors.get(i));
                 }
             }
-            result.a = minTrueDistance;
 
-            return result;
+            EdgeSelectors.MultiAndTrueDistance shapeDistance = shapeEdgeSelector.distance();
+            EdgeSelectors.MultiAndTrueDistance innerDistance = innerEdgeSelector.distance();
+            EdgeSelectors.MultiAndTrueDistance outerDistance = outerEdgeSelector.distance();
+
+            double innerScalarDistance = MathUtils.median(innerDistance.c, innerDistance.m, innerDistance.y);
+            double outerScalarDistance = MathUtils.median(outerDistance.c, outerDistance.m, outerDistance.y);
+
+            EdgeSelectors.MultiAndTrueDistance distance;
+
+            int winding = 0;
+            if (innerScalarDistance >= 0 && Math.abs(innerScalarDistance) <= Math.abs(outerScalarDistance)) {
+                distance = innerDistance;
+                winding = 1;
+                for (int i = 0; i < contourCount; i++) {
+                    if (windings.get(i) > 0) {
+                        EdgeSelectors.MultiAndTrueDistance contourDistance = edgeSelectors.get(i).distance();
+                        double contourScalar = MathUtils.median(contourDistance.c, contourDistance.m, contourDistance.y);
+                        double distanceScalar = MathUtils.median(distance.c, distance.m, distance.y);
+                        if (Math.abs(contourScalar) < Math.abs(outerScalarDistance) && contourScalar > distanceScalar) {
+                            distance = contourDistance;
+                        }
+                    }
+                }
+            } else if (outerScalarDistance <= 0 && Math.abs(outerScalarDistance) < Math.abs(innerScalarDistance)) {
+                distance = outerDistance;
+                winding = -1;
+                for (int i = 0; i < contourCount; i++) {
+                    if (windings.get(i) < 0) {
+                        EdgeSelectors.MultiAndTrueDistance contourDistance = edgeSelectors.get(i).distance();
+                        double contourScalar = MathUtils.median(contourDistance.c, contourDistance.m, contourDistance.y);
+                        double distanceScalar = MathUtils.median(distance.c, distance.m, distance.y);
+                        if (Math.abs(contourScalar) < Math.abs(innerScalarDistance) && contourScalar < distanceScalar) {
+                            distance = contourDistance;
+                        }
+                    }
+                }
+            } else {
+                return shapeDistance;
+            }
+
+            double distanceScalar = MathUtils.median(distance.c, distance.m, distance.y);
+            for (int i = 0; i < contourCount; i++) {
+                if (windings.get(i) != winding) {
+                    EdgeSelectors.MultiAndTrueDistance contourDistance = edgeSelectors.get(i).distance();
+                    double contourScalar = MathUtils.median(contourDistance.c, contourDistance.m, contourDistance.y);
+                    if (contourScalar * distanceScalar >= 0 && Math.abs(contourScalar) < Math.abs(distanceScalar)) {
+                        distance = contourDistance;
+                        distanceScalar = contourScalar;
+                    }
+                }
+            }
+            double shapeScalar = MathUtils.median(shapeDistance.c, shapeDistance.m, shapeDistance.y);
+            if (distanceScalar == shapeScalar) {
+                distance = shapeDistance;
+            }
+
+            return distance;
         }
 
         private MsdfShape createShapeFromSelectors() {

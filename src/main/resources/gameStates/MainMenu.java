@@ -53,7 +53,7 @@ public class MainMenu implements State {
         //TODO [!][!!][!!!][20250819@12:33am]
         initializeGlyphs();
         int unicode = 'A';
-        while(unicode<'E') {
+        while(unicode<'B') {
             testSingleGlyph(glyphManager, unicode);
             unicode++;
         }

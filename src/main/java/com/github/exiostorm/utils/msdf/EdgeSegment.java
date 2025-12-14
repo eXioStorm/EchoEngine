@@ -7,17 +7,19 @@ import java.awt.geom.Rectangle2D;
 import static com.github.exiostorm.utils.msdf.EquationSolver.*;
 
 public abstract class EdgeSegment {
+    //TODO 20251213 LINE is never used, this could be something causing problems
     public static final int LINE = 0;
     public static final int QUADRATIC = 1;
     public static final int CUBIC = 2;
 
-    public EdgeSegment(EdgeColor edgeColor) {
-        this.edgeColor = edgeColor;
+    //TODO 20251213 Claude thinks this color might not be updating.
+    public EdgeSegment(ColorHolder edgeColor) {
+        this.edgeColor = edgeColor.color;
     }
-    public static EdgeSegment create(Vector2d p0, Vector2d p1, EdgeColor edgeColor) {
+    public static EdgeSegment create(Vector2d p0, Vector2d p1, ColorHolder edgeColor) {
         return new LinearSegment(p0, p1, edgeColor);
     }
-    public static EdgeSegment create(Vector2d p0, Vector2d p1, Vector2d p2, EdgeColor edgeColor) {
+    public static EdgeSegment create(Vector2d p0, Vector2d p1, Vector2d p2, ColorHolder edgeColor) {
 
         Vector2d v1 = new Vector2d(p1).sub(p0);
         Vector2d v2 = new Vector2d(p2).sub(p1);
@@ -28,7 +30,7 @@ public abstract class EdgeSegment {
 
         return new QuadraticSegment(p0, p1, p2, edgeColor);
     }
-    public static EdgeSegment create(Vector2d p0, Vector2d p1, Vector2d p2, Vector2d p3, EdgeColor edgeColor) {
+    public static EdgeSegment create(Vector2d p0, Vector2d p1, Vector2d p2, Vector2d p3, ColorHolder edgeColor) {
 
         Vector2d p12 = new Vector2d(p2).sub(p1);
         if (new Vector2d(p1).sub(p0).dot(p12) == 0.0f && p12.dot(new Vector2d(p3).sub(p2)) == 0.0f) {
@@ -92,7 +94,7 @@ public abstract class EdgeSegment {
     }
     private Vector2d[] p = new Vector2d[2];
     public abstract EdgeSegment clone();
-    public EdgeColor edgeColor;
+    public int edgeColor;
     public abstract int type();
     public int EDGE_TYPE;
     public abstract Vector2d[] controlPoints();
@@ -113,7 +115,7 @@ public abstract class EdgeSegment {
 class LinearSegment extends EdgeSegment {
     private Vector2d[] p = new Vector2d[2];
 
-    public LinearSegment(Vector2d p0, Vector2d p1, EdgeColor edgeColor) {
+    public LinearSegment(Vector2d p0, Vector2d p1, ColorHolder edgeColor) {
         super(edgeColor);
         EDGE_TYPE = 0;
         p[0] = new Vector2d(p0);
@@ -122,7 +124,7 @@ class LinearSegment extends EdgeSegment {
 
     @Override
     public LinearSegment clone() {
-        return new LinearSegment(p[0], p[1], edgeColor);
+        return new LinearSegment(p[0], p[1], new ColorHolder(edgeColor));
     }
 
     @Override
@@ -208,16 +210,16 @@ class LinearSegment extends EdgeSegment {
 
     @Override
     public void splitInThirds(EdgeSegment[] parts) {
-        parts[0] = new LinearSegment(p[0], point(1.0/3.0), edgeColor);
-        parts[1] = new LinearSegment(point(1.0/3.0), point(2.0/3.0), edgeColor);
-        parts[2] = new LinearSegment(point(2.0/3.0), p[1], edgeColor);
+        parts[0] = new LinearSegment(p[0], point(1.0/3.0), new ColorHolder(edgeColor));
+        parts[1] = new LinearSegment(point(1.0/3.0), point(2.0/3.0), new ColorHolder(edgeColor));
+        parts[2] = new LinearSegment(point(2.0/3.0), p[1], new ColorHolder(edgeColor));
     }
 }
 
 class QuadraticSegment extends EdgeSegment {
     private Vector2d[] p = new Vector2d[3];
 
-    public QuadraticSegment(Vector2d p0, Vector2d p1, Vector2d p2, EdgeColor edgeColor) {
+    public QuadraticSegment(Vector2d p0, Vector2d p1, Vector2d p2, ColorHolder edgeColor) {
         super(edgeColor);
         EDGE_TYPE = 1;
         p[0] = new Vector2d(p0);
@@ -227,7 +229,7 @@ class QuadraticSegment extends EdgeSegment {
 
     @Override
     public QuadraticSegment clone() {
-        return new QuadraticSegment(p[0], p[1], p[2], edgeColor);
+        return new QuadraticSegment(p[0], p[1], p[2], new ColorHolder(edgeColor));
     }
 
     @Override
@@ -435,22 +437,22 @@ class QuadraticSegment extends EdgeSegment {
                 new Vector2d(p[1]).lerp(p[2], 4.0/9.0), 0.5);
         Vector2d control2 = new Vector2d(p[1]).lerp(p[2], 2.0/3.0);
 
-        parts[0] = new QuadraticSegment(p[0], control1, point(1.0/3.0), edgeColor);
-        parts[1] = new QuadraticSegment(point(1.0/3.0), midControl, point(2.0/3.0), edgeColor);
-        parts[2] = new QuadraticSegment(point(2.0/3.0), control2, p[2], edgeColor);
+        parts[0] = new QuadraticSegment(p[0], control1, point(1.0/3.0), new ColorHolder(edgeColor));
+        parts[1] = new QuadraticSegment(point(1.0/3.0), midControl, point(2.0/3.0), new ColorHolder(edgeColor));
+        parts[2] = new QuadraticSegment(point(2.0/3.0), control2, p[2], new ColorHolder(edgeColor));
     }
 
     public EdgeSegment convertToCubic() {
         Vector2d control1 = new Vector2d(p[0]).lerp(p[1], 2.0/3.0);
         Vector2d control2 = new Vector2d(p[1]).lerp(p[2], 1.0/3.0);
-        return new CubicSegment(p[0], control1, control2, p[2], edgeColor);
+        return new CubicSegment(p[0], control1, control2, p[2], new ColorHolder(edgeColor));
     }
 }
 
 class CubicSegment extends EdgeSegment {
     private Vector2d[] p = new Vector2d[4];
 
-    public CubicSegment(Vector2d p0, Vector2d p1, Vector2d p2, Vector2d p3, EdgeColor edgeColor) {
+    public CubicSegment(Vector2d p0, Vector2d p1, Vector2d p2, Vector2d p3, ColorHolder edgeColor) {
         super(edgeColor);
         EDGE_TYPE = 2;
         p[0] = new Vector2d(p0);
@@ -461,7 +463,7 @@ class CubicSegment extends EdgeSegment {
 
     @Override
     public CubicSegment clone() {
-        return new CubicSegment(p[0], p[1], p[2], p[3], edgeColor);
+        return new CubicSegment(p[0], p[1], p[2], p[3], new ColorHolder(edgeColor));
     }
 
     @Override
@@ -679,7 +681,7 @@ class CubicSegment extends EdgeSegment {
         Vector2d p123 = new Vector2d(p12).lerp(p23, 1.0/3.0);
         Vector2d p0123 = new Vector2d(p012).lerp(p123, 1.0/3.0);
 
-        parts[0] = new CubicSegment(p[0], p01, p012, p0123, edgeColor);
+        parts[0] = new CubicSegment(p[0], p01, p012, p0123, new ColorHolder(edgeColor));
 
         // For the middle segment, we need different control points
         Vector2d p01_2 = new Vector2d(p[0]).lerp(p[1], 2.0/3.0);
@@ -692,8 +694,8 @@ class CubicSegment extends EdgeSegment {
         Vector2d mid1 = new Vector2d(p123).lerp(p012_2, 0.5);
         Vector2d mid2 = new Vector2d(p0123_2).lerp(p123, 0.5);
 
-        parts[1] = new CubicSegment(p0123, mid1, mid2, p0123_2, edgeColor);
+        parts[1] = new CubicSegment(p0123, mid1, mid2, p0123_2, new ColorHolder(edgeColor));
 
-        parts[2] = new CubicSegment(p0123_2, p123_2, p23_2, p[3], edgeColor);
+        parts[2] = new CubicSegment(p0123_2, p123_2, p23_2, p[3], new ColorHolder(edgeColor));
     }
 }

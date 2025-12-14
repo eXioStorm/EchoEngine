@@ -3,6 +3,10 @@ package com.github.exiostorm.utils.msdf;
 import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
 import static com.github.exiostorm.utils.msdf.MathUtils.*;
 import org.joml.Vector2d;
+
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 
 /**
@@ -190,7 +194,7 @@ public class MSDFErrorCorrection {
             if (!contour.edges.isEmpty()) {
                 EdgeSegment prevEdge = contour.edges.get(contour.edges.size() - 1).edge;
                 for (EdgeHolder edge : contour.edges) {
-                    int commonColor = prevEdge.edgeColor.color & edge.edge.edgeColor.color;
+                    int commonColor = prevEdge.edgeColor & edge.edge.edgeColor;
                     // If the color changes from prevEdge to edge, this is a corner.
                     if ((commonColor & (commonColor - 1)) == 0) {
                         // Find the four texels that envelop the corner and mark them as protected.
@@ -668,9 +672,26 @@ public class MSDFErrorCorrection {
                 }
 
                 if (hasError) {
-                    byte currentValue = ((Number) stencil.getPixel(x, row, 0)).byteValue();
-                    stencil.setPixel(x, row, 0, (byte)(currentValue | Flags.ERROR));
-                }
+                             byte currentValue = ((Number) stencil.getPixel(x, row, 0)).byteValue();
+                             byte newValue = (byte)(currentValue | Flags.ERROR);
+
+                             // Determine the type of the pixels array and convert the value accordingly
+                             if (stencil.pixels instanceof float[]) {
+                                      stencil.setPixel(x, row, 0, (float) newValue);
+                                  } else if (stencil.pixels instanceof int[]) {
+                                      stencil.setPixel(x, row, 0, (int) newValue);
+                                  } else if (stencil.pixels instanceof byte[]) {
+                                      stencil.setPixel(x, row, 0, newValue);
+                                  } else if (stencil.pixels instanceof FloatBuffer) {
+                                      stencil.setPixel(x, row, 0, (float) newValue);
+                                  } else if (stencil.pixels instanceof IntBuffer) {
+                                      stencil.setPixel(x, row, 0, (int) newValue);
+                                  } else if (stencil.pixels instanceof ByteBuffer) {
+                                      stencil.setPixel(x, row, 0, newValue);
+                                  } else {
+                                      throw new UnsupportedOperationException("Unsupported pixel type");
+                                  }
+                          }
             }
         }
     }
@@ -726,16 +747,16 @@ public class MSDFErrorCorrection {
 
     /// Returns a bit mask of which channels contribute to an edge between the two texels a, b.
     private static int edgeBetweenTexels(float[] a, float[] b) {
-        return (EdgeColorEnum.RED.getValue().color * (edgeBetweenTexelsChannel(a, b, 0) ? 1 : 0) +
-                EdgeColorEnum.GREEN.getValue().color * (edgeBetweenTexelsChannel(a, b, 1) ? 1 : 0) +
-                EdgeColorEnum.BLUE.getValue().color * (edgeBetweenTexelsChannel(a, b, 2) ? 1 : 0));
+        return (EdgeColorEnum.CYAN.getValue().color * (edgeBetweenTexelsChannel(a, b, 0) ? 1 : 0) +
+                EdgeColorEnum.MAGENTA.getValue().color * (edgeBetweenTexelsChannel(a, b, 1) ? 1 : 0) +
+                EdgeColorEnum.YELLOW.getValue().color * (edgeBetweenTexelsChannel(a, b, 2) ? 1 : 0));
     }
 
     /// Marks texel as protected if one of its non-median channels is present in the channel mask.
     private void protectExtremeChannels(BitmapRef stencil, int x, int y, float[] msd, float m, int mask) {
-        if ((mask & EdgeColorEnum.RED.getValue().color) != 0 && msd[0] != m ||
-                (mask & EdgeColorEnum.GREEN.getValue().color) != 0 && msd[1] != m ||
-                (mask & EdgeColorEnum.BLUE.getValue().color) != 0 && msd[2] != m) {
+        if ((mask & EdgeColorEnum.CYAN.getValue().color) != 0 && msd[0] != m ||
+                (mask & EdgeColorEnum.MAGENTA.getValue().color) != 0 && msd[1] != m ||
+                (mask & EdgeColorEnum.YELLOW.getValue().color) != 0 && msd[2] != m) {
 
             byte currentValue = (Byte) stencil.getPixel(x, y, 0);
             stencil.setPixel(x, y, 0, (byte)(currentValue | Flags.PROTECTED));

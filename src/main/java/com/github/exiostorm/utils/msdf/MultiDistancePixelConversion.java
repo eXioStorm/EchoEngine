@@ -7,8 +7,8 @@ public class MultiDistancePixelConversion extends DistancePixelConversion<EdgeSe
 
     @Override
     public void convert(float[] pixels, EdgeSelectors.MultiDistance distance) {
-        pixels[0] = (float) mapping.map(distance.r);
-        pixels[1] = (float) mapping.map(distance.g);
-        pixels[2] = (float) mapping.map(distance.b);
+        pixels[0] = (float) mapping.map(distance.c);
+        pixels[1] = (float) mapping.map(distance.m);
+        pixels[2] = (float) mapping.map(distance.y);
     }
 }

@@ -8,8 +8,7 @@ public class msdfgen {
 
     // Generic distance field generation
     private static <D, C extends ContourCombiners.ContourCombiner<D>>
-    void generateDistanceField(
-            BitmapRef<float[]> output,
+    void generateDistanceField(            BitmapRef<float[]> output,
             MsdfShape msdfShape,
             SDFTransformation transformation,
             Class<C> combinerClass,
@@ -31,7 +30,7 @@ public class msdfgen {
             float[] pixelChannels = new float[channels];
 
             for (int y = 0; y < height; y++) {
-                int row = msdfShape.inverseYAxis ? height - y - 1 : y;
+                //int row = msdfShape.inverseYAxis ? height - y - 1 : y;
 
                 for (int col = 0; col < width; col++) {
                     int x = rightToLeft ? width - col - 1 : col;
@@ -53,7 +52,7 @@ public class msdfgen {
                     // write converted channels back into the BitmapRef
                     for (int c = 0; c < channels; c++) {
                         // setPixel expects boxed Objects; we pass Float
-                        output.setPixel(x, row, c, pixelChannels[c]);
+                        output.setPixel(x, y, c, pixelChannels[c]);
                     }
                 }
 
