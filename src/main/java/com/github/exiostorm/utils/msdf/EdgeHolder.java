@@ -4,9 +4,7 @@ import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
 import org.joml.Vector2d;
 
 import java.awt.geom.Rectangle2D;
-//TODO 20251214 after updating this class to not use it's own color variable everything breaks.
 public class EdgeHolder {
-    // public to match original C++ usage (code expects .edge)
     public Vector2d point;
     public double absDistance;
     public double aDomainDistance, bDomainDistance;

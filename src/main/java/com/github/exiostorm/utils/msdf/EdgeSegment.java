@@ -1,5 +1,6 @@
 package com.github.exiostorm.utils.msdf;
 
+import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
 import org.joml.Vector2d;
 
 import java.awt.geom.Rectangle2D;
@@ -210,9 +211,9 @@ class LinearSegment extends EdgeSegment {
 
     @Override
     public void splitInThirds(EdgeSegment[] parts) {
-        parts[0] = new LinearSegment(p[0], point(1.0/3.0), new ColorHolder(edgeColor));
-        parts[1] = new LinearSegment(point(1.0/3.0), point(2.0/3.0), new ColorHolder(edgeColor));
-        parts[2] = new LinearSegment(point(2.0/3.0), p[1], new ColorHolder(edgeColor));
+        parts[0] = new LinearSegment(p[0], point(1.0/3.0), EdgeColorEnum.WHITE.getValue());
+        parts[1] = new LinearSegment(point(1.0/3.0), point(2.0/3.0), EdgeColorEnum.WHITE.getValue());
+        parts[2] = new LinearSegment(point(2.0/3.0), p[1], EdgeColorEnum.WHITE.getValue());
     }
 }
 
@@ -437,15 +438,15 @@ class QuadraticSegment extends EdgeSegment {
                 new Vector2d(p[1]).lerp(p[2], 4.0/9.0), 0.5);
         Vector2d control2 = new Vector2d(p[1]).lerp(p[2], 2.0/3.0);
 
-        parts[0] = new QuadraticSegment(p[0], control1, point(1.0/3.0), new ColorHolder(edgeColor));
-        parts[1] = new QuadraticSegment(point(1.0/3.0), midControl, point(2.0/3.0), new ColorHolder(edgeColor));
-        parts[2] = new QuadraticSegment(point(2.0/3.0), control2, p[2], new ColorHolder(edgeColor));
+        parts[0] = new QuadraticSegment(p[0], control1, point(1.0/3.0), EdgeColorEnum.WHITE.getValue());
+        parts[1] = new QuadraticSegment(point(1.0/3.0), midControl, point(2.0/3.0), EdgeColorEnum.WHITE.getValue());
+        parts[2] = new QuadraticSegment(point(2.0/3.0), control2, p[2], EdgeColorEnum.WHITE.getValue());
     }
 
     public EdgeSegment convertToCubic() {
         Vector2d control1 = new Vector2d(p[0]).lerp(p[1], 2.0/3.0);
         Vector2d control2 = new Vector2d(p[1]).lerp(p[2], 1.0/3.0);
-        return new CubicSegment(p[0], control1, control2, p[2], new ColorHolder(edgeColor));
+        return new CubicSegment(p[0], control1, control2, p[2], EdgeColorEnum.WHITE.getValue());
     }
 }
 
@@ -681,7 +682,7 @@ class CubicSegment extends EdgeSegment {
         Vector2d p123 = new Vector2d(p12).lerp(p23, 1.0/3.0);
         Vector2d p0123 = new Vector2d(p012).lerp(p123, 1.0/3.0);
 
-        parts[0] = new CubicSegment(p[0], p01, p012, p0123, new ColorHolder(edgeColor));
+        parts[0] = new CubicSegment(p[0], p01, p012, p0123, EdgeColorEnum.WHITE.getValue());
 
         // For the middle segment, we need different control points
         Vector2d p01_2 = new Vector2d(p[0]).lerp(p[1], 2.0/3.0);
@@ -694,8 +695,8 @@ class CubicSegment extends EdgeSegment {
         Vector2d mid1 = new Vector2d(p123).lerp(p012_2, 0.5);
         Vector2d mid2 = new Vector2d(p0123_2).lerp(p123, 0.5);
 
-        parts[1] = new CubicSegment(p0123, mid1, mid2, p0123_2, new ColorHolder(edgeColor));
+        parts[1] = new CubicSegment(p0123, mid1, mid2, p0123_2, EdgeColorEnum.WHITE.getValue());
 
-        parts[2] = new CubicSegment(p0123_2, p123_2, p23_2, p[3], new ColorHolder(edgeColor));
+        parts[2] = new CubicSegment(p0123_2, p123_2, p23_2, p[3], EdgeColorEnum.WHITE.getValue());
     }
 }

@@ -11,9 +11,15 @@ import java.util.List;
 import static com.github.exiostorm.utils.msdf.enums.EdgeColorEnum.*;
 
 public class EdgeColoring {
+    //TODO have claude fix this one?
     private static int symmetricalTrichotomy(int position, int n) {
         return (int) ((3+2.875*position/(n-1)-1.4375+.5)-3);
     }
+    /*
+    private static int symmetricalTrichotomy(int position, int n) {
+    return (int)(3.0 * (position + 0.5) / n) - 1;
+}
+     */
     private static boolean isCorner(Vector2d dirA, Vector2d dirB, double crossThreshold) {
         double dot = dirA.dot(dirB);
         double cross = dirA.x * dirB.y - dirA.y * dirB.x;
@@ -30,7 +36,7 @@ public class EdgeColoring {
         return v;
     }
     static int initColor(SeedHolder seedHolder) {
-        final int[] colors = { CYAN.getValue().color, MAGENTA.getValue().color, YELLOW.getValue().color };
+        final int[] colors = { RED.getValue().color, GREEN.getValue().color, BLUE.getValue().color };
         return colors[seedExtract3(seedHolder)];
     }
     public static List<Contours.Contour> extractContours(Shape shape) {
@@ -117,7 +123,6 @@ public class EdgeColoring {
     // DEBUG VERSION - Let's add logging to see what's actually happening
 
     public static void edgeColoringSimple(java.util.List<Contours.Contour> contours, double angleThreshold, SeedHolder seedHolder) {
-        //TODO 20251214 ChatGPT Says we're missing the logic for dot, and we only have cross
         double crossThreshold = Math.sin(angleThreshold);
         ColorHolder colorHolder = new ColorHolder(initColor(seedHolder));
         java.util.List<Integer> corners = new java.util.ArrayList<>();
@@ -134,19 +139,29 @@ public class EdgeColoring {
 
             {
                 corners.clear();
-                Vector2d prevDirection = contour.edges.get(contour.edges.size() - 1).edge.direction(1);
+                Vector2d prevDirection =
+                        new Vector2d(contour.edges.get(contour.edges.size() - 1)
+                                .edge.direction(1))
+                                .normalize();
                 int index = 0;
-                for (java.util.Iterator<EdgeHolder> edgeIter = contour.edges.iterator(); edgeIter.hasNext(); index++) {
-                    EdgeHolder edgeHolder = edgeIter.next();
-                    if (isCorner(prevDirection.normalize(), edgeHolder.edge.direction(0).normalize(), crossThreshold))
+                for (EdgeHolder edgeHolder : contour.edges) {
+                    Vector2d dir0 =
+                            new Vector2d(edgeHolder.edge.direction(0)).normalize();
+
+                    if (isCorner(prevDirection, dir0, crossThreshold))
                         corners.add(index);
-                    prevDirection = edgeHolder.edge.direction(1);
+
+                    prevDirection =
+                            new Vector2d(edgeHolder.edge.direction(1)).normalize();
+
+                    index++;
                 }
             }
 
             System.out.println("Corners found: " + corners.size() + " at indices: " + corners);
             int m = contour.edges.size();
 
+            /*
             if (m == 1) {
                 splitSingleEdgeContour(contour, seedHolder);
                 continue;
@@ -156,16 +171,15 @@ public class EdgeColoring {
                 splitTwoEdgeContour(contour, seedHolder);
                 continue;
             }
+             */
 
 
             if (corners.isEmpty()) {
                 switchColor(colorHolder, seedHolder);
-                int color = colorHolder.color;
-
                 for (EdgeHolder edge : contour.edges) {
-                    edge.edge.edgeColor = color;
-                    switchColor(colorHolder, seedHolder);
-                    color = colorHolder.color;
+                    edge.edge.edgeColor = colorHolder.color;
+                    //switchColor(colorHolder, seedHolder);
+                    //System.err.println(edge.edge.edgeColor);
                 }
             }
 
@@ -210,7 +224,7 @@ public class EdgeColoring {
 
                         System.out.println("Second edge split into positions: " + (3 - 3*corner) + ", " + (4 - 3*corner) + ", " + (5 - 3*corner));
 
-                        // Assign colors
+                        // Color assignment: assign to parts[0] through parts[5] in order
                         parts[0].edgeColor = colors[0].color;
                         parts[1].edgeColor = colors[0].color;
                         parts[2].edgeColor = colors[1].color;
@@ -252,8 +266,8 @@ public class EdgeColoring {
                 int start = corners.get(0);
                 //int m = contour.edges.size();
                 switchColor(colorHolder, seedHolder);
-                ColorHolder initialColor = new ColorHolder(colorHolder.color);
-                ColorHolder currentColor = new ColorHolder(colorHolder.color); // Create a new holder for this contour
+                int initialColor = colorHolder.color;
+                //ColorHolder currentColor = new ColorHolder(colorHolder.color); // Create a new holder for this contour
 
                 System.out.println("Multiple corners case: " + cornerCount + " corners");
 
@@ -263,18 +277,23 @@ public class EdgeColoring {
                     if (spline + 1 < cornerCount && corners.get(spline + 1) == index) {
                         ++spline;
                         switchColor(
-                                currentColor,
+                                colorHolder,
                                 seedHolder,
                                 (spline == cornerCount - 1)
-                                        ? initialColor.color
-                                        : WHITE.getValue().color
+                                        ? initialColor
+                                        : WHITE.getValue().color //TODO 20251214 might need to change this to 0 for black?? from WHITE.getValue().color
                         );
                     }
 
-                    contour.edges.get(index).edge.edgeColor = (currentColor.color);
+                    contour.edges.get(index).edge.edgeColor = (colorHolder.color);
+                    //System.err.println("contour #"+contourIndex+", index #"+index+", color : "+contour.edges.get(index).edge.edgeColor);
                 }
             }
             contourIndex++;
+            System.out.println("\nFinal colors in storage order for contour " + contourIndex + ":");
+            for (int z = 0; z < contour.edges.size(); z++) {
+                System.out.println("  Storage index " + z + ": color " + contour.edges.get(z).edge.edgeColor);
+            }
         }
 
         System.out.println("\n=== Finished edgeColoringSimple ===");
@@ -328,25 +347,30 @@ public class EdgeColoring {
     }
 
     private static String colorToString(int color) {
-        boolean cyan = (color & CYAN.getValue().color) != 0;
-        boolean magenta = (color & MAGENTA.getValue().color) != 0;
-        boolean yellow = (color & YELLOW.getValue().color) != 0;
+        boolean red = (color & RED.getValue().color) != 0;
+        boolean green = (color & GREEN.getValue().color) != 0;
+        boolean blue = (color & BLUE.getValue().color) != 0;
 
         java.util.List<String> channels = new java.util.ArrayList<>();
-        if (cyan) channels.add("C");
-        if (magenta) channels.add("M");
-        if (yellow) channels.add("Y");
+        if (red) channels.add("R");
+        if (green) channels.add("G");
+        if (blue) channels.add("B");
 
         if (channels.isEmpty()) return "NONE(0x" + Integer.toHexString(color) + ")";
         return String.join("+", channels) + "(0x" + Integer.toHexString(color) + ")";
     }
-    private static void switchColor(ColorHolder ColorHolder, SeedHolder seedHolder) {
-        int shifted = ColorHolder.color << (1 + seedExtract2(seedHolder));
-        ColorHolder.color = (shifted | (shifted >> 3)) & WHITE.getValue().color; // Now WHITE = 7, so this works correctly
+    public static void switchColor(ColorHolder colorHolder, SeedHolder seedHolder) {
+        int color = colorHolder.color;
+
+        int shift = 1 + seedExtract2(seedHolder);
+        int shifted = color << shift;
+        int result = (shifted | (shifted >> 3)) & WHITE.getValue().color;
+
+        colorHolder.setColor(result);
     }
     private static void switchColor(ColorHolder colorHolder, SeedHolder seedHolder, int banned) {
         int combined = colorHolder.color & banned;
-        if (combined == CYAN.getValue().color || combined == MAGENTA.getValue().color || combined == YELLOW.getValue().color) {
+        if (combined == RED.getValue().color || combined == GREEN.getValue().color || combined == BLUE.getValue().color) {
             colorHolder.color = combined ^ WHITE.getValue().color;
         } else {
             switchColor(colorHolder, seedHolder);

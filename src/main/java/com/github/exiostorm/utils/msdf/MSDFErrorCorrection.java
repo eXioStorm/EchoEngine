@@ -111,7 +111,9 @@ public class MSDFErrorCorrection {
                     if (distanceResult instanceof Number) {
                         rawDistance = ((Number) distanceResult).doubleValue();
                     } else {
-                        rawDistance = 0.0; // fallback
+                        //TODO ChatGPT said to not accept this case
+                        throw new IllegalStateException("ShapeDistanceFinder returned non-numeric distance");
+                        //rawDistance = 0.0; // fallback
                     }
                     float refPSD = (float)parent.distanceMapping.map(rawDistance);
 
@@ -148,11 +150,42 @@ public class MSDFErrorCorrection {
         public ArtifactClassifier classifier(Vector2d direction, double span) {
             return new ArtifactClassifier(this, direction, span);
         }
-
         private static void interpolate(float[] result, BitmapRef bitmap, Vector2d coord) {
-            // Bilinear interpolation implementation
-            // This would need to be implemented based on your bitmap interpolation logic
-            // For now, this is a placeholder
+            // Convert from pixel-center coordinates to texel indices
+            double px = coord.x - 0.5;
+            double py = coord.y - 0.5;
+
+            int x0 = (int) Math.floor(px);
+            int y0 = (int) Math.floor(py);
+            int x1 = x0 + 1;
+            int y1 = y0 + 1;
+
+            // Fractional part
+            double tx = px - x0;
+            double ty = py - y0;
+
+            // Clamp coordinates
+            int w = bitmap.getWidth();
+            int h = bitmap.getHeight();
+
+            x0 = Math.max(0, Math.min(w - 1, x0));
+            x1 = Math.max(0, Math.min(w - 1, x1));
+            y0 = Math.max(0, Math.min(h - 1, y0));
+            y1 = Math.max(0, Math.min(h - 1, y1));
+
+            // Fetch samples - MUST loop through ALL channels, not just 3!
+            int channels = result.length;  // Or bitmap.getChannels() if available
+            for (int c = 0; c < channels; ++c) {
+                float v00 = ((Number) bitmap.getPixel(x0, y0, c)).floatValue();
+                float v10 = ((Number) bitmap.getPixel(x1, y0, c)).floatValue();
+                float v01 = ((Number) bitmap.getPixel(x0, y1, c)).floatValue();
+                float v11 = ((Number) bitmap.getPixel(x1, y1, c)).floatValue();
+
+                // Bilinear interpolation
+                double v0 = v00 + tx * (v10 - v00);
+                double v1 = v01 + tx * (v11 - v01);
+                result[c] = (float) (v0 + ty * (v1 - v0));
+            }
         }
     }
 
@@ -554,6 +587,7 @@ public class MSDFErrorCorrection {
                             ((Number) sdf.getPixel(x - 1, row, 1)).floatValue(),
                             ((Number) sdf.getPixel(x - 1, row, 2)).floatValue()
                     };
+                    //TODO slow to create a new Vector2d every time
                     if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(-1, 0), hSpan), cm, c, l)) {
                         hasError = true;
                     }
@@ -564,6 +598,7 @@ public class MSDFErrorCorrection {
                             ((Number) sdf.getPixel(x, row - 1, 1)).floatValue(),
                             ((Number) sdf.getPixel(x, row - 1, 2)).floatValue()
                     };
+                    //TODO slow to create a new Vector2d every time
                     if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(0, -1), vSpan), cm, c, b)) {
                         hasError = true;
                     }
@@ -574,6 +609,7 @@ public class MSDFErrorCorrection {
                             ((Number) sdf.getPixel(x + 1, row, 1)).floatValue(),
                             ((Number) sdf.getPixel(x + 1, row, 2)).floatValue()
                     };
+                    //TODO slow to create a new Vector2d every time
                     if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(+1, 0), hSpan), cm, c, r)) {
                         hasError = true;
                     }
@@ -584,6 +620,7 @@ public class MSDFErrorCorrection {
                             ((Number) sdf.getPixel(x, row + 1, 1)).floatValue(),
                             ((Number) sdf.getPixel(x, row + 1, 2)).floatValue()
                     };
+                    //TODO slow to create a new Vector2d every time
                     if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(0, +1), vSpan), cm, c, t)) {
                         hasError = true;
                     }
@@ -606,6 +643,7 @@ public class MSDFErrorCorrection {
                             ((Number) sdf.getPixel(x - 1, row - 1, 1)).floatValue(),
                             ((Number) sdf.getPixel(x - 1, row - 1, 2)).floatValue()
                     };
+                    //TODO slow to create a new Vector2d every time
                     if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(-1, -1), dSpan), cm, c, l, b, lb)) {
                         hasError = true;
                     }
@@ -626,6 +664,7 @@ public class MSDFErrorCorrection {
                             ((Number) sdf.getPixel(x + 1, row - 1, 1)).floatValue(),
                             ((Number) sdf.getPixel(x + 1, row - 1, 2)).floatValue()
                     };
+                    //TODO slow to create a new Vector2d every time
                     if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(+1, -1), dSpan), cm, c, r, b, rb)) {
                         hasError = true;
                     }
@@ -646,6 +685,7 @@ public class MSDFErrorCorrection {
                             ((Number) sdf.getPixel(x - 1, row + 1, 1)).floatValue(),
                             ((Number) sdf.getPixel(x - 1, row + 1, 2)).floatValue()
                     };
+                    //TODO slow to create a new Vector2d every time
                     if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(-1, +1), dSpan), cm, c, l, t, lt)) {
                         hasError = true;
                     }
@@ -666,6 +706,7 @@ public class MSDFErrorCorrection {
                             ((Number) sdf.getPixel(x + 1, row + 1, 1)).floatValue(),
                             ((Number) sdf.getPixel(x + 1, row + 1, 2)).floatValue()
                     };
+                    //TODO slow to create a new Vector2d every time
                     if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(+1, +1), dSpan), cm, c, r, t, rt)) {
                         hasError = true;
                     }
@@ -747,16 +788,16 @@ public class MSDFErrorCorrection {
 
     /// Returns a bit mask of which channels contribute to an edge between the two texels a, b.
     private static int edgeBetweenTexels(float[] a, float[] b) {
-        return (EdgeColorEnum.CYAN.getValue().color * (edgeBetweenTexelsChannel(a, b, 0) ? 1 : 0) +
-                EdgeColorEnum.MAGENTA.getValue().color * (edgeBetweenTexelsChannel(a, b, 1) ? 1 : 0) +
-                EdgeColorEnum.YELLOW.getValue().color * (edgeBetweenTexelsChannel(a, b, 2) ? 1 : 0));
+        return (EdgeColorEnum.RED.getValue().color * (edgeBetweenTexelsChannel(a, b, 0) ? 1 : 0) +
+                EdgeColorEnum.GREEN.getValue().color * (edgeBetweenTexelsChannel(a, b, 1) ? 1 : 0) +
+                EdgeColorEnum.BLUE.getValue().color * (edgeBetweenTexelsChannel(a, b, 2) ? 1 : 0));
     }
 
     /// Marks texel as protected if one of its non-median channels is present in the channel mask.
     private void protectExtremeChannels(BitmapRef stencil, int x, int y, float[] msd, float m, int mask) {
-        if ((mask & EdgeColorEnum.CYAN.getValue().color) != 0 && msd[0] != m ||
-                (mask & EdgeColorEnum.MAGENTA.getValue().color) != 0 && msd[1] != m ||
-                (mask & EdgeColorEnum.YELLOW.getValue().color) != 0 && msd[2] != m) {
+        if ((mask & EdgeColorEnum.RED.getValue().color) != 0 && msd[0] != m ||
+                (mask & EdgeColorEnum.GREEN.getValue().color) != 0 && msd[1] != m ||
+                (mask & EdgeColorEnum.BLUE.getValue().color) != 0 && msd[2] != m) {
 
             byte currentValue = (Byte) stencil.getPixel(x, y, 0);
             stencil.setPixel(x, y, 0, (byte)(currentValue | Flags.PROTECTED));

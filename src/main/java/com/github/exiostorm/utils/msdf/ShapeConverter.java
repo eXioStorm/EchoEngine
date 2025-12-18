@@ -6,7 +6,6 @@ import org.joml.Vector2d;
 import java.awt.geom.PathIterator;
 
 public class ShapeConverter {
-
     public static MsdfShape fromAwtShape(java.awt.Shape awtShape) {
         MsdfShape msdfShape = new MsdfShape();
 

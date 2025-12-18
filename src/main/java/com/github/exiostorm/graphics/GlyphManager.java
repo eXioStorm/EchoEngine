@@ -6,6 +6,10 @@ package com.github.exiostorm.graphics;
 
 import com.github.exiostorm.utils.msdf.*;
 import org.joml.Vector2d;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.freetype.FT_Face;
+import org.lwjgl.util.freetype.FT_GlyphSlot;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -27,6 +31,8 @@ import java.nio.ByteOrder;
 import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static java.awt.Font.getFont;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.util.freetype.FreeType.*;
+import static org.lwjgl.util.freetype.FreeType.FT_LOAD_NO_SCALE;
 
 //TODO fuck. we also need new logic for a new atlas because of sizing restrictions. our atlas will need re-sized and re-uploaded when new glyphs are added.
 // Should have something to toggle the ability to generate new glyphs so that people can prevent performance hits. then new glyphs will just render with a default character.
@@ -228,7 +234,96 @@ public class GlyphManager {
      * Create a Shape from a font glyph
      */
     public String createGlyph(int unicode, String fontName, File outputFile) {
+        //FreeTypeGlyphConverter converter = null;
+        String path = gamePanel.getFontDirectory() + fontName + ".ttf";
         try {
+            /*
+            converter = new FreeTypeGlyphConverter();
+
+            long face = converter.loadFont(path);
+
+            FT_Face ftFace = converter.createFace(path, face);
+
+            int glyphIndex = FT_Get_Char_Index(ftFace, unicode);
+
+            if (glyphIndex == 0) {
+                System.err.println("Glyph not found for unicode: " + unicode);
+                return null;
+            }
+
+            if (FT_Load_Glyph(ftFace, glyphIndex, FT_LOAD_NO_SCALE) != 0) {
+                System.err.println("Failed to load glyph");
+                return null;
+            }
+
+            FT_GlyphSlot slot = ftFace.glyph();
+
+            // Convert FreeType outline to MsdfShape
+            //MsdfShape msdfShape = FreeTypeGlyphConverter.fromFreeTypeOutline(slot.outline(), ftFace);
+            MsdfShape msdfShape = FreeTypeGlyphConverter.fromFreeTypeOutline1(slot.outline());
+
+            converter.dispose();
+            converter = null;
+             */
+            MsdfShape msdfShape = new MsdfShape();
+
+            long ftLibrary = 0;
+            long ftFace = 0;
+
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+
+                // Init FreeType
+                PointerBuffer pLib = stack.mallocPointer(1);
+                int err = FT_Init_FreeType(pLib);
+                if (err != 0)
+                    throw new RuntimeException("FT_Init_FreeType failed: " + err);
+                ftLibrary = pLib.get(0);
+
+                // Load font face
+                PointerBuffer pFace = stack.mallocPointer(1);
+                err = FT_New_Face(ftLibrary, path, 0, pFace);
+                if (err != 0)
+                    throw new RuntimeException("FT_New_Face failed: " + err);
+                ftFace = pFace.get(0);
+            }
+
+            FT_Face face = FT_Face.create(ftFace);
+
+            if (msdfShape == null) {
+                System.err.println("Could not convert glyph outline for unicode: " + unicode);
+                return null;
+            }
+            int glyphIndex = FT_Get_Char_Index(face, unicode);
+            if (glyphIndex == 0) {
+                System.err.println("Glyph not found for unicode: " + unicode);
+                return null;
+            }
+
+            int loadFlags =
+                    FT_LOAD_NO_BITMAP |
+                            FT_LOAD_NO_HINTING |
+                            FT_LOAD_NO_AUTOHINT;
+
+            int err = FT_Load_Glyph(face, glyphIndex, loadFlags);
+            if (err != 0)
+                throw new RuntimeException("FT_Load_Glyph failed: " + err);
+
+            FT_GlyphSlot slot = face.glyph();
+
+            if (slot.format() != FT_GLYPH_FORMAT_OUTLINE) {
+                System.err.println("Glyph has no outline: " + unicode);
+                return null;
+            }
+
+// THIS is the critical call:
+            ImportFont.readFreetypeOutline(
+                    msdfShape,
+                    slot.outline(),
+                    SCALE
+            );
+            msdfShape.inverseYAxis = false;
+
+            /*
             Font font = getFont(fontName);
             if (font == null) {
                 System.err.println("Font not found: " + fontName);
@@ -244,16 +339,17 @@ public class GlyphManager {
 
             // 2. Convert Java2D PathIterator → msdfgen.Shape
             com.github.exiostorm.utils.msdf.MsdfShape msdfShape = ShapeConverter.fromAwtShape(awtShape);
+             */
 
             // IMPORTANT
-            //msdfShape.inverseYAxis = true;
-            msdfShape.normalize();
+            //TODO 20251215 was getting normalized twice
+            //msdfShape.normalize();
 
 
             EdgeColoring.edgeColoringSimple(
                     msdfShape.contours,
-                    3.0,  // angleThreshold - determines what counts as a corner
-                    new SeedHolder(0)  // seed for deterministic color assignment
+                    3.0,
+                    new SeedHolder(0)
             );
             System.err.println("=== Shape edge data ===");
             if (!msdfShape.contours.isEmpty()) {
@@ -289,25 +385,44 @@ public class GlyphManager {
             //TODO !!!!! 20251213
             Rectangle2D.Double bounds = new Rectangle2D.Double();
             msdfShape.bound(bounds);
-            double padding = RANGE * 1.0;  // Increase padding
-            double availableWidth = GLYPH_SIZE - 2 * padding;
-            double availableHeight = GLYPH_SIZE - 2 * padding;
-            double scale = Math.min(
-                    availableWidth / bounds.width,
-                    availableHeight / bounds.height
-            );
-            double frameLeft = bounds.x - (availableWidth / scale - bounds.width) / 2.0;
-            double frameBottom = bounds.y - (availableHeight / scale - bounds.height) / 2.0;
-            double shapeCenterX = bounds.x + bounds.width / 2.0;
-            double shapeCenterY = bounds.y + bounds.height / 2.0;
-            double textureCenterX = GLYPH_SIZE / (2.0 * scale);
-            double textureCenterY = GLYPH_SIZE / (2.0 * scale);
+
+            double l = bounds.x;
+            double b = bounds.y;
+            double r = bounds.x + bounds.width;
+            double t = bounds.y + bounds.height;
+
+// Apply range padding (assuming RANGE_UNIT mode)
+            l += RANGE;
+            b += RANGE;
+            r -= RANGE;
+            t -= RANGE;
+
+// Check for degenerate bounds
+            if (l >= r || b >= t) {
+                l = 0; b = 0; r = 1; t = 1;
+            }
+
+            double dimsX = r - l;
+            double dimsY = t - b;
+
+            double scale;
+            double translateX, translateY;
+
+// Aspect ratio comparison to determine fit direction
+            if (dimsX * GLYPH_SIZE < dimsY * GLYPH_SIZE) {
+                // Fit to height
+                translateX = 0.5 * (GLYPH_SIZE / GLYPH_SIZE * dimsY - dimsX) - l;
+                translateY = -b;
+                scale = GLYPH_SIZE / dimsY;
+            } else {
+                // Fit to width
+                translateX = -l;
+                translateY = 0.5 * (GLYPH_SIZE / GLYPH_SIZE * dimsX - dimsY) - b;
+                scale = GLYPH_SIZE / dimsX;
+            }
 
             Range range = new Range(RANGE);
-            Vector2d translate = new Vector2d(
-                    textureCenterX - shapeCenterX,
-                    textureCenterY - shapeCenterY  // Back to minus
-            );
+            Vector2d translate = new Vector2d(translateX, translateY);
             Projection projection = new Projection(
                     new Vector2d(scale, scale),
                     translate
@@ -347,28 +462,18 @@ public class GlyphManager {
             // After generateMSDF, before toBufferedImage:
             //System.out.println("Sampling bitmap data:");
             float[] data = bitmap.getPixels();
-            for (int y = 0; y < 5; y++) {  // Check first 5 rows
-                for (int x = 0; x < 5; x++) {  // Check first 5 columns
-                    int idx = (y * GLYPH_SIZE + x) * 3;
-                    float r = data[idx + 0];
-                    float g = data[idx + 1];
-                    float b = data[idx + 2];
-                    //System.out.printf("  [%d,%d]: R=%.3f G=%.3f B=%.3f%n", x, y, r, g, b);
-
-                    // Check if all channels are identical (would indicate flattening)
-                    /*
-                    if (Math.abs(r - g) < 0.001f && Math.abs(g - b) < 0.001f) {
-                        System.out.println("    ^ WARNING: All channels identical!");
-                    }
-                     */
-                }
-            }
             // 6. Convert to BufferedImage (utility function)
             BufferedImage msdfImage = BitmapUtil.toBufferedImage(bitmap);
 
             // 7. Save PNG
             outputFile.getParentFile().mkdirs();
             ImageIO.write(msdfImage, "PNG", outputFile);
+
+            if (ftFace != 0)
+                FT_Done_Face(face);
+            if (ftLibrary != 0)
+                FT_Done_FreeType(ftLibrary);
+
 
             return outputFile.getPath();
         } catch (Exception e) {
