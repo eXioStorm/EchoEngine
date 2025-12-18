@@ -20,6 +20,7 @@ public class MSDFErrorCorrection {
 
     private static final int CLASSIFIER_FLAG_CANDIDATE = 0x01;
     private static final int CLASSIFIER_FLAG_ARTIFACT = 0x02;
+    private final DistanceMapping.Delta dist = new DistanceMapping.Delta(1);
 
     /// Stencil flags.
     public static final class Flags {
@@ -268,10 +269,9 @@ public class MSDFErrorCorrection {
     /// Flags all texels that contribute to edges as protected.
     public void protectEdges(BitmapRef sdf) {
         float radius;
-
         // Horizontal texel pairs
         radius = (float)(PROTECTION_RADIUS_TOLERANCE *
-                transformation.unprojectVector(new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length());
+                transformation.unprojectVector(new Vector2d(transformation.getDistanceMapping().map(dist), 0)).length());
 
         for (int y = 0; y < sdf.getHeight(); ++y) {
             for (int x = 0; x < sdf.getWidth() - 1; ++x) {
@@ -300,7 +300,7 @@ public class MSDFErrorCorrection {
 
         // Vertical texel pairs
         radius = (float)(PROTECTION_RADIUS_TOLERANCE *
-                transformation.unprojectVector(new Vector2d(0, transformation.getDistanceMapping().map(1.0))).length());
+                transformation.unprojectVector(new Vector2d(0, transformation.getDistanceMapping().map(dist))).length());
 
         for (int y = 0; y < sdf.getHeight() - 1; ++y) {
             for (int x = 0; x < sdf.getWidth(); ++x) {
@@ -330,7 +330,7 @@ public class MSDFErrorCorrection {
 
         // Diagonal texel pairs
         radius = (float)(PROTECTION_RADIUS_TOLERANCE *
-                transformation.unprojectVector(new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length());
+                transformation.unprojectVector(new Vector2d(transformation.getDistanceMapping().map(dist), 0)).length());
 
         for (int y = 0; y < sdf.getHeight() - 1; ++y) {
             for (int x = 0; x < sdf.getWidth() - 1; ++x) {
@@ -386,12 +386,12 @@ public class MSDFErrorCorrection {
     public void findErrors(BitmapRef sdf) {
         // Compute the expected deltas between values of horizontally, vertically, and diagonally adjacent texels.
         double hSpan = minDeviationRatio * transformation.unprojectVector(
-                new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length();
+                new Vector2d(transformation.getDistanceMapping().map(dist), 0)).length();
         double vSpan = minDeviationRatio * transformation.unprojectVector(
-                new Vector2d(0, transformation.getDistanceMapping().map(1.0))).length();
+                new Vector2d(0, transformation.getDistanceMapping().map(dist))).length();
         double dSpan = minDeviationRatio * transformation.unprojectVector(
-                new Vector2d(transformation.getDistanceMapping().map(1.0),
-                        transformation.getDistanceMapping().map(1.0))).length();
+                new Vector2d(transformation.getDistanceMapping().map(dist),
+                        transformation.getDistanceMapping().map(dist))).length();
 
         // Inspect all texels.
         for (int y = 0; y < sdf.getHeight(); ++y) {
@@ -547,12 +547,12 @@ public class MSDFErrorCorrection {
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF and comparison with the exact shape distance.
     public void findErrorsWithShape(BitmapRef sdf, MsdfShape msdfShape) {
         double hSpan = minDeviationRatio * transformation.unprojectVector(
-                new Vector2d(transformation.getDistanceMapping().map(1.0), 0)).length();
+                new Vector2d(transformation.getDistanceMapping().map(dist), 0)).length();
         double vSpan = minDeviationRatio * transformation.unprojectVector(
-                new Vector2d(0, transformation.getDistanceMapping().map(1.0))).length();
+                new Vector2d(0, transformation.getDistanceMapping().map(dist))).length();
         double dSpan = minDeviationRatio * transformation.unprojectVector(
-                new Vector2d(transformation.getDistanceMapping().map(1.0),
-                        transformation.getDistanceMapping().map(1.0))).length();
+                new Vector2d(transformation.getDistanceMapping().map(dist),
+                        transformation.getDistanceMapping().map(dist))).length();
 
         ShapeDistanceChecker shapeDistanceChecker = new ShapeDistanceChecker(sdf, msdfShape, transformation,
                 transformation.getDistanceMapping(), minImproveRatio);
