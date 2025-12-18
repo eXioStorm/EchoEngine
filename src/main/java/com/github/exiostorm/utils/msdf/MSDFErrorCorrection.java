@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
-
+//TODO 20251218 This class is not identical to C++ implementation. After fixing this, and BitmapRef we should be done!
 /**
  * Performs error correction on a computed MSDF to eliminate interpolation artifacts.
  * This is a low-level class, you may want to use the API in msdf-error-correction.h instead.
@@ -230,6 +230,8 @@ public class MSDFErrorCorrection {
 
     /// Flags all texels that are interpolated at corners as protected.
     public void protectCorners(MsdfShape msdfShape) {
+        //TODO 20251218
+        //stencil.reorient(msdfShape.getYAxisOrientation());
         for (Contours.Contour contour : msdfShape.contours) {
             if (!contour.edges.isEmpty()) {
                 EdgeSegment prevEdge = contour.edges.get(contour.edges.size() - 1).edge;
@@ -241,9 +243,6 @@ public class MSDFErrorCorrection {
                         Vector2d p = transformation.project(edge.edge.point(0));
                         int l = (int) Math.floor(p.x - 0.5);
                         int b = (int) Math.floor(p.y - 0.5);
-                        if (msdfShape.inverseYAxis) {
-                            b = stencil.getHeight() - b - 2;
-                        }
                         int r = l + 1;
                         int t = b + 1;
                         // Check that the positions are within bounds.
@@ -336,9 +335,10 @@ public class MSDFErrorCorrection {
 
         // Diagonal texel pairs
         radius = (float)(PROTECTION_RADIUS_TOLERANCE *
-                transformation.unprojectVector(
-                        new Vector2d(transformation.getDistanceMapping().map(dist))
-                ).length());
+                transformation.unprojectVector(new Vector2d(
+                        transformation.getDistanceMapping().map(dist),
+                        transformation.getDistanceMapping().map(dist)  // Should be the same value, not 0!
+                )).length());
 
         for (int y = 0; y < sdf.getHeight() - 1; ++y) {
             for (int x = 0; x < sdf.getWidth() - 1; ++x) {

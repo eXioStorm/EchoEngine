@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
-
+//TODO 20251218 This class doesn't match the C++ implementation, changes are needed for image flipping (why our generated glyph is upside down)
 /**
  * Reference to a 2D image bitmap or buffer acting as one.
  * Pixel storage not owned or managed by the object.
