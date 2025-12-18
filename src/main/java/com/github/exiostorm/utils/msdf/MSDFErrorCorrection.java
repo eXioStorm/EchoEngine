@@ -152,40 +152,46 @@ public class MSDFErrorCorrection {
             return new ArtifactClassifier(this, direction, span);
         }
         private static void interpolate(float[] result, BitmapRef bitmap, Vector2d coord) {
-            // Convert from pixel-center coordinates to texel indices
-            double px = coord.x - 0.5;
-            double py = coord.y - 0.5;
+            // Clamp position to bitmap bounds BEFORE subtracting 0.5
+            double px = Math.max(0.0, Math.min((double)bitmap.getWidth(), coord.x));
+            double py = Math.max(0.0, Math.min((double)bitmap.getHeight(), coord.y));
 
+            // Now subtract 0.5 to convert from pixel-center to texel coordinates
+            px -= 0.5;
+            py -= 0.5;
+
+            // Compute integer coordinates
             int x0 = (int) Math.floor(px);
             int y0 = (int) Math.floor(py);
             int x1 = x0 + 1;
             int y1 = y0 + 1;
 
-            // Fractional part
+            // Compute fractional parts for interpolation
             double tx = px - x0;
             double ty = py - y0;
 
-            // Clamp coordinates
+            // Clamp integer coordinates to valid range
             int w = bitmap.getWidth();
             int h = bitmap.getHeight();
-
             x0 = Math.max(0, Math.min(w - 1, x0));
             x1 = Math.max(0, Math.min(w - 1, x1));
             y0 = Math.max(0, Math.min(h - 1, y0));
             y1 = Math.max(0, Math.min(h - 1, y1));
 
-            // Fetch samples - MUST loop through ALL channels, not just 3!
-            int channels = result.length;  // Or bitmap.getChannels() if available
+            // Bilinear interpolation - must process ALL channels
+            int channels = result.length;
             for (int c = 0; c < channels; ++c) {
                 float v00 = ((Number) bitmap.getPixel(x0, y0, c)).floatValue();
                 float v10 = ((Number) bitmap.getPixel(x1, y0, c)).floatValue();
                 float v01 = ((Number) bitmap.getPixel(x0, y1, c)).floatValue();
                 float v11 = ((Number) bitmap.getPixel(x1, y1, c)).floatValue();
 
-                // Bilinear interpolation
-                double v0 = v00 + tx * (v10 - v00);
-                double v1 = v01 + tx * (v11 - v01);
-                result[c] = (float) (v0 + ty * (v1 - v0));
+                // Mix horizontally at bottom and top
+                double vBottom = v00 + tx * (v10 - v00);
+                double vTop = v01 + tx * (v11 - v01);
+
+                // Mix vertically
+                result[c] = (float) (vBottom + ty * (vTop - vBottom));
             }
         }
     }
@@ -330,7 +336,9 @@ public class MSDFErrorCorrection {
 
         // Diagonal texel pairs
         radius = (float)(PROTECTION_RADIUS_TOLERANCE *
-                transformation.unprojectVector(new Vector2d(transformation.getDistanceMapping().map(dist), 0)).length());
+                transformation.unprojectVector(
+                        new Vector2d(transformation.getDistanceMapping().map(dist))
+                ).length());
 
         for (int y = 0; y < sdf.getHeight() - 1; ++y) {
             for (int x = 0; x < sdf.getWidth() - 1; ++x) {
@@ -390,8 +398,8 @@ public class MSDFErrorCorrection {
         double vSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(0, transformation.getDistanceMapping().map(dist))).length();
         double dSpan = minDeviationRatio * transformation.unprojectVector(
-                new Vector2d(transformation.getDistanceMapping().map(dist),
-                        transformation.getDistanceMapping().map(dist))).length();
+                new Vector2d(transformation.getDistanceMapping().map(dist))
+        ).length();
 
         // Inspect all texels.
         for (int y = 0; y < sdf.getHeight(); ++y) {
@@ -551,8 +559,8 @@ public class MSDFErrorCorrection {
         double vSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(0, transformation.getDistanceMapping().map(dist))).length();
         double dSpan = minDeviationRatio * transformation.unprojectVector(
-                new Vector2d(transformation.getDistanceMapping().map(dist),
-                        transformation.getDistanceMapping().map(dist))).length();
+                new Vector2d(transformation.getDistanceMapping().map(dist))
+        ).length();
 
         ShapeDistanceChecker shapeDistanceChecker = new ShapeDistanceChecker(sdf, msdfShape, transformation,
                 transformation.getDistanceMapping(), minImproveRatio);
