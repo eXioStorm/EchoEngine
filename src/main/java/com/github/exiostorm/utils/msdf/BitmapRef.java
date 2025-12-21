@@ -1,5 +1,7 @@
 package com.github.exiostorm.utils.msdf;
 
+import com.github.exiostorm.utils.enums.YAxisOrientation;
+
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -14,12 +16,14 @@ public class BitmapRef<T> {
     protected int width;
     protected int height;
     protected int channels;
+    protected boolean yOrientation = YAxisOrientation.getDefault().getBool();
 
     public BitmapRef() {
         this.pixels = null;
         this.width = 0;
         this.height = 0;
         this.channels = 1;
+        this.yOrientation = YAxisOrientation.getDefault().getBool();
     }
 
     public BitmapRef(T pixels, int width, int height) {
@@ -31,6 +35,7 @@ public class BitmapRef<T> {
         this.width = width;
         this.height = height;
         this.channels = channels;
+        this.yOrientation = YAxisOrientation.getDefault().getBool();
     }
 
     /**

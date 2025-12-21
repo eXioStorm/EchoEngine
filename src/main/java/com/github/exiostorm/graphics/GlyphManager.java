@@ -321,7 +321,7 @@ public class GlyphManager {
                     slot.outline(),
                     SCALE
             );
-            msdfShape.inverseYAxis = false;
+            //msdfShape.inverseYAxis = false;
 
             /*
             Font font = getFont(fontName);

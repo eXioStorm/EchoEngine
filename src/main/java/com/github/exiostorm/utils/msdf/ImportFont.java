@@ -215,7 +215,7 @@ public final class ImportFont {
     public static int readFreetypeOutline(MsdfShape output, FT_Outline outline, double scale) {
         output.contours.clear();
         // Note: setYAxisOrientation not shown in your code, add if available
-         output.inverseYAxis = false;
+         //output.inverseYAxis = false;
 
         FtContext context = new FtContext();
         context.scale = scale;

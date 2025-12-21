@@ -45,11 +45,11 @@ public class MsdfShape {
     public List<Contours.Contour> contours;
 
     /** Specifies whether the shape uses bottom-to-top (false) or top-to-bottom (true) Y coordinates. */
-    public boolean inverseYAxis;
+    //public boolean inverseYAxis;
 
     public MsdfShape() {
         this.contours = new ArrayList<>();
-        this.inverseYAxis = false;
+        //this.inverseYAxis = false;
     }
 
     /** Adds a contour. */

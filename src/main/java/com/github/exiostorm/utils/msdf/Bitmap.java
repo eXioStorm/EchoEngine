@@ -7,6 +7,7 @@ import java.util.Arrays; /**
  * A 2D image bitmap with N channels of type T.
  * Pixel memory is managed by the class.
  */
+@Deprecated // unable to locate where this was originally used, going to delete after we get everything working. Engine still launches even when fully commented out.
 public class Bitmap<T> {
     private T pixels;
     private int width;
@@ -204,6 +205,6 @@ public class Bitmap<T> {
     }
 
     public BitmapConstRef<T> toBitmapConstRef() {
-        return new BitmapConstRef<>(pixels, width, height, channels);
+        return new BitmapConstRef<>(pixels, width, height, channels, false);
     }
 }

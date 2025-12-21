@@ -1,5 +1,6 @@
 package com.github.exiostorm.utils.msdf;
 
+import com.github.exiostorm.utils.enums.YAxisOrientation;
 import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
 import static com.github.exiostorm.utils.msdf.MathUtils.*;
 import org.joml.Vector2d;
@@ -143,9 +144,10 @@ public class MSDFErrorCorrection {
             this.distanceMapping = distanceMapping;
             this.minImproveRatio = minImproveRatio;
             this.texelSize = projection.unprojectVector(new Vector2d(1.0, 1.0));
-            if (msdfShape.inverseYAxis) {
+            //TODO 20251219 need to re-implement this after I move this boolean to BitmapRef.
+            /*if (msdfShape.inverseYAxis) {
                 this.texelSize.y = -this.texelSize.y;
-            }
+            }*/
         }
 
         public ArtifactClassifier classifier(Vector2d direction, double span) {
@@ -566,7 +568,7 @@ public class MSDFErrorCorrection {
                 transformation.getDistanceMapping(), minImproveRatio);
 
         for (int y = 0; y < sdf.getHeight(); ++y) {
-            int row = msdfShape.inverseYAxis ? sdf.getHeight() - y - 1 : y;
+            int row = YAxisOrientation.getDefault().getBool() ? sdf.getHeight() - y - 1 : y;
             for (int x = 0; x < sdf.getWidth(); ++x) {
                 // Fix: Cast to Number first, then get byte value
                 byte stencilValue = ((Number) stencil.getPixel(x, row, 0)).byteValue();
