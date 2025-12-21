@@ -154,11 +154,11 @@ public class MSDFErrorCorrection {
             return new ArtifactClassifier(this, direction, span);
         }
         private static void interpolate(float[] result, BitmapRef bitmap, Vector2d coord) {
-            // Clamp position to bitmap bounds BEFORE subtracting 0.5
-            double px = Math.max(0.0, Math.min((double)bitmap.getWidth(), coord.x));
-            double py = Math.max(0.0, Math.min((double)bitmap.getHeight(), coord.y));
+            // Clamp to [0, width] and [0, height] FIRST (C++ clamp behavior)
+            double px = Math.max(0.0, Math.min((double) bitmap.getWidth(), coord.x));
+            double py = Math.max(0.0, Math.min((double) bitmap.getHeight(), coord.y));
 
-            // Now subtract 0.5 to convert from pixel-center to texel coordinates
+            // THEN subtract 0.5
             px -= 0.5;
             py -= 0.5;
 
@@ -172,7 +172,7 @@ public class MSDFErrorCorrection {
             double tx = px - x0;
             double ty = py - y0;
 
-            // Clamp integer coordinates to valid range
+            // Clamp integer coordinates to valid array indices [0, width-1] and [0, height-1]
             int w = bitmap.getWidth();
             int h = bitmap.getHeight();
             x0 = Math.max(0, Math.min(w - 1, x0));
@@ -180,7 +180,7 @@ public class MSDFErrorCorrection {
             y0 = Math.max(0, Math.min(h - 1, y0));
             y1 = Math.max(0, Math.min(h - 1, y1));
 
-            // Bilinear interpolation - must process ALL channels
+            // Bilinear interpolation
             int channels = result.length;
             for (int c = 0; c < channels; ++c) {
                 float v00 = ((Number) bitmap.getPixel(x0, y0, c)).floatValue();
@@ -601,7 +601,7 @@ public class MSDFErrorCorrection {
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF and comparison with the exact shape distance.
     public void findErrorsWithShape(BitmapRef sdf, MsdfShape msdfShape) {
         sdf.reorient(msdfShape.getYAxisOrientation());
-        stencil.reorient(sdf.yOrientation ? YAxisOrientation.Y_DOWNWARD.getBool() : YAxisOrientation.Y_UPWARD.getBool());
+        stencil.reorient(sdf.yOrientation);  // FIX #1: Direct pass, no logic reversal
 
         double hSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(transformation.getDistanceMapping().map(dist), 0)).length();
@@ -685,7 +685,7 @@ public class MSDFErrorCorrection {
 
                 // Check diagonal neighbors - fetch diagonal pixels directly as needed
                 if (x > 0 && y > 0) {
-                    if (l == null) { // Lazy load if not already fetched
+                    if (l == null) {
                         l = new float[] {
                                 ((Number) sdf.getPixel(x - 1, y, 0)).floatValue(),
                                 ((Number) sdf.getPixel(x - 1, y, 1)).floatValue(),
@@ -784,7 +784,7 @@ public class MSDFErrorCorrection {
                     }
                 }
 
-                // Mark the stencil if an error was detected
+                // Mark the stencil if an error was detected - FIX #3: Simplified
                 if (hasError) {
                     byte currentValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
                     byte newValue = (byte)(currentValue | Flags.ERROR);
