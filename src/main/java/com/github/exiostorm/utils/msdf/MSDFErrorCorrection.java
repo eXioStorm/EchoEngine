@@ -405,7 +405,11 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF only.
+    /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF only.
     public void findErrors(BitmapRef sdf) {
+        // CRITICAL: Reorient stencil to match SDF's orientation
+        stencil.reorient(sdf.getYOrientation());
+
         // Compute the expected deltas between values of horizontally, vertically, and diagonally adjacent texels.
         double hSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(transformation.getDistanceMapping().map(dist), 0)).length();
@@ -418,7 +422,7 @@ public class MSDFErrorCorrection {
         // Inspect all texels.
         for (int y = 0; y < sdf.getHeight(); ++y) {
             for (int x = 0; x < sdf.getWidth(); ++x) {
-                // Get all 3 channels for current pixel
+                // Get current pixel's channel values
                 float c0 = (Float) sdf.getPixel(x, y, 0);
                 float c1 = (Float) sdf.getPixel(x, y, 1);
                 float c2 = (Float) sdf.getPixel(x, y, 2);
@@ -427,137 +431,158 @@ public class MSDFErrorCorrection {
                 float cm = median(c[0], c[1], c[2]);
                 boolean protectedFlag = ((Byte) stencil.getPixel(x, y, 0) & Flags.PROTECTED) != 0;
 
+                // Cache neighbor values (like C++ does with pointers)
+                float[] l = null, b = null, r = null, t = null;
                 boolean hasError = false;
 
-                // Check all 8 neighbors
+                // Check horizontal and vertical neighbors first
                 if (x > 0) {
-                    float l0 = (Float) sdf.getPixel(x - 1, y, 0);
-                    float l1 = (Float) sdf.getPixel(x - 1, y, 1);
-                    float l2 = (Float) sdf.getPixel(x - 1, y, 2);
-                    float[] l = {l0, l1, l2};
+                    l = new float[] {
+                            (Float) sdf.getPixel(x - 1, y, 0),
+                            (Float) sdf.getPixel(x - 1, y, 1),
+                            (Float) sdf.getPixel(x - 1, y, 2)
+                    };
                     if (hasLinearArtifact(new BaseArtifactClassifier(hSpan, protectedFlag), cm, c, l)) {
                         hasError = true;
                     }
                 }
+
                 if (y > 0) {
-                    float b0 = (Float) sdf.getPixel(x, y - 1, 0);
-                    float b1 = (Float) sdf.getPixel(x, y - 1, 1);
-                    float b2 = (Float) sdf.getPixel(x, y - 1, 2);
-                    float[] b = {b0, b1, b2};
+                    b = new float[] {
+                            (Float) sdf.getPixel(x, y - 1, 0),
+                            (Float) sdf.getPixel(x, y - 1, 1),
+                            (Float) sdf.getPixel(x, y - 1, 2)
+                    };
                     if (hasLinearArtifact(new BaseArtifactClassifier(vSpan, protectedFlag), cm, c, b)) {
                         hasError = true;
                     }
                 }
+
                 if (x < sdf.getWidth() - 1) {
-                    float r0 = (Float) sdf.getPixel(x + 1, y, 0);
-                    float r1 = (Float) sdf.getPixel(x + 1, y, 1);
-                    float r2 = (Float) sdf.getPixel(x + 1, y, 2);
-                    float[] r = {r0, r1, r2};
+                    r = new float[] {
+                            (Float) sdf.getPixel(x + 1, y, 0),
+                            (Float) sdf.getPixel(x + 1, y, 1),
+                            (Float) sdf.getPixel(x + 1, y, 2)
+                    };
                     if (hasLinearArtifact(new BaseArtifactClassifier(hSpan, protectedFlag), cm, c, r)) {
                         hasError = true;
                     }
                 }
+
                 if (y < sdf.getHeight() - 1) {
-                    float t0 = (Float) sdf.getPixel(x, y + 1, 0);
-                    float t1 = (Float) sdf.getPixel(x, y + 1, 1);
-                    float t2 = (Float) sdf.getPixel(x, y + 1, 2);
-                    float[] t = {t0, t1, t2};
+                    t = new float[] {
+                            (Float) sdf.getPixel(x, y + 1, 0),
+                            (Float) sdf.getPixel(x, y + 1, 1),
+                            (Float) sdf.getPixel(x, y + 1, 2)
+                    };
                     if (hasLinearArtifact(new BaseArtifactClassifier(vSpan, protectedFlag), cm, c, t)) {
                         hasError = true;
                     }
                 }
 
-                // Diagonal checks
+                // Check diagonal neighbors - reuse cached values when possible
                 if (x > 0 && y > 0) {
-                    // Reuse l and b from above, get lb
-                    float lb0 = (Float) sdf.getPixel(x - 1, y - 1, 0);
-                    float lb1 = (Float) sdf.getPixel(x - 1, y - 1, 1);
-                    float lb2 = (Float) sdf.getPixel(x - 1, y - 1, 2);
-                    float[] lb = {lb0, lb1, lb2};
-
-                    // Recreate l and b arrays for this scope
-                    float l0 = (Float) sdf.getPixel(x - 1, y, 0);
-                    float l1 = (Float) sdf.getPixel(x - 1, y, 1);
-                    float l2 = (Float) sdf.getPixel(x - 1, y, 2);
-                    float[] l = {l0, l1, l2};
-
-                    float b0 = (Float) sdf.getPixel(x, y - 1, 0);
-                    float b1 = (Float) sdf.getPixel(x, y - 1, 1);
-                    float b2 = (Float) sdf.getPixel(x, y - 1, 2);
-                    float[] b = {b0, b1, b2};
-
+                    // Lazily load l and b if not already fetched
+                    if (l == null) {
+                        l = new float[] {
+                                (Float) sdf.getPixel(x - 1, y, 0),
+                                (Float) sdf.getPixel(x - 1, y, 1),
+                                (Float) sdf.getPixel(x - 1, y, 2)
+                        };
+                    }
+                    if (b == null) {
+                        b = new float[] {
+                                (Float) sdf.getPixel(x, y - 1, 0),
+                                (Float) sdf.getPixel(x, y - 1, 1),
+                                (Float) sdf.getPixel(x, y - 1, 2)
+                        };
+                    }
+                    float[] lb = new float[] {
+                            (Float) sdf.getPixel(x - 1, y - 1, 0),
+                            (Float) sdf.getPixel(x - 1, y - 1, 1),
+                            (Float) sdf.getPixel(x - 1, y - 1, 2)
+                    };
                     if (hasDiagonalArtifact(new BaseArtifactClassifier(dSpan, protectedFlag), cm, c, l, b, lb)) {
                         hasError = true;
                     }
                 }
-                // Diagonal checks (after the existing x > 0 && y > 0 check)
 
                 if (x < sdf.getWidth() - 1 && y > 0) {
-                    // Recreate r and b arrays for this scope
-                    float r0 = (Float) sdf.getPixel(x + 1, y, 0);
-                    float r1 = (Float) sdf.getPixel(x + 1, y, 1);
-                    float r2 = (Float) sdf.getPixel(x + 1, y, 2);
-                    float[] r = {r0, r1, r2};
-
-                    float b0 = (Float) sdf.getPixel(x, y - 1, 0);
-                    float b1 = (Float) sdf.getPixel(x, y - 1, 1);
-                    float b2 = (Float) sdf.getPixel(x, y - 1, 2);
-                    float[] b = {b0, b1, b2};
-
-                    float rb0 = (Float) sdf.getPixel(x + 1, y - 1, 0);
-                    float rb1 = (Float) sdf.getPixel(x + 1, y - 1, 1);
-                    float rb2 = (Float) sdf.getPixel(x + 1, y - 1, 2);
-                    float[] rb = {rb0, rb1, rb2};
-
+                    if (r == null) {
+                        r = new float[] {
+                                (Float) sdf.getPixel(x + 1, y, 0),
+                                (Float) sdf.getPixel(x + 1, y, 1),
+                                (Float) sdf.getPixel(x + 1, y, 2)
+                        };
+                    }
+                    if (b == null) {
+                        b = new float[] {
+                                (Float) sdf.getPixel(x, y - 1, 0),
+                                (Float) sdf.getPixel(x, y - 1, 1),
+                                (Float) sdf.getPixel(x, y - 1, 2)
+                        };
+                    }
+                    float[] rb = new float[] {
+                            (Float) sdf.getPixel(x + 1, y - 1, 0),
+                            (Float) sdf.getPixel(x + 1, y - 1, 1),
+                            (Float) sdf.getPixel(x + 1, y - 1, 2)
+                    };
                     if (hasDiagonalArtifact(new BaseArtifactClassifier(dSpan, protectedFlag), cm, c, r, b, rb)) {
                         hasError = true;
                     }
                 }
 
                 if (x > 0 && y < sdf.getHeight() - 1) {
-                    // Recreate l and get t
-                    float l0 = (Float) sdf.getPixel(x - 1, y, 0);
-                    float l1 = (Float) sdf.getPixel(x - 1, y, 1);
-                    float l2 = (Float) sdf.getPixel(x - 1, y, 2);
-                    float[] l = {l0, l1, l2};
-
-                    float t0 = (Float) sdf.getPixel(x, y + 1, 0);
-                    float t1 = (Float) sdf.getPixel(x, y + 1, 1);
-                    float t2 = (Float) sdf.getPixel(x, y + 1, 2);
-                    float[] t = {t0, t1, t2};
-
-                    float lt0 = (Float) sdf.getPixel(x - 1, y + 1, 0);
-                    float lt1 = (Float) sdf.getPixel(x - 1, y + 1, 1);
-                    float lt2 = (Float) sdf.getPixel(x - 1, y + 1, 2);
-                    float[] lt = {lt0, lt1, lt2};
-
+                    if (l == null) {
+                        l = new float[] {
+                                (Float) sdf.getPixel(x - 1, y, 0),
+                                (Float) sdf.getPixel(x - 1, y, 1),
+                                (Float) sdf.getPixel(x - 1, y, 2)
+                        };
+                    }
+                    if (t == null) {
+                        t = new float[] {
+                                (Float) sdf.getPixel(x, y + 1, 0),
+                                (Float) sdf.getPixel(x, y + 1, 1),
+                                (Float) sdf.getPixel(x, y + 1, 2)
+                        };
+                    }
+                    float[] lt = new float[] {
+                            (Float) sdf.getPixel(x - 1, y + 1, 0),
+                            (Float) sdf.getPixel(x - 1, y + 1, 1),
+                            (Float) sdf.getPixel(x - 1, y + 1, 2)
+                    };
                     if (hasDiagonalArtifact(new BaseArtifactClassifier(dSpan, protectedFlag), cm, c, l, t, lt)) {
                         hasError = true;
                     }
                 }
 
                 if (x < sdf.getWidth() - 1 && y < sdf.getHeight() - 1) {
-                    // Get r and t
-                    float r0 = (Float) sdf.getPixel(x + 1, y, 0);
-                    float r1 = (Float) sdf.getPixel(x + 1, y, 1);
-                    float r2 = (Float) sdf.getPixel(x + 1, y, 2);
-                    float[] r = {r0, r1, r2};
-
-                    float t0 = (Float) sdf.getPixel(x, y + 1, 0);
-                    float t1 = (Float) sdf.getPixel(x, y + 1, 1);
-                    float t2 = (Float) sdf.getPixel(x, y + 1, 2);
-                    float[] t = {t0, t1, t2};
-
-                    float rt0 = (Float) sdf.getPixel(x + 1, y + 1, 0);
-                    float rt1 = (Float) sdf.getPixel(x + 1, y + 1, 1);
-                    float rt2 = (Float) sdf.getPixel(x + 1, y + 1, 2);
-                    float[] rt = {rt0, rt1, rt2};
-
+                    if (r == null) {
+                        r = new float[] {
+                                (Float) sdf.getPixel(x + 1, y, 0),
+                                (Float) sdf.getPixel(x + 1, y, 1),
+                                (Float) sdf.getPixel(x + 1, y, 2)
+                        };
+                    }
+                    if (t == null) {
+                        t = new float[] {
+                                (Float) sdf.getPixel(x, y + 1, 0),
+                                (Float) sdf.getPixel(x, y + 1, 1),
+                                (Float) sdf.getPixel(x, y + 1, 2)
+                        };
+                    }
+                    float[] rt = new float[] {
+                            (Float) sdf.getPixel(x + 1, y + 1, 0),
+                            (Float) sdf.getPixel(x + 1, y + 1, 1),
+                            (Float) sdf.getPixel(x + 1, y + 1, 2)
+                    };
                     if (hasDiagonalArtifact(new BaseArtifactClassifier(dSpan, protectedFlag), cm, c, r, t, rt)) {
                         hasError = true;
                     }
                 }
 
+                // Mark the stencil if an error was detected
                 if (hasError) {
                     byte currentValue = (Byte) stencil.getPixel(x, y, 0);
                     stencil.setPixel(x, y, 0, (byte)(currentValue | Flags.ERROR));
