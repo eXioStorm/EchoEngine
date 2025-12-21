@@ -784,7 +784,6 @@ public class MSDFErrorCorrection {
                     }
                 }
 
-                // Mark the stencil if an error was detected - FIX #3: Simplified
                 if (hasError) {
                     byte currentValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
                     byte newValue = (byte)(currentValue | Flags.ERROR);
