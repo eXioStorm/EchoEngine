@@ -46,6 +46,55 @@ public class BitmapRef<T> {
         return channels * (width * y + x);
     }
 
+
+    /**
+     * Get a specific channel value at coordinates (x, y, channel).
+     * Channel should be in range [0, channels-1].
+     */
+    public float getChannel(int x, int y, int channel) {
+        if (channel < 0 || channel >= channels) {
+            throw new IndexOutOfBoundsException("Channel " + channel + " out of bounds [0, " + channels + ")");
+        }
+
+        int index = getPixelIndex(x, y) + channel;
+
+        if (pixels instanceof float[]) {
+            return ((float[]) pixels)[index];
+        } else if (pixels instanceof double[]) {
+            return (float) ((double[]) pixels)[index];
+        } else if (pixels instanceof int[]) {
+            return ((int[]) pixels)[index];
+        } else if (pixels instanceof byte[]) {
+            return ((byte[]) pixels)[index];
+        }
+
+        throw new UnsupportedOperationException("Unsupported pixel type: " + pixels.getClass());
+    }
+
+    /**
+     * Set a specific channel value at coordinates (x, y, channel).
+     * Channel should be in range [0, channels-1].
+     */
+    public void setChannel(int x, int y, int channel, float value) {
+        if (channel < 0 || channel >= channels) {
+            throw new IndexOutOfBoundsException("Channel " + channel + " out of bounds [0, " + channels + ")");
+        }
+
+        int index = getPixelIndex(x, y) + channel;
+
+        if (pixels instanceof float[]) {
+            ((float[]) pixels)[index] = value;
+        } else if (pixels instanceof double[]) {
+            ((double[]) pixels)[index] = value;
+        } else if (pixels instanceof int[]) {
+            ((int[]) pixels)[index] = (int) value;
+        } else if (pixels instanceof byte[]) {
+            ((byte[]) pixels)[index] = (byte) value;
+        } else {
+            throw new UnsupportedOperationException("Unsupported pixel type: " + pixels.getClass());
+        }
+    }
+
     /**
      * Get single channel value at coordinates (x, y, channel).
      */
