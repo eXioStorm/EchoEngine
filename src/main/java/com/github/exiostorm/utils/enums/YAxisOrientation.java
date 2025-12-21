@@ -2,8 +2,8 @@ package com.github.exiostorm.utils.enums;
 
 //This feels dumb as fuck, however it's the way it's done in the original msdfgen, so what do I know. maybe there's something I don't.
 public enum YAxisOrientation {
-    TRUE(true),
-    FALSE(false);
+    Y_UPWARD(true),
+    Y_DOWNWARD(false);
     private final boolean bool;
     YAxisOrientation(boolean bool) {
         this.bool = bool;
@@ -11,7 +11,7 @@ public enum YAxisOrientation {
     public boolean getBool() {
         return bool;
     }
-    private static final YAxisOrientation DEFAULT = FALSE;
+    private static YAxisOrientation DEFAULT = Y_UPWARD;
     public static YAxisOrientation getDefault() {
         return DEFAULT;
     }

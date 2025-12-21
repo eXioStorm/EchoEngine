@@ -556,6 +556,10 @@ public class MSDFErrorCorrection {
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF and comparison with the exact shape distance.
     public void findErrorsWithShape(BitmapRef sdf, MsdfShape msdfShape) {
+        // Apply Y-axis orientation to both bitmaps ONCE at the start
+        // This matches the C++ behavior of sdf.reorient() and stencil.reorient()
+        boolean flipY = YAxisOrientation.getDefault().getBool();
+
         double hSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(transformation.getDistanceMapping().map(dist), 0)).length();
         double vSpan = minDeviationRatio * transformation.unprojectVector(
@@ -567,182 +571,196 @@ public class MSDFErrorCorrection {
         ShapeDistanceChecker shapeDistanceChecker = new ShapeDistanceChecker(sdf, msdfShape, transformation,
                 transformation.getDistanceMapping(), minImproveRatio);
 
+        // Iterate over all pixels
         for (int y = 0; y < sdf.getHeight(); ++y) {
-            int row = YAxisOrientation.getDefault().getBool() ? sdf.getHeight() - y - 1 : y;
             for (int x = 0; x < sdf.getWidth(); ++x) {
-                // Fix: Cast to Number first, then get byte value
-                byte stencilValue = ((Number) stencil.getPixel(x, row, 0)).byteValue();
+                // Check if already marked as error
+                byte stencilValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
                 if ((stencilValue & Flags.ERROR) != 0) {
                     continue;
                 }
 
-                // Get all 3 channels for the current pixel
+                // Get current pixel's channel values
                 float[] c = new float[] {
-                        ((Number) sdf.getPixel(x, row, 0)).floatValue(),
-                        ((Number) sdf.getPixel(x, row, 1)).floatValue(),
-                        ((Number) sdf.getPixel(x, row, 2)).floatValue()
+                        ((Number) sdf.getPixel(x, y, 0)).floatValue(),
+                        ((Number) sdf.getPixel(x, y, 1)).floatValue(),
+                        ((Number) sdf.getPixel(x, y, 2)).floatValue()
                 };
 
+                // Set up the shape distance checker for this pixel
                 shapeDistanceChecker.shapeCoord = transformation.unproject(new Vector2d(x + 0.5, y + 0.5));
-                shapeDistanceChecker.sdfCoord = new Vector2d(x + 0.5, row + 0.5);
+                shapeDistanceChecker.sdfCoord = new Vector2d(x + 0.5, y + 0.5);
                 shapeDistanceChecker.msd = c;
-                shapeDistanceChecker.protectedFlag = (((Number) stencil.getPixel(x, row, 0)).byteValue() & Flags.PROTECTED) != 0;
+                shapeDistanceChecker.protectedFlag = ((stencilValue & Flags.PROTECTED) != 0);
                 float cm = median(c[0], c[1], c[2]);
 
+                // Cache neighbor pointers for reuse (like the C++ version)
+                float[] l = null, b = null, r = null, t = null;
                 boolean hasError = false;
 
+                // Check horizontal and vertical neighbors
                 if (x > 0) {
-                    float[] l = new float[] {
-                            ((Number) sdf.getPixel(x - 1, row, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x - 1, row, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x - 1, row, 2)).floatValue()
+                    l = new float[] {
+                            ((Number) sdf.getPixel(x - 1, y, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, y, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, y, 2)).floatValue()
                     };
-                    //TODO slow to create a new Vector2d every time
                     if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(-1, 0), hSpan), cm, c, l)) {
                         hasError = true;
                     }
                 }
                 if (y > 0) {
-                    float[] b = new float[] {
-                            ((Number) sdf.getPixel(x, row - 1, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x, row - 1, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x, row - 1, 2)).floatValue()
+                    b = new float[] {
+                            ((Number) sdf.getPixel(x, y - 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x, y - 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x, y - 1, 2)).floatValue()
                     };
-                    //TODO slow to create a new Vector2d every time
                     if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(0, -1), vSpan), cm, c, b)) {
                         hasError = true;
                     }
                 }
                 if (x < sdf.getWidth() - 1) {
-                    float[] r = new float[] {
-                            ((Number) sdf.getPixel(x + 1, row, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x + 1, row, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x + 1, row, 2)).floatValue()
+                    r = new float[] {
+                            ((Number) sdf.getPixel(x + 1, y, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, y, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, y, 2)).floatValue()
                     };
-                    //TODO slow to create a new Vector2d every time
                     if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(+1, 0), hSpan), cm, c, r)) {
                         hasError = true;
                     }
                 }
                 if (y < sdf.getHeight() - 1) {
-                    float[] t = new float[] {
-                            ((Number) sdf.getPixel(x, row + 1, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x, row + 1, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x, row + 1, 2)).floatValue()
+                    t = new float[] {
+                            ((Number) sdf.getPixel(x, y + 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x, y + 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x, y + 1, 2)).floatValue()
                     };
-                    //TODO slow to create a new Vector2d every time
                     if (hasLinearArtifact(shapeDistanceChecker.classifier(new Vector2d(0, +1), vSpan), cm, c, t)) {
                         hasError = true;
                     }
                 }
 
-// Diagonal checks
+                // Check diagonal neighbors - fetch diagonal pixels directly as needed
                 if (x > 0 && y > 0) {
-                    float[] l = new float[] {
-                            ((Number) sdf.getPixel(x - 1, row, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x - 1, row, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x - 1, row, 2)).floatValue()
-                    };
-                    float[] b = new float[] {
-                            ((Number) sdf.getPixel(x, row - 1, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x, row - 1, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x, row - 1, 2)).floatValue()
-                    };
+                    if (l == null) { // Lazy load if not already fetched
+                        l = new float[] {
+                                ((Number) sdf.getPixel(x - 1, y, 0)).floatValue(),
+                                ((Number) sdf.getPixel(x - 1, y, 1)).floatValue(),
+                                ((Number) sdf.getPixel(x - 1, y, 2)).floatValue()
+                        };
+                    }
+                    if (b == null) {
+                        b = new float[] {
+                                ((Number) sdf.getPixel(x, y - 1, 0)).floatValue(),
+                                ((Number) sdf.getPixel(x, y - 1, 1)).floatValue(),
+                                ((Number) sdf.getPixel(x, y - 1, 2)).floatValue()
+                        };
+                    }
                     float[] lb = new float[] {
-                            ((Number) sdf.getPixel(x - 1, row - 1, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x - 1, row - 1, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x - 1, row - 1, 2)).floatValue()
+                            ((Number) sdf.getPixel(x - 1, y - 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, y - 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, y - 1, 2)).floatValue()
                     };
-                    //TODO slow to create a new Vector2d every time
                     if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(-1, -1), dSpan), cm, c, l, b, lb)) {
                         hasError = true;
                     }
                 }
+
                 if (x < sdf.getWidth() - 1 && y > 0) {
-                    float[] r = new float[] {
-                            ((Number) sdf.getPixel(x + 1, row, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x + 1, row, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x + 1, row, 2)).floatValue()
-                    };
-                    float[] b = new float[] {
-                            ((Number) sdf.getPixel(x, row - 1, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x, row - 1, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x, row - 1, 2)).floatValue()
-                    };
+                    if (r == null) {
+                        r = new float[] {
+                                ((Number) sdf.getPixel(x + 1, y, 0)).floatValue(),
+                                ((Number) sdf.getPixel(x + 1, y, 1)).floatValue(),
+                                ((Number) sdf.getPixel(x + 1, y, 2)).floatValue()
+                        };
+                    }
+                    if (b == null) {
+                        b = new float[] {
+                                ((Number) sdf.getPixel(x, y - 1, 0)).floatValue(),
+                                ((Number) sdf.getPixel(x, y - 1, 1)).floatValue(),
+                                ((Number) sdf.getPixel(x, y - 1, 2)).floatValue()
+                        };
+                    }
                     float[] rb = new float[] {
-                            ((Number) sdf.getPixel(x + 1, row - 1, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x + 1, row - 1, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x + 1, row - 1, 2)).floatValue()
+                            ((Number) sdf.getPixel(x + 1, y - 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, y - 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, y - 1, 2)).floatValue()
                     };
-                    //TODO slow to create a new Vector2d every time
                     if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(+1, -1), dSpan), cm, c, r, b, rb)) {
                         hasError = true;
                     }
                 }
+
                 if (x > 0 && y < sdf.getHeight() - 1) {
-                    float[] l = new float[] {
-                            ((Number) sdf.getPixel(x - 1, row, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x - 1, row, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x - 1, row, 2)).floatValue()
-                    };
-                    float[] t = new float[] {
-                            ((Number) sdf.getPixel(x, row + 1, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x, row + 1, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x, row + 1, 2)).floatValue()
-                    };
+                    if (l == null) {
+                        l = new float[] {
+                                ((Number) sdf.getPixel(x - 1, y, 0)).floatValue(),
+                                ((Number) sdf.getPixel(x - 1, y, 1)).floatValue(),
+                                ((Number) sdf.getPixel(x - 1, y, 2)).floatValue()
+                        };
+                    }
+                    if (t == null) {
+                        t = new float[] {
+                                ((Number) sdf.getPixel(x, y + 1, 0)).floatValue(),
+                                ((Number) sdf.getPixel(x, y + 1, 1)).floatValue(),
+                                ((Number) sdf.getPixel(x, y + 1, 2)).floatValue()
+                        };
+                    }
                     float[] lt = new float[] {
-                            ((Number) sdf.getPixel(x - 1, row + 1, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x - 1, row + 1, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x - 1, row + 1, 2)).floatValue()
+                            ((Number) sdf.getPixel(x - 1, y + 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, y + 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x - 1, y + 1, 2)).floatValue()
                     };
-                    //TODO slow to create a new Vector2d every time
                     if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(-1, +1), dSpan), cm, c, l, t, lt)) {
                         hasError = true;
                     }
                 }
+
                 if (x < sdf.getWidth() - 1 && y < sdf.getHeight() - 1) {
-                    float[] r = new float[] {
-                            ((Number) sdf.getPixel(x + 1, row, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x + 1, row, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x + 1, row, 2)).floatValue()
-                    };
-                    float[] t = new float[] {
-                            ((Number) sdf.getPixel(x, row + 1, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x, row + 1, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x, row + 1, 2)).floatValue()
-                    };
+                    if (r == null) {
+                        r = new float[] {
+                                ((Number) sdf.getPixel(x + 1, y, 0)).floatValue(),
+                                ((Number) sdf.getPixel(x + 1, y, 1)).floatValue(),
+                                ((Number) sdf.getPixel(x + 1, y, 2)).floatValue()
+                        };
+                    }
+                    if (t == null) {
+                        t = new float[] {
+                                ((Number) sdf.getPixel(x, y + 1, 0)).floatValue(),
+                                ((Number) sdf.getPixel(x, y + 1, 1)).floatValue(),
+                                ((Number) sdf.getPixel(x, y + 1, 2)).floatValue()
+                        };
+                    }
                     float[] rt = new float[] {
-                            ((Number) sdf.getPixel(x + 1, row + 1, 0)).floatValue(),
-                            ((Number) sdf.getPixel(x + 1, row + 1, 1)).floatValue(),
-                            ((Number) sdf.getPixel(x + 1, row + 1, 2)).floatValue()
+                            ((Number) sdf.getPixel(x + 1, y + 1, 0)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, y + 1, 1)).floatValue(),
+                            ((Number) sdf.getPixel(x + 1, y + 1, 2)).floatValue()
                     };
-                    //TODO slow to create a new Vector2d every time
                     if (hasDiagonalArtifact(shapeDistanceChecker.classifier(new Vector2d(+1, +1), dSpan), cm, c, r, t, rt)) {
                         hasError = true;
                     }
                 }
 
+                // Mark the stencil if an error was detected
                 if (hasError) {
-                             byte currentValue = ((Number) stencil.getPixel(x, row, 0)).byteValue();
-                             byte newValue = (byte)(currentValue | Flags.ERROR);
-
-                             // Determine the type of the pixels array and convert the value accordingly
-                             if (stencil.pixels instanceof float[]) {
-                                      stencil.setPixel(x, row, 0, (float) newValue);
-                                  } else if (stencil.pixels instanceof int[]) {
-                                      stencil.setPixel(x, row, 0, (int) newValue);
-                                  } else if (stencil.pixels instanceof byte[]) {
-                                      stencil.setPixel(x, row, 0, newValue);
-                                  } else if (stencil.pixels instanceof FloatBuffer) {
-                                      stencil.setPixel(x, row, 0, (float) newValue);
-                                  } else if (stencil.pixels instanceof IntBuffer) {
-                                      stencil.setPixel(x, row, 0, (int) newValue);
-                                  } else if (stencil.pixels instanceof ByteBuffer) {
-                                      stencil.setPixel(x, row, 0, newValue);
-                                  } else {
-                                      throw new UnsupportedOperationException("Unsupported pixel type");
-                                  }
-                          }
+                    byte currentValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
+                    byte newValue = (byte)(currentValue | Flags.ERROR);
+                    if (stencil.pixels instanceof float[]) {
+                        stencil.setPixel(x, y, 0, (float) newValue);
+                    } else if (stencil.pixels instanceof int[]) {
+                        stencil.setPixel(x, y, 0, (int) newValue);
+                    } else if (stencil.pixels instanceof byte[]) {
+                        stencil.setPixel(x, y, 0, newValue);
+                    } else if (stencil.pixels instanceof FloatBuffer) {
+                        stencil.setPixel(x, y, 0, (float) newValue);
+                    } else if (stencil.pixels instanceof IntBuffer) {
+                        stencil.setPixel(x, y, 0, (int) newValue);
+                    } else if (stencil.pixels instanceof ByteBuffer) {
+                        stencil.setPixel(x, y, 0, newValue);
+                    } else {
+                        throw new UnsupportedOperationException("Unsupported pixel type");
+                    }
+                }
             }
         }
     }
