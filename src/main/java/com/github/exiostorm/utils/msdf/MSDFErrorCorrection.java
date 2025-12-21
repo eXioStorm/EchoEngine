@@ -785,17 +785,15 @@ public class MSDFErrorCorrection {
                 }
 
                 if (hasError) {
-                    byte currentValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
-                    byte newValue = (byte)(currentValue | Flags.ERROR);
-                    switch (stencil.pixels) {
-                        case float[] floats -> stencil.setPixel(x, y, 0, (float) newValue);
-                        case int[] ints -> stencil.setPixel(x, y, 0, (int) newValue);
-                        case byte[] bytes -> stencil.setPixel(x, y, 0, newValue);
-                        case FloatBuffer floatBuffer -> stencil.setPixel(x, y, 0, (float) newValue);
-                        case IntBuffer intBuffer -> stencil.setPixel(x, y, 0, (int) newValue);
-                        case ByteBuffer byteBuffer -> stencil.setPixel(x, y, 0, newValue);
-                        case null, default -> throw new UnsupportedOperationException("Unsupported pixel type");
+                    for (int z = 0; z<10;) {
+                        z++;
+                        System.err.println(stencil.getPixel(x, y, 0).toString());
                     }
+                    //TODO 20251222 this wasn't working because we can't cast float to byte. which, why are we using byte everywhere?
+                    //System.err.println(stencil.getPixel(x, y, 0).toString());
+                    float currentValue = ((Number) stencil.getPixel(x, y, 0)).floatValue();
+                    //stencil.setPixel(x, y, 0, (currentValue | Flags.ERROR));
+                    stencil.setPixel(x, y, 0, currentValue);
                 }
             }
         }
