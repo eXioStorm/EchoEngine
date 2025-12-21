@@ -231,22 +231,34 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags all texels that are interpolated at corners as protected.
+    /// Flags all texels that are interpolated at corners as protected.
     public void protectCorners(MsdfShape msdfShape) {
-        //TODO 20251218
-        //stencil.reorient(msdfShape.getYAxisOrientation());
+        // Reorient the stencil based on the shape's Y-axis orientation
+        stencil.reorient(msdfShape.getYAxisOrientation());
+
         for (Contours.Contour contour : msdfShape.contours) {
             if (!contour.edges.isEmpty()) {
+                // Get the last edge as prevEdge
                 EdgeSegment prevEdge = contour.edges.get(contour.edges.size() - 1).edge;
-                for (EdgeHolder edge : contour.edges) {
-                    int commonColor = prevEdge.edgeColor & edge.edge.edgeColor;
+
+                for (EdgeHolder edgeHolder : contour.edges) {
+                    EdgeSegment edge = edgeHolder.edge;
+
+                    // Find colors common to both edges
+                    int commonColor = prevEdge.edgeColor & edge.edgeColor;
+
                     // If the color changes from prevEdge to edge, this is a corner.
+                    // The C++ condition is: !(commonColor & (commonColor - 1))
+                    // This checks if commonColor is 0 or a power of 2 (has at most 1 bit set)
+                    // This means the edges don't share multiple colors - indicating a corner
                     if ((commonColor & (commonColor - 1)) == 0) {
                         // Find the four texels that envelop the corner and mark them as protected.
-                        Vector2d p = transformation.project(edge.edge.point(0));
+                        Vector2d p = transformation.project(edge.point(0));
                         int l = (int) Math.floor(p.x - 0.5);
                         int b = (int) Math.floor(p.y - 0.5);
                         int r = l + 1;
                         int t = b + 1;
+
                         // Check that the positions are within bounds.
                         if (l < stencil.getWidth() && b < stencil.getHeight() && r >= 0 && t >= 0) {
                             if (l >= 0 && b >= 0) {
@@ -267,7 +279,7 @@ public class MSDFErrorCorrection {
                             }
                         }
                     }
-                    prevEdge = edge.edge;
+                    prevEdge = edge;
                 }
             }
         }
