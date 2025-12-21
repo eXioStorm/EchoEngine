@@ -8,7 +8,8 @@ public class msdfgen {
 
     // Generic distance field generation
     private static <D, C extends ContourCombiners.ContourCombiner<D>>
-    void generateDistanceField(            BitmapRef<float[]> output,
+    void generateDistanceField(
+            BitmapRef<float[]> output,
             MsdfShape msdfShape,
             SDFTransformation transformation,
             Class<C> combinerClass,

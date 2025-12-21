@@ -785,9 +785,9 @@ public class MSDFErrorCorrection {
                 }
 
                 if (hasError) {
-                    //TODO 20251222 this wasn't working because we can't cast float to byte. which, why are we using byte everywhere?
+                    //TODO 20251222 we can't cast float to byte. entire Bitmap-Ref, Section, Const's, etc. need re-implemented.
                     byte currentValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
-                    stencil.setPixel(x, y, 0, (byte)(currentValue | Flags.ERROR));
+                    stencil.setPixel(x, y, 0, (currentValue | Flags.ERROR));
                     //stencil.setPixel(x, y, 0, currentValue);
                 }
             }
