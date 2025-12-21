@@ -802,7 +802,6 @@ public class MSDFErrorCorrection {
     }
 
     /// Modifies the MSDF so that all texels with the error flag are converted to single-channel.
-    /// Modifies the MSDF so that all texels with the error flag are converted to single-channel.
     public void apply(BitmapRef sdf) {
         // Reorient the sdf bitmap to match the stencil's orientation
         sdf.reorient(stencil.yOrientation);
