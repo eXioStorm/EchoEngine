@@ -413,7 +413,6 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF only.
-    /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF only.
     public void findErrors(BitmapRef sdf) {
         // CRITICAL: Reorient stencil to match SDF's orientation
         stencil.reorient(sdf.getYOrientation());
