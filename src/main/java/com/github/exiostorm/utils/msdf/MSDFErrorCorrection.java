@@ -286,20 +286,25 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags all texels that contribute to edges as protected.
+    /// Flags all texels that contribute to edges as protected.
     public void protectEdges(BitmapRef sdf) {
         float radius;
+
+        // CRITICAL FIX: Reorient stencil to match sdf orientation
+        stencil.reorient(sdf.yOrientation);
+
         // Horizontal texel pairs
         radius = (float)(PROTECTION_RADIUS_TOLERANCE *
                 transformation.unprojectVector(new Vector2d(transformation.getDistanceMapping().map(dist), 0)).length());
 
         for (int y = 0; y < sdf.getHeight(); ++y) {
             for (int x = 0; x < sdf.getWidth() - 1; ++x) {
-                // Get individual channel values for left pixel
+                // Get left pixel (current)
                 float left0 = (Float) sdf.getPixel(x, y, 0);
                 float left1 = (Float) sdf.getPixel(x, y, 1);
                 float left2 = (Float) sdf.getPixel(x, y, 2);
 
-                // Get individual channel values for right pixel
+                // Get right pixel (next)
                 float right0 = (Float) sdf.getPixel(x + 1, y, 0);
                 float right1 = (Float) sdf.getPixel(x + 1, y, 1);
                 float right2 = (Float) sdf.getPixel(x + 1, y, 2);
@@ -323,11 +328,12 @@ public class MSDFErrorCorrection {
 
         for (int y = 0; y < sdf.getHeight() - 1; ++y) {
             for (int x = 0; x < sdf.getWidth(); ++x) {
-                // Get individual channel values instead of arrays
+                // Get bottom pixel (current)
                 float bottom0 = (Float) sdf.getPixel(x, y, 0);
                 float bottom1 = (Float) sdf.getPixel(x, y, 1);
                 float bottom2 = (Float) sdf.getPixel(x, y, 2);
 
+                // Get top pixel (next row)
                 float top0 = (Float) sdf.getPixel(x, y + 1, 0);
                 float top1 = (Float) sdf.getPixel(x, y + 1, 1);
                 float top2 = (Float) sdf.getPixel(x, y + 1, 2);
@@ -336,7 +342,6 @@ public class MSDFErrorCorrection {
                 float tm = median(top0, top1, top2);
 
                 if (Math.abs(bm - 0.5f) + Math.abs(tm - 0.5f) < radius) {
-                    // Create arrays for the methods that expect them
                     float[] bottom = {bottom0, bottom1, bottom2};
                     float[] top = {top0, top1, top2};
 
@@ -348,15 +353,15 @@ public class MSDFErrorCorrection {
         }
 
         // Diagonal texel pairs
+        // CRITICAL FIX: Use single parameter Vector2d constructor (not two separate values)
         radius = (float)(PROTECTION_RADIUS_TOLERANCE *
                 transformation.unprojectVector(new Vector2d(
-                        transformation.getDistanceMapping().map(dist),
-                        transformation.getDistanceMapping().map(dist)  // Should be the same value, not 0!
+                        transformation.getDistanceMapping().map(dist)
                 )).length());
 
         for (int y = 0; y < sdf.getHeight() - 1; ++y) {
             for (int x = 0; x < sdf.getWidth() - 1; ++x) {
-                // Get individual channel values instead of arrays
+                // Get all four pixels in the quad
                 float lb0 = (Float) sdf.getPixel(x, y, 0);
                 float lb1 = (Float) sdf.getPixel(x, y, 1);
                 float lb2 = (Float) sdf.getPixel(x, y, 2);
@@ -378,6 +383,7 @@ public class MSDFErrorCorrection {
                 float mlt = median(lt0, lt1, lt2);
                 float mrt = median(rt0, rt1, rt2);
 
+                // Check left-bottom to right-top diagonal
                 if (Math.abs(mlb - 0.5f) + Math.abs(mrt - 0.5f) < radius) {
                     float[] lb = {lb0, lb1, lb2};
                     float[] rt = {rt0, rt1, rt2};
@@ -385,6 +391,8 @@ public class MSDFErrorCorrection {
                     protectExtremeChannels(stencil, x, y, lb, mlb, mask);
                     protectExtremeChannels(stencil, x + 1, y + 1, rt, mrt, mask);
                 }
+
+                // Check right-bottom to left-top diagonal
                 if (Math.abs(mrb - 0.5f) + Math.abs(mlt - 0.5f) < radius) {
                     float[] rb = {rb0, rb1, rb2};
                     float[] lt = {lt0, lt1, lt2};
