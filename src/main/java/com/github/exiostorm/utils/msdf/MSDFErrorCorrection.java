@@ -777,13 +777,18 @@ public class MSDFErrorCorrection {
     }
 
     /// Modifies the MSDF so that all texels with the error flag are converted to single-channel.
+    /// Modifies the MSDF so that all texels with the error flag are converted to single-channel.
     public void apply(BitmapRef sdf) {
+        // Reorient the sdf bitmap to match the stencil's orientation
+        sdf.reorient(stencil.yOrientation);
+
+        // Iterate through all pixels
         for (int y = 0; y < sdf.getHeight(); ++y) {
             for (int x = 0; x < sdf.getWidth(); ++x) {
-                // Fix: Cast to Number first, then get byte value
+                // Check if this pixel has an error flag
                 byte stencilValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
                 if ((stencilValue & Flags.ERROR) != 0) {
-                    // Get the three channel values - cast to Number then get float value
+                    // Get the three channel values
                     float ch0 = ((Number) sdf.getPixel(x, y, 0)).floatValue();
                     float ch1 = ((Number) sdf.getPixel(x, y, 1)).floatValue();
                     float ch2 = ((Number) sdf.getPixel(x, y, 2)).floatValue();
