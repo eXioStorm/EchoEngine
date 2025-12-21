@@ -146,7 +146,6 @@ public class BitmapRef<T> {
      */
     public void reorient(Boolean orientation) {
         this.yOrientation = orientation == YAxisOrientation.Y_DOWNWARD.getBool();
-        this.yOrientation = orientation == YAxisOrientation.Y_DOWNWARD.getBool();
     }
     public boolean getYOrientation() { return yOrientation; }
 
