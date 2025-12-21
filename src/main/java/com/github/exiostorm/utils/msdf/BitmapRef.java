@@ -145,7 +145,7 @@ public class BitmapRef<T> {
      * After calling this, all getPixel/setPixel operations will be adjusted accordingly.
      */
     public void reorient(Boolean orientation) {
-        this.yOrientation = orientation == YAxisOrientation.Y_DOWNWARD.getBool();
+        this.yOrientation = orientation;
     }
     public boolean getYOrientation() { return yOrientation; }
 
