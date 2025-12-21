@@ -5,7 +5,6 @@ import com.github.exiostorm.utils.enums.YAxisOrientation;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-//TODO 20251218 This class doesn't match the C++ implementation, changes are needed for image flipping (why our generated glyph is upside down)
 /**
  * Reference to a 2D image bitmap or buffer acting as one.
  * Pixel storage not owned or managed by the object.
@@ -145,9 +144,11 @@ public class BitmapRef<T> {
      * Reorients the bitmap's Y-axis based on the provided orientation.
      * After calling this, all getPixel/setPixel operations will be adjusted accordingly.
      */
-    public void reorient(YAxisOrientation orientation) {
-        this.yOrientation = orientation == YAxisOrientation.Y_DOWNWARD;
+    public void reorient(Boolean orientation) {
+        this.yOrientation = orientation == YAxisOrientation.Y_DOWNWARD.getBool();
+        this.yOrientation = orientation == YAxisOrientation.Y_DOWNWARD.getBool();
     }
+    public boolean getYOrientation() { return yOrientation; }
 
     // Getters
     public T getPixels() { return pixels; }

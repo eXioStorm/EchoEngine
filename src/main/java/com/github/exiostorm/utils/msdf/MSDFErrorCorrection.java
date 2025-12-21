@@ -556,9 +556,8 @@ public class MSDFErrorCorrection {
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF and comparison with the exact shape distance.
     public void findErrorsWithShape(BitmapRef sdf, MsdfShape msdfShape) {
-        // Apply Y-axis orientation to both bitmaps ONCE at the start
-        // This matches the C++ behavior of sdf.reorient() and stencil.reorient()
-        boolean flipY = YAxisOrientation.getDefault().getBool();
+        sdf.reorient(msdfShape.getYAxisOrientation());
+        stencil.reorient(sdf.yOrientation ? YAxisOrientation.Y_DOWNWARD.getBool() : YAxisOrientation.Y_UPWARD.getBool());
 
         double hSpan = minDeviationRatio * transformation.unprojectVector(
                 new Vector2d(transformation.getDistanceMapping().map(dist), 0)).length();

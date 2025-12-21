@@ -20,6 +20,8 @@ public class MsdfShape {
 
     private static final double DECONVERGE_OVERSHOOT = 1.11111111111111111; // moves control points slightly more than necessary to account for floating-point errors
 
+    private boolean inverseYAxis;
+
     public static class Bounds {
         public double l, b, r, t;
 
@@ -49,7 +51,7 @@ public class MsdfShape {
 
     public MsdfShape() {
         this.contours = new ArrayList<>();
-        //this.inverseYAxis = false;
+        this.inverseYAxis = false;
     }
 
     /** Adds a contour. */
@@ -284,6 +286,9 @@ public class MsdfShape {
     // Helper method to get orthogonal vector
     private static Vector2d getOrthogonal(Vector2d v, boolean polarity) {
         return polarity ? new Vector2d(-v.y, v.x) : new Vector2d(v.y, -v.x);
+    }
+    public boolean getYAxisOrientation() {
+        return this.inverseYAxis;
     }
 
     // Helper method for sign function
