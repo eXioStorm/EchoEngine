@@ -787,20 +787,14 @@ public class MSDFErrorCorrection {
                 if (hasError) {
                     byte currentValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
                     byte newValue = (byte)(currentValue | Flags.ERROR);
-                    if (stencil.pixels instanceof float[]) {
-                        stencil.setPixel(x, y, 0, (float) newValue);
-                    } else if (stencil.pixels instanceof int[]) {
-                        stencil.setPixel(x, y, 0, (int) newValue);
-                    } else if (stencil.pixels instanceof byte[]) {
-                        stencil.setPixel(x, y, 0, newValue);
-                    } else if (stencil.pixels instanceof FloatBuffer) {
-                        stencil.setPixel(x, y, 0, (float) newValue);
-                    } else if (stencil.pixels instanceof IntBuffer) {
-                        stencil.setPixel(x, y, 0, (int) newValue);
-                    } else if (stencil.pixels instanceof ByteBuffer) {
-                        stencil.setPixel(x, y, 0, newValue);
-                    } else {
-                        throw new UnsupportedOperationException("Unsupported pixel type");
+                    switch (stencil.pixels) {
+                        case float[] floats -> stencil.setPixel(x, y, 0, (float) newValue);
+                        case int[] ints -> stencil.setPixel(x, y, 0, (int) newValue);
+                        case byte[] bytes -> stencil.setPixel(x, y, 0, newValue);
+                        case FloatBuffer floatBuffer -> stencil.setPixel(x, y, 0, (float) newValue);
+                        case IntBuffer intBuffer -> stencil.setPixel(x, y, 0, (int) newValue);
+                        case ByteBuffer byteBuffer -> stencil.setPixel(x, y, 0, newValue);
+                        case null, default -> throw new UnsupportedOperationException("Unsupported pixel type");
                     }
                 }
             }
