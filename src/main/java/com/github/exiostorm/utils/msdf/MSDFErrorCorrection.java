@@ -791,9 +791,9 @@ public class MSDFErrorCorrection {
                     }
                     //TODO 20251222 this wasn't working because we can't cast float to byte. which, why are we using byte everywhere?
                     //System.err.println(stencil.getPixel(x, y, 0).toString());
-                    float currentValue = ((Number) stencil.getPixel(x, y, 0)).floatValue();
-                    //stencil.setPixel(x, y, 0, (currentValue | Flags.ERROR));
-                    stencil.setPixel(x, y, 0, currentValue);
+                    byte currentValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
+                    stencil.setPixel(x, y, 0, (byte)(currentValue | Flags.ERROR));
+                    //stencil.setPixel(x, y, 0, currentValue);
                 }
             }
         }
