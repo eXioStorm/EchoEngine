@@ -13,7 +13,8 @@ import com.github.exiostorm.utils.enums.YAxisOrientation;
  *
  * @param <T> The pixel data type (float[], int[], byte[], etc.)
  */
-public class BitmapConstSection<T> {
+@Deprecated
+public class DprBitmapConstSection<T> {
     protected final T pixels;
     protected int offset; // Starting offset in the array (mutable for reorient)
     protected final int width;
@@ -30,7 +31,7 @@ public class BitmapConstSection<T> {
      */
     protected boolean yOrientation;
 
-    public BitmapConstSection() {
+    public DprBitmapConstSection() {
         this.pixels = null;
         this.offset = 0;
         this.width = 0;
@@ -40,19 +41,19 @@ public class BitmapConstSection<T> {
         this.yOrientation = YAxisOrientation.getDefault().getBool();
     }
 
-    public BitmapConstSection(T pixels, int width, int height) {
+    public DprBitmapConstSection(T pixels, int width, int height) {
         this(pixels, 0, width, height, 1, width, YAxisOrientation.getDefault().getBool());
     }
 
-    public BitmapConstSection(T pixels, int width, int height, int channels) {
+    public DprBitmapConstSection(T pixels, int width, int height, int channels) {
         this(pixels, 0, width, height, channels, channels * width, YAxisOrientation.getDefault().getBool());
     }
 
-    public BitmapConstSection(T pixels, int width, int height, int channels, boolean yOrientation) {
+    public DprBitmapConstSection(T pixels, int width, int height, int channels, boolean yOrientation) {
         this(pixels, 0, width, height, channels, channels * width, yOrientation);
     }
 
-    public BitmapConstSection(T pixels, int offset, int width, int height, int channels, int rowStride, boolean yOrientation) {
+    public DprBitmapConstSection(T pixels, int offset, int width, int height, int channels, int rowStride, boolean yOrientation) {
         this.pixels = pixels;
         this.offset = offset;
         this.width = width;
@@ -65,7 +66,7 @@ public class BitmapConstSection<T> {
     /**
      * Copy constructor from BitmapRef.
      */
-    public BitmapConstSection(BitmapRef<T> orig) {
+    public DprBitmapConstSection(DprBitmapRef<T> orig) {
         this.pixels = orig.pixels;
         this.offset = 0;
         this.width = orig.width;
@@ -78,7 +79,7 @@ public class BitmapConstSection<T> {
     /**
      * Copy constructor from BitmapConstRef.
      */
-    public BitmapConstSection(BitmapConstRef<T> orig) {
+    public DprBitmapConstSection(DprBitmapConstRef<T> orig) {
         this.pixels = orig.pixels;
         this.offset = 0;
         this.width = orig.width;
@@ -91,7 +92,7 @@ public class BitmapConstSection<T> {
     /**
      * Copy constructor from BitmapSection.
      */
-    public BitmapConstSection(BitmapSection<T> orig) {
+    public DprBitmapConstSection(DprBitmapSection<T> orig) {
         this.pixels = orig.pixels;
         this.offset = orig.offset;
         this.width = orig.width;
@@ -171,7 +172,7 @@ public class BitmapConstSection<T> {
      * Returns a constant reference to a rectangular subsection of the bitmap.
      * Bounds are [xMin, yMin) to [xMax, yMax) - excluding xMax and yMax.
      */
-    public BitmapConstSection<T> getSection(int xMin, int yMin, int xMax, int yMax) {
+    public DprBitmapConstSection<T> getSection(int xMin, int yMin, int xMax, int yMax) {
         if (xMin < 0 || yMin < 0 || xMax > width || yMax > height || xMin >= xMax || yMin >= yMax) {
             throw new IllegalArgumentException("Invalid section bounds");
         }
@@ -180,14 +181,14 @@ public class BitmapConstSection<T> {
         int sectionWidth = xMax - xMin;
         int sectionHeight = yMax - yMin;
 
-        return new BitmapConstSection<>(pixels, newOffset, sectionWidth, sectionHeight, channels, rowStride, yOrientation);
+        return new DprBitmapConstSection<>(pixels, newOffset, sectionWidth, sectionHeight, channels, rowStride, yOrientation);
     }
 
     /**
      * Returns a constant reference to a rectangular subsection of the bitmap.
      * C++ has both getSection and getConstSection that return the same thing.
      */
-    public BitmapConstSection<T> getConstSection(int xMin, int yMin, int xMax, int yMax) {
+    public DprBitmapConstSection<T> getConstSection(int xMin, int yMin, int xMax, int yMax) {
         return getSection(xMin, yMin, xMax, yMax);
     }
 

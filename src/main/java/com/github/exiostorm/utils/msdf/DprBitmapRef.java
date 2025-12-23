@@ -9,14 +9,15 @@ import java.nio.IntBuffer;
  * Reference to a 2D image bitmap or buffer acting as one.
  * Pixel storage not owned or managed by the object.
  */
-public class BitmapRef<T> {
+@Deprecated
+public class DprBitmapRef<T> {
     protected T pixels;
     protected int width;
     protected int height;
     protected int channels;
-    protected boolean yOrientation = YAxisOrientation.getDefault().getBool();
+    protected boolean yOrientation;
 
-    public BitmapRef() {
+    public DprBitmapRef() {
         this.pixels = null;
         this.width = 0;
         this.height = 0;
@@ -24,11 +25,11 @@ public class BitmapRef<T> {
         this.yOrientation = YAxisOrientation.getDefault().getBool();
     }
 
-    public BitmapRef(T pixels, int width, int height) {
+    public DprBitmapRef(T pixels, int width, int height) {
         this(pixels, width, height, 1);
     }
 
-    public BitmapRef(T pixels, int width, int height, int channels) {
+    public DprBitmapRef(T pixels, int width, int height, int channels) {
         this.pixels = pixels;
         this.width = width;
         this.height = height;

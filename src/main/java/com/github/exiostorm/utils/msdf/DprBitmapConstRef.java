@@ -10,29 +10,30 @@ import com.github.exiostorm.utils.enums.YAxisOrientation;
  *
  * @param <T> The pixel data type (float[], int[], byte[], etc.)
  */
-public class BitmapConstRef<T> {
+@Deprecated
+public class DprBitmapConstRef<T> {
     protected final T pixels;
     protected final int width;
     protected final int height;
     protected final int channels;
     protected boolean yOrientation;
 
-    public BitmapConstRef() {
+    public DprBitmapConstRef() {
         this.pixels = null;
         this.width = 0;
         this.height = 0;
         this.channels = 1;
         this.yOrientation = YAxisOrientation.getDefault().getBool();
     }
-    public BitmapConstRef(T pixels, int width, int height) {
+    public DprBitmapConstRef(T pixels, int width, int height) {
         this(pixels, width, height, 1, YAxisOrientation.getDefault().getBool());
     }
 
-    public BitmapConstRef(T pixels, int width, int height, int channels) {
+    public DprBitmapConstRef(T pixels, int width, int height, int channels) {
         this(pixels, width, height, channels, YAxisOrientation.getDefault().getBool());
     }
 
-    public BitmapConstRef(T pixels, int width, int height, int channels, boolean yOrientation) {
+    public DprBitmapConstRef(T pixels, int width, int height, int channels, boolean yOrientation) {
         this.pixels = pixels;
         this.width = width;
         this.height = height;
@@ -44,7 +45,7 @@ public class BitmapConstRef<T> {
      * Copy constructor from BitmapRef.
      * Corresponds to C++ BitmapConstRef(const BitmapRef<T, N> &orig).
      */
-    public BitmapConstRef(BitmapRef<T> orig) {
+    public DprBitmapConstRef(DprBitmapRef<T> orig) {
         this.pixels = orig.pixels;
         this.width = orig.width;
         this.height = orig.height;
@@ -122,7 +123,7 @@ public class BitmapConstRef<T> {
      * Returns a constant reference to a rectangular section of the bitmap.
      * Bounds are [xMin, yMin) to [xMax, yMax) - excluding xMax and yMax.
      */
-    public BitmapConstSection<T> getSection(int xMin, int yMin, int xMax, int yMax) {
+    public DprBitmapConstSection<T> getSection(int xMin, int yMin, int xMax, int yMax) {
         if (xMin < 0 || yMin < 0 || xMax > width || yMax > height || xMin >= xMax || yMin >= yMax) {
             throw new IllegalArgumentException("Invalid section bounds");
         }
@@ -132,14 +133,14 @@ public class BitmapConstRef<T> {
         int sectionHeight = yMax - yMin;
         int rowStride = channels * width;
 
-        return new BitmapConstSection<>(pixels, offset, sectionWidth, sectionHeight, channels, rowStride, yOrientation);
+        return new DprBitmapConstSection<>(pixels, offset, sectionWidth, sectionHeight, channels, rowStride, yOrientation);
     }
 
     /**
      * Returns a constant reference to a rectangular section of the bitmap.
      * C++ has both getSection and getConstSection that return the same thing.
      */
-    public BitmapConstSection<T> getConstSection(int xMin, int yMin, int xMax, int yMax) {
+    public DprBitmapConstSection<T> getConstSection(int xMin, int yMin, int xMax, int yMax) {
         return getSection(xMin, yMin, xMax, yMax);
     }
 

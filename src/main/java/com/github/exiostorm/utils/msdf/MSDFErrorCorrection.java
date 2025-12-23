@@ -1,13 +1,9 @@
 package com.github.exiostorm.utils.msdf;
 
-import com.github.exiostorm.utils.enums.YAxisOrientation;
 import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
 import static com.github.exiostorm.utils.msdf.MathUtils.*;
 import org.joml.Vector2d;
 
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.Arrays;
 //TODO 20251218 This class is not identical to C++ implementation. After fixing this, and BitmapRef we should be done!
 /**
@@ -132,12 +128,12 @@ public class MSDFErrorCorrection {
         public boolean protectedFlag;
 
         private final SimpleTrueShapeDistanceFinder distanceFinder;
-        private final BitmapRef sdf;
+        private final DprBitmapRef sdf;
         private final DistanceMapping distanceMapping;
         private Vector2d texelSize;
         private final double minImproveRatio;
 
-        public ShapeDistanceChecker(BitmapRef sdf, MsdfShape msdfShape, Projection projection,
+        public ShapeDistanceChecker(DprBitmapRef sdf, MsdfShape msdfShape, Projection projection,
                                     DistanceMapping distanceMapping, double minImproveRatio) {
             this.distanceFinder = new SimpleTrueShapeDistanceFinder(msdfShape);
             this.sdf = sdf;
@@ -153,7 +149,7 @@ public class MSDFErrorCorrection {
         public ArtifactClassifier classifier(Vector2d direction, double span) {
             return new ArtifactClassifier(this, direction, span);
         }
-        private static void interpolate(float[] result, BitmapRef bitmap, Vector2d coord) {
+        private static void interpolate(float[] result, DprBitmapRef bitmap, Vector2d coord) {
             // Clamp to [0, width] and [0, height] FIRST (C++ clamp behavior)
             double px = Math.max(0.0, Math.min((double) bitmap.getWidth(), coord.x));
             double py = Math.max(0.0, Math.min((double) bitmap.getHeight(), coord.y));
@@ -198,7 +194,7 @@ public class MSDFErrorCorrection {
         }
     }
 
-    private BitmapRef stencil;
+    private DprBitmapRef stencil;
     private SDFTransformation transformation;
     private double minDeviationRatio;
     private double minImproveRatio;
@@ -208,7 +204,7 @@ public class MSDFErrorCorrection {
         this.minImproveRatio = ErrorCorrectionConfig.DEFAULT_MIN_IMPROVE_RATIO;
     }
 
-    public MSDFErrorCorrection(BitmapRef stencil, SDFTransformation transformation) {
+    public MSDFErrorCorrection(DprBitmapRef stencil, SDFTransformation transformation) {
         this.stencil = stencil;
         this.transformation = transformation;
         this.minDeviationRatio = ErrorCorrectionConfig.DEFAULT_MIN_DEVIATION_RATIO;
@@ -287,7 +283,7 @@ public class MSDFErrorCorrection {
 
     /// Flags all texels that contribute to edges as protected.
     /// Flags all texels that contribute to edges as protected.
-    public void protectEdges(BitmapRef sdf) {
+    public void protectEdges(DprBitmapRef sdf) {
         float radius;
 
         // CRITICAL FIX: Reorient stencil to match sdf orientation
@@ -413,7 +409,7 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF only.
-    public void findErrors(BitmapRef sdf) {
+    public void findErrors(DprBitmapRef sdf) {
         // CRITICAL: Reorient stencil to match SDF's orientation
         stencil.reorient(sdf.getYOrientation());
 
@@ -599,7 +595,7 @@ public class MSDFErrorCorrection {
     }
 
     /// Flags texels that are expected to cause interpolation artifacts based on analysis of the SDF and comparison with the exact shape distance.
-    public void findErrorsWithShape(BitmapRef sdf, MsdfShape msdfShape) {
+    public void findErrorsWithShape(DprBitmapRef sdf, MsdfShape msdfShape) {
         sdf.reorient(msdfShape.getYAxisOrientation());
         stencil.reorient(sdf.yOrientation);  // FIX #1: Direct pass, no logic reversal
 
@@ -789,13 +785,14 @@ public class MSDFErrorCorrection {
                     byte currentValue = ((Number) stencil.getPixel(x, y, 0)).byteValue();
                     stencil.setPixel(x, y, 0, (currentValue | Flags.ERROR));
                     //stencil.setPixel(x, y, 0, currentValue);
+                    //stencil.setPixel(x, y, 0, 0.0f);
                 }
             }
         }
     }
 
     /// Modifies the MSDF so that all texels with the error flag are converted to single-channel.
-    public void apply(BitmapRef sdf) {
+    public void apply(DprBitmapRef sdf) {
         // Reorient the sdf bitmap to match the stencil's orientation
         sdf.reorient(stencil.yOrientation);
 
@@ -823,7 +820,7 @@ public class MSDFErrorCorrection {
     }
 
     /// Returns the stencil in its current state (see Flags).
-    public BitmapRef getStencil() {
+    public DprBitmapRef getStencil() {
         return stencil;
     }
 
@@ -855,7 +852,7 @@ public class MSDFErrorCorrection {
     }
 
     /// Marks texel as protected if one of its non-median channels is present in the channel mask.
-    private void protectExtremeChannels(BitmapRef stencil, int x, int y, float[] msd, float m, int mask) {
+    private void protectExtremeChannels(DprBitmapRef stencil, int x, int y, float[] msd, float m, int mask) {
         if ((mask & EdgeColorEnum.RED.getValue().color) != 0 && msd[0] != m ||
                 (mask & EdgeColorEnum.GREEN.getValue().color) != 0 && msd[1] != m ||
                 (mask & EdgeColorEnum.BLUE.getValue().color) != 0 && msd[2] != m) {

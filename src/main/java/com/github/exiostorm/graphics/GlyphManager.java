@@ -32,7 +32,6 @@ import static com.github.exiostorm.main.EchoGame.gamePanel;
 import static java.awt.Font.getFont;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.util.freetype.FreeType.*;
-import static org.lwjgl.util.freetype.FreeType.FT_LOAD_NO_SCALE;
 
 //TODO fuck. we also need new logic for a new atlas because of sizing restrictions. our atlas will need re-sized and re-uploaded when new glyphs are added.
 // Should have something to toggle the ability to generate new glyphs so that people can prevent performance hits. then new glyphs will just render with a default character.
@@ -376,7 +375,7 @@ public class GlyphManager {
                 }
             }*/
             // 3. Create output bitmap
-            BitmapRef<float[]> bitmap = new BitmapRef<>(
+            DprBitmapRef<float[]> bitmap = new DprBitmapRef<>(
                     new float[GLYPH_SIZE * GLYPH_SIZE * 3],
                     GLYPH_SIZE,
                     GLYPH_SIZE,
@@ -496,7 +495,7 @@ public class GlyphManager {
                             }
                         com.github.exiostorm.utils.msdf.MsdfShape sdfShape = ShapeConverter.fromAwtShape(awtShape);
                         sdfShape.normalize();
-                        BitmapRef<float[]> bitmap = new BitmapRef<>(
+                        DprBitmapRef<float[]> bitmap = new DprBitmapRef<>(
                                         new float[GLYPH_SIZE * GLYPH_SIZE],
                                        GLYPH_SIZE,
                                         GLYPH_SIZE,

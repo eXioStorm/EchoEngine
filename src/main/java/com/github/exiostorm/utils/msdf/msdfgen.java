@@ -9,7 +9,7 @@ public class msdfgen {
     // Generic distance field generation
     private static <D, C extends ContourCombiners.ContourCombiner<D>>
     void generateDistanceField(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             SDFTransformation transformation,
             Class<C> combinerClass,
@@ -68,12 +68,12 @@ public class msdfgen {
     }
     // SDF Generation
     public static void generateSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             SDFTransformation transformation) {
         generateSDF(output, msdfShape, transformation, new GeneratorConfig());
     }
-    public static void generateSDF(BitmapRef<float[]> output,
+    public static void generateSDF(DprBitmapRef<float[]> output,
                                    MsdfShape msdfShape,
                                    SDFTransformation transformation,
                                    GeneratorConfig config) {
@@ -101,7 +101,7 @@ public class msdfgen {
         }
     }
     public static void generateSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             Projection projection,
             Range range,
@@ -130,7 +130,7 @@ public class msdfgen {
     }
 
     public static void generateSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             Range range,
             Vector2d scale,
@@ -145,7 +145,7 @@ public class msdfgen {
 
     // PSDF Generation
     public static void generatePSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             SDFTransformation transformation,
             GeneratorConfig config) {
@@ -169,14 +169,14 @@ public class msdfgen {
     }
 
     public static void generatePSDF(
-        BitmapRef<float[]> output,
+        DprBitmapRef<float[]> output,
         MsdfShape msdfShape,
         SDFTransformation transformation) {
     generatePSDF(output, msdfShape, transformation, new GeneratorConfig());
 }
 
     public static void generatePSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             Range range,
             Vector2d scale,
@@ -191,7 +191,7 @@ public class msdfgen {
     }
 
     public static void generatePSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             Projection projection,
             Range range,
@@ -223,7 +223,7 @@ public class msdfgen {
 
     // MSDF Generation
     public static void generateMSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             SDFTransformation transformation,
             MSDFGeneratorConfig config) {
@@ -260,13 +260,13 @@ public class msdfgen {
         errorCorrection.apply(output);
     }
 
-    public static void generateMSDF(BitmapRef<float[]> output, MsdfShape msdfShape,
+    public static void generateMSDF(DprBitmapRef<float[]> output, MsdfShape msdfShape,
                                     SDFTransformation transformation) {
         generateMSDF(output, msdfShape, transformation, new MSDFGeneratorConfig());
     }
 
     public static void generateMSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             Projection projection,
             Range range,
@@ -308,7 +308,7 @@ public class msdfgen {
     }
 
     public static void generateMSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             Range range,
             Vector2d scale,
@@ -326,7 +326,7 @@ public class msdfgen {
 
     // MTSDF Generation
     public static void generateMTSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             SDFTransformation transformation,
             MSDFGeneratorConfig config
@@ -365,7 +365,7 @@ public class msdfgen {
         errorCorrection.apply(output);
     }
 
-    public static void generateMTSDF(BitmapRef<float[]> output, MsdfShape msdfShape,
+    public static void generateMTSDF(DprBitmapRef<float[]> output, MsdfShape msdfShape,
                                      SDFTransformation transformation) {
         generateMTSDF(output, msdfShape, transformation, new MSDFGeneratorConfig());
     }
@@ -375,7 +375,7 @@ public class msdfgen {
      *                    const Projection &projection, Range range, const MSDFGeneratorConfig &config)
      */
     public static void generateMTSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             Projection projection,
             Range range,
@@ -397,7 +397,7 @@ public class msdfgen {
      *                    const ErrorCorrectionConfig &errorCorrectionConfig, bool overlapSupport)
      */
     public static void generateMTSDF(
-            BitmapRef<float[]> output,
+            DprBitmapRef<float[]> output,
             MsdfShape msdfShape,
             Range range,
             Vector2d scale,

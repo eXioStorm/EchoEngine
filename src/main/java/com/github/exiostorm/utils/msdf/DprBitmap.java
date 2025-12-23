@@ -8,14 +8,14 @@ import java.util.Arrays; /**
  * Pixel memory is managed by the class.
  */
 @Deprecated // unable to locate where this was originally used, going to delete after we get everything working. Engine still launches even when fully commented out.
-public class Bitmap<T> {
+public class DprBitmap<T> {
     private T pixels;
     private int width;
     private int height;
     private int channels;
     private Class<T> pixelType;
 
-    public Bitmap() {
+    public DprBitmap() {
         this.pixels = null;
         this.width = 0;
         this.height = 0;
@@ -23,12 +23,12 @@ public class Bitmap<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public Bitmap(Class<T> pixelType, int width, int height) {
+    public DprBitmap(Class<T> pixelType, int width, int height) {
         this(pixelType, width, height, 1);
     }
 
     @SuppressWarnings("unchecked")
-    public Bitmap(Class<T> pixelType, int width, int height, int channels) {
+    public DprBitmap(Class<T> pixelType, int width, int height, int channels) {
         this.pixelType = pixelType;
         this.width = width;
         this.height = height;
@@ -53,7 +53,7 @@ public class Bitmap<T> {
         }
     }
 
-    public Bitmap(BitmapConstRef<T> orig) {
+    public DprBitmap(DprBitmapConstRef<T> orig) {
         this.width = orig.getWidth();
         this.height = orig.getHeight();
         this.channels = orig.getChannels();
@@ -63,7 +63,7 @@ public class Bitmap<T> {
         copyFromReference(origPixels);
     }
 
-    public Bitmap(Bitmap<T> orig) {
+    public DprBitmap(DprBitmap<T> orig) {
         this.width = orig.width;
         this.height = orig.height;
         this.channels = orig.channels;
@@ -115,7 +115,7 @@ public class Bitmap<T> {
     }
 
     // Assignment operators
-    public Bitmap<T> assign(BitmapConstRef<T> orig) {
+    public DprBitmap<T> assign(DprBitmapConstRef<T> orig) {
         if (this.pixels != orig.getPixels()) {
             this.width = orig.getWidth();
             this.height = orig.getHeight();
@@ -125,7 +125,7 @@ public class Bitmap<T> {
         return this;
     }
 
-    public Bitmap<T> assign(Bitmap<T> orig) {
+    public DprBitmap<T> assign(DprBitmap<T> orig) {
         if (this != orig) {
             this.width = orig.width;
             this.height = orig.height;
@@ -200,11 +200,11 @@ public class Bitmap<T> {
         return pixels;
     }
 
-    public BitmapRef<T> toBitmapRef() {
-        return new BitmapRef<>(pixels, width, height, channels);
+    public DprBitmapRef<T> toBitmapRef() {
+        return new DprBitmapRef<>(pixels, width, height, channels);
     }
 
-    public BitmapConstRef<T> toBitmapConstRef() {
-        return new BitmapConstRef<>(pixels, width, height, channels, false);
+    public DprBitmapConstRef<T> toBitmapConstRef() {
+        return new DprBitmapConstRef<>(pixels, width, height, channels, false);
     }
 }
