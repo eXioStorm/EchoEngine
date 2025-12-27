@@ -249,7 +249,7 @@ public class msdfgen {
         }
 
         // Apply MSDF error correction
-        MSDFErrorCorrection errorCorrection = new MSDFErrorCorrection(output, transformation);
+        DprMSDFErrorCorrection errorCorrection = new DprMSDFErrorCorrection(output, transformation);
         errorCorrection.setMinDeviationRatio(ErrorCorrectionConfig.DEFAULT_MIN_DEVIATION_RATIO);
         errorCorrection.setMinImproveRatio(ErrorCorrectionConfig.DEFAULT_MIN_IMPROVE_RATIO);
 
@@ -298,7 +298,7 @@ public class msdfgen {
         }
 
         // ---- MSDF ERROR CORRECTION ----
-        MSDFErrorCorrection errorCorrection = new MSDFErrorCorrection(output, transformation);
+        DprMSDFErrorCorrection errorCorrection = new DprMSDFErrorCorrection(output, transformation);
 
         errorCorrection.setMinDeviationRatio(config.errorCorrection.minDeviationRatio);
         errorCorrection.setMinImproveRatio(config.errorCorrection.minImproveRatio);
@@ -355,7 +355,7 @@ public class msdfgen {
         }
 
         // Apply error correction using your MSDFErrorCorrection class
-        MSDFErrorCorrection errorCorrection = new MSDFErrorCorrection(output, transformation);
+        DprMSDFErrorCorrection errorCorrection = new DprMSDFErrorCorrection(output, transformation);
         // Set configuration values from MSDFGeneratorConfig if needed
         if (config.errorCorrection != null) {
             errorCorrection.setMinDeviationRatio(ErrorCorrectionConfig.DEFAULT_MIN_DEVIATION_RATIO);

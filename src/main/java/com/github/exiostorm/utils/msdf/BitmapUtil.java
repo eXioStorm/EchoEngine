@@ -2,7 +2,7 @@ package com.github.exiostorm.utils.msdf;
 
 import java.awt.image.BufferedImage;
 
-public class BitmapUtil {
+public final class BitmapUtil {
     //TODO 20251224 I think we can still use this, it's just taking in our previous BitmapRef that we're deprecating.
     public static BufferedImage toBufferedImage(DprBitmapRef<float[]> bmp) {
         BufferedImage img = new BufferedImage(bmp.getWidth(), bmp.getHeight(), BufferedImage.TYPE_INT_ARGB);

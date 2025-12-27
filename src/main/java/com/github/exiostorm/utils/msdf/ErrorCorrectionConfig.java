@@ -12,10 +12,10 @@ public final class ErrorCorrectionConfig {
 
     // Your code says these come from MSDFErrorCorrection: keep that consistent
     private static final double DEFAULT_MIN_DEVIATION_RATIO_INTERNAL =
-            MSDFErrorCorrection.ErrorCorrectionConfig.DEFAULT_MIN_DEVIATION_RATIO;
+            DprMSDFErrorCorrection.ErrorCorrectionConfig.DEFAULT_MIN_DEVIATION_RATIO;
 
     private static final double DEFAULT_MIN_IMPROVE_RATIO_INTERNAL =
-            MSDFErrorCorrection.ErrorCorrectionConfig.DEFAULT_MIN_IMPROVE_RATIO;
+            DprMSDFErrorCorrection.ErrorCorrectionConfig.DEFAULT_MIN_IMPROVE_RATIO;
 
     // ----------------------------------------------------------
     // Enum Mode
