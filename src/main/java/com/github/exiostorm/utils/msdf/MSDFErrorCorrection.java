@@ -132,7 +132,7 @@ public class MSDFErrorCorrection {
          * Inner class representing the artifact classifier
          * Extends BaseArtifactClassifier functionality
          */
-        public class ArtifactClassifier {
+        public class ArtifactClassifier extends BaseArtifactClassifier {
 
             private final ShapeDistanceChecker<C, D> parent;
             private final Vector2d direction;
@@ -146,6 +146,7 @@ public class MSDFErrorCorrection {
              * @param span The span for range testing
              */
             public ArtifactClassifier(ShapeDistanceChecker<C, D> parent, Vector2d direction, double span) {
+                super(span, parent.protectedFlag);
                 this.parent = parent;
                 this.direction = new Vector2d(direction);
                 this.span = span;
