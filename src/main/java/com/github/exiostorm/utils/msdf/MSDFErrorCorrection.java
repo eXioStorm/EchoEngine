@@ -785,6 +785,207 @@ public class MSDFErrorCorrection {
         }
     }
 
+    /**
+     * Flags texels that are expected to cause interpolation artifacts based on analysis
+     * of the SDF and comparison with the exact shape distance.
+     *
+     * This method provides more accurate artifact detection than the SDF-only version
+     * by computing the actual shape distance at artifact candidate positions.
+     *
+     * @param <C> The ContourCombiner type
+     * @param <D> The distance type returned by the ContourCombiner
+     * @param sdf The SDF bitmap (3 or 4 channels)
+     * @param shape The shape to check distances against
+     * @param contourCombiner The contour combiner to use for distance calculations
+     */
+    public <C extends ContourCombiners.ContourCombiner<D>, D> void findErrors(
+            BitmapRef<float[]> sdf,
+            MsdfShape shape,
+            C contourCombiner) {
+        //TODO 20251228 not 100% certain this is identical.
+        // This is our main method that might have inaccuracies, it's a LOT to digest and I'm kinda rushing... hopefully it's correct.
+
+        // Reorient SDF and stencil to match shape's Y-axis orientation
+        sdf.reorient(shape.getYAxisOrientation());
+        stencil.reorient(sdf.yOrientation);
+
+        // Compute the expected deltas between values of horizontally, vertically,
+        // and diagonally adjacent texels
+        double hSpan = minDeviationRatio * transformation.unprojectVector(
+                new Vector2d(transformation.distanceMapping.map(new DistanceMapping.Delta(1)), 0)).length();
+        double vSpan = minDeviationRatio * transformation.unprojectVector(
+                new Vector2d(0, transformation.distanceMapping.map(new DistanceMapping.Delta(1)))).length();
+        double dSpan = minDeviationRatio * transformation.unprojectVector(
+                new Vector2d(transformation.distanceMapping.map(new DistanceMapping.Delta(1)), 0)).length();
+
+        // Create the shape distance checker for accurate distance evaluation
+        ShapeDistanceChecker<C, D> shapeDistanceChecker = new ShapeDistanceChecker<>(
+                sdf,
+                shape,
+                transformation,
+                transformation.distanceMapping,
+                minImproveRatio,
+                contourCombiner);
+
+        //TODO from reading Claude's justification, this seems to maybe be where it deviates for "efficiency". we'll see after we're done if we get a different result or not.
+        // Zigzag pattern for better cache performance
+        int xDirection = 1;
+
+        // Inspect all texels
+        for (int y = 0; y < sdf.height; ++y) {
+            // Start from left or right depending on direction
+            int x = xDirection < 0 ? sdf.width - 1 : 0;
+
+            for (int col = 0; col < sdf.width; ++col, x += xDirection) {
+                // Skip texels already marked with ERROR flag
+                if ((getStencilValue(x, y) & Flags.ERROR) != 0) {
+                    continue;
+                }
+
+                int cIdx = sdf.sectionOperator(x, y);
+                float[] c = sdf.pixels;
+
+                // Set up the shape distance checker for this texel
+                shapeDistanceChecker.shapeCoord = transformation.unproject(new Vector2d(x + 0.5, y + 0.5));
+                shapeDistanceChecker.sdfCoord = new Vector2d(x + 0.5, y + 0.5);
+                shapeDistanceChecker.msd = new float[] {c[cIdx], c[cIdx + 1], c[cIdx + 2]};
+                shapeDistanceChecker.protectedFlag = (getStencilValue(x, y) & Flags.PROTECTED) != 0;
+
+                float cm = median(c[cIdx], c[cIdx + 1], c[cIdx + 2]);
+
+                // Initialize neighbor indices
+                int lIdx = 0, bIdx = 0, rIdx = 0, tIdx = 0;
+                boolean hasL = false, hasB = false, hasR = false, hasT = false;
+
+                // Mark current texel c with the error flag if an artifact occurs when
+                // it's interpolated with any of its 8 neighbors
+                boolean hasError = false;
+
+                // Check left neighbor
+                if (x > 0) {
+                    lIdx = sdf.sectionOperator(x - 1, y);
+                    hasL = true;
+                    if (hasLinearArtifact(
+                            shapeDistanceChecker.classifier(new Vector2d(-1, 0), hSpan),
+                            cm, c, cIdx, c, lIdx)) {
+                        hasError = true;
+                    }
+                }
+
+                // Check bottom neighbor
+                if (!hasError && y > 0) {
+                    bIdx = sdf.sectionOperator(x, y - 1);
+                    hasB = true;
+                    if (hasLinearArtifact(
+                            shapeDistanceChecker.classifier(new Vector2d(0, -1), vSpan),
+                            cm, c, cIdx, c, bIdx)) {
+                        hasError = true;
+                    }
+                }
+
+                // Check right neighbor
+                if (!hasError && x < sdf.width - 1) {
+                    rIdx = sdf.sectionOperator(x + 1, y);
+                    hasR = true;
+                    if (hasLinearArtifact(
+                            shapeDistanceChecker.classifier(new Vector2d(+1, 0), hSpan),
+                            cm, c, cIdx, c, rIdx)) {
+                        hasError = true;
+                    }
+                }
+
+                // Check top neighbor
+                if (!hasError && y < sdf.height - 1) {
+                    tIdx = sdf.sectionOperator(x, y + 1);
+                    hasT = true;
+                    if (hasLinearArtifact(
+                            shapeDistanceChecker.classifier(new Vector2d(0, +1), vSpan),
+                            cm, c, cIdx, c, tIdx)) {
+                        hasError = true;
+                    }
+                }
+
+                // Check diagonal neighbors (bottom-left)
+                if (!hasError && x > 0 && y > 0) {
+                    if (!hasL) lIdx = sdf.sectionOperator(x - 1, y);
+                    if (!hasB) bIdx = sdf.sectionOperator(x, y - 1);
+                    int lbIdx = sdf.sectionOperator(x - 1, y - 1);
+                    if (hasDiagonalArtifact(
+                            shapeDistanceChecker.classifier(new Vector2d(-1, -1), dSpan),
+                            cm, c, cIdx, c, lIdx, c, bIdx, c, lbIdx)) {
+                        hasError = true;
+                    }
+                }
+
+                // Check diagonal neighbors (bottom-right)
+                if (!hasError && x < sdf.width - 1 && y > 0) {
+                    if (!hasR) rIdx = sdf.sectionOperator(x + 1, y);
+                    if (!hasB) bIdx = sdf.sectionOperator(x, y - 1);
+                    int rbIdx = sdf.sectionOperator(x + 1, y - 1);
+                    if (hasDiagonalArtifact(
+                            shapeDistanceChecker.classifier(new Vector2d(+1, -1), dSpan),
+                            cm, c, cIdx, c, rIdx, c, bIdx, c, rbIdx)) {
+                        hasError = true;
+                    }
+                }
+
+                // Check diagonal neighbors (top-left)
+                if (!hasError && x > 0 && y < sdf.height - 1) {
+                    if (!hasL) lIdx = sdf.sectionOperator(x - 1, y);
+                    if (!hasT) tIdx = sdf.sectionOperator(x, y + 1);
+                    int ltIdx = sdf.sectionOperator(x - 1, y + 1);
+                    if (hasDiagonalArtifact(
+                            shapeDistanceChecker.classifier(new Vector2d(-1, +1), dSpan),
+                            cm, c, cIdx, c, lIdx, c, tIdx, c, ltIdx)) {
+                        hasError = true;
+                    }
+                }
+
+                // Check diagonal neighbors (top-right)
+                if (!hasError && x < sdf.width - 1 && y < sdf.height - 1) {
+                    if (!hasR) rIdx = sdf.sectionOperator(x + 1, y);
+                    if (!hasT) tIdx = sdf.sectionOperator(x, y + 1);
+                    int rtIdx = sdf.sectionOperator(x + 1, y + 1);
+                    if (hasDiagonalArtifact(
+                            shapeDistanceChecker.classifier(new Vector2d(+1, +1), dSpan),
+                            cm, c, cIdx, c, rIdx, c, tIdx, c, rtIdx)) {
+                        hasError = true;
+                    }
+                }
+
+                // Apply error flag if an artifact was detected
+                if (hasError) {
+                    setStencilValue(x, y, (byte) (getStencilValue(x, y) | Flags.ERROR));
+                }
+            }
+
+            // Reverse direction for next row (zigzag pattern)
+            xDirection = -xDirection;
+        }
+    }
+
+    /**
+     * Modifies the MSDF so that all texels with the error flag are converted to single-channel.
+     *
+     * @param sdf The SDF bitmap to modify (3 or 4 channels)
+     */
+    public void apply(BitmapRef<float[]> sdf) {
+        sdf.reorient(stencil.yOrientation);
+
+        for (int y = 0; y < sdf.height; y++) {
+            for (int x = 0; x < sdf.width; x++) {
+                if ((getStencilValue(x, y) & Flags.ERROR) != 0) {
+                    int pixelIdx = sdf.sectionOperator(x, y);
+                    // Set all color channels to the median
+                    float m = median(sdf.pixels[pixelIdx], sdf.pixels[pixelIdx + 1], sdf.pixels[pixelIdx + 2]);
+                    sdf.pixels[pixelIdx] = m;
+                    sdf.pixels[pixelIdx + 1] = m;
+                    sdf.pixels[pixelIdx + 2] = m;
+                }
+            }
+        }
+    }
+
 
 
 
