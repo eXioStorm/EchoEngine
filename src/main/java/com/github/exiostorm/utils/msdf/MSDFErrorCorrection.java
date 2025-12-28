@@ -972,17 +972,28 @@ public class MSDFErrorCorrection {
     public void apply(BitmapRef<float[]> sdf) {
         sdf.reorient(stencil.yOrientation);
 
-        for (int y = 0; y < sdf.height; y++) {
-            for (int x = 0; x < sdf.width; x++) {
-                if ((getStencilValue(x, y) & Flags.ERROR) != 0) {
-                    int pixelIdx = sdf.sectionOperator(x, y);
-                    // Set all color channels to the median
-                    float m = median(sdf.pixels[pixelIdx], sdf.pixels[pixelIdx + 1], sdf.pixels[pixelIdx + 2]);
-                    sdf.pixels[pixelIdx] = m;
-                    sdf.pixels[pixelIdx + 1] = m;
-                    sdf.pixels[pixelIdx + 2] = m;
+        byte[] stencilPixels = stencil.pixels;
+        float[] sdfPixels = sdf.pixels;
+
+        int stencilRowIdx = stencil.offset;
+        int sdfRowIdx = sdf.offset;
+
+        for (int y = 0; y < sdf.height; ++y) {
+            int maskIdx = stencilRowIdx;
+            int pixelIdx = sdfRowIdx;
+
+            for (int x = 0; x < sdf.width; ++x) {
+                if ((stencilPixels[maskIdx] & Flags.ERROR) != 0) {
+                    float m = median(sdfPixels[pixelIdx], sdfPixels[pixelIdx + 1], sdfPixels[pixelIdx + 2]);
+                    sdfPixels[pixelIdx] = m;
+                    sdfPixels[pixelIdx + 1] = m;
+                    sdfPixels[pixelIdx + 2] = m;
                 }
+                ++maskIdx;
+                pixelIdx += sdf.nChannels;
             }
+            stencilRowIdx += stencil.rowStride;
+            sdfRowIdx += sdf.rowStride;
         }
     }
 
