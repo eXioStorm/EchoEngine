@@ -15,7 +15,7 @@ public class PixelPointer {
 //TODO 20251228 NEVERMIND! turns out this is what causes our headache with casting. explains why Claude got so confused before.
 // THOUGH, could perhaps make a pointer class that only contains the offset values instead of the pixels. no casting required.
 public class BitmapRef<T> {
-    protected T pixels;
+    public T pixels;
     protected int width;
     protected int height;
     protected int nChannels;

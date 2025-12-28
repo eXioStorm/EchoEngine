@@ -4,13 +4,13 @@ import java.awt.image.BufferedImage;
 
 public final class BitmapUtil {
     //TODO 20251224 I think we can still use this, it's just taking in our previous BitmapRef that we're deprecating.
-    public static BufferedImage toBufferedImage(DprBitmapRef<float[]> bmp) {
-        BufferedImage img = new BufferedImage(bmp.getWidth(), bmp.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    public static BufferedImage toBufferedImage(BitmapRef<float[]> bmp) {
+        BufferedImage img = new BufferedImage(bmp.width, bmp.height, BufferedImage.TYPE_INT_ARGB);
 
-        float[] px = bmp.getPixels();
-        int w = bmp.getWidth();
-        int h = bmp.getHeight();
-        int c = bmp.getChannels();
+        float[] px = bmp.pixels;
+        int w = bmp.width;
+        int h = bmp.height;
+        int c = bmp.nChannels;
 
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {

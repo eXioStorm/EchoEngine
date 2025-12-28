@@ -375,7 +375,7 @@ public class GlyphManager {
                 }
             }*/
             // 3. Create output bitmap
-            DprBitmapRef<float[]> bitmap = new DprBitmapRef<>(
+            BitmapRef<float[]> bitmap = new BitmapRef<>(
                     new float[GLYPH_SIZE * GLYPH_SIZE * 3],
                     GLYPH_SIZE,
                     GLYPH_SIZE,
@@ -460,7 +460,7 @@ public class GlyphManager {
             msdfgen.generateMSDF(bitmap, msdfShape, projection, range, config);
             // After generateMSDF, before toBufferedImage:
             //System.out.println("Sampling bitmap data:");
-            float[] data = bitmap.getPixels();
+            float[] data = bitmap.pixels;
             // 6. Convert to BufferedImage (utility function)
             BufferedImage msdfImage = BitmapUtil.toBufferedImage(bitmap);
 
@@ -495,7 +495,7 @@ public class GlyphManager {
                             }
                         com.github.exiostorm.utils.msdf.MsdfShape sdfShape = ShapeConverter.fromAwtShape(awtShape);
                         sdfShape.normalize();
-                        DprBitmapRef<float[]> bitmap = new DprBitmapRef<>(
+                        BitmapRef<float[]> bitmap = new BitmapRef<>(
                                         new float[GLYPH_SIZE * GLYPH_SIZE],
                                        GLYPH_SIZE,
                                         GLYPH_SIZE,
