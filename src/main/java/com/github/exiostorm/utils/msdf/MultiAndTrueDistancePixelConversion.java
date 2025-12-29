@@ -7,9 +7,9 @@ public class MultiAndTrueDistancePixelConversion extends DistancePixelConversion
 
     @Override
     public void convert(float[] pixels, EdgeSelectors.MultiAndTrueDistance distance) {
-        pixels[0] = (float) mapping.map(distance.c);
-        pixels[1] = (float) mapping.map(distance.m);
-        pixels[2] = (float) mapping.map(distance.y);
+        pixels[0] = (float) mapping.map(distance.r);
+        pixels[1] = (float) mapping.map(distance.g);
+        pixels[2] = (float) mapping.map(distance.b);
         pixels[3] = (float) mapping.map(distance.a);
     }
 }

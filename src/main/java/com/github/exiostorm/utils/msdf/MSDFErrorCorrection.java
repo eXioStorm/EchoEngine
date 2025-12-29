@@ -207,7 +207,7 @@ public class MSDFErrorCorrection {
                 if (distanceResult instanceof Double) {
                     return (Double) distanceResult;
                 } else if (distanceResult instanceof EdgeSelectors.MultiDistance md) {
-                    return median(md.c, md.m, md.y);
+                    return median(md.r, md.g, md.b);
                 }
                 throw new IllegalStateException("Unknown distance type: " + distanceResult.getClass());
             }

@@ -6,7 +6,7 @@ import org.joml.Vector2d;
 public class EdgeSelectors {
 
     public static class MultiDistance {
-        public double c, m, y;
+        public double r, g, b;
     }
 
     public static class MultiAndTrueDistance extends MultiDistance {
@@ -312,9 +312,9 @@ public class EdgeSelectors {
 
         public MultiDistance distance() {
             MultiDistance md = new MultiDistance();
-            md.c = r.computeDistance(p);
-            md.m = g.computeDistance(p);
-            md.y = b.computeDistance(p);
+            md.r = r.computeDistance(p);
+            md.g = g.computeDistance(p);
+            md.b = b.computeDistance(p);
             return md;
         }
 
@@ -330,9 +330,9 @@ public class EdgeSelectors {
         public MultiAndTrueDistance distance() {
             MultiDistance base = super.distance();
             MultiAndTrueDistance mtd = new MultiAndTrueDistance();
-            mtd.c = base.c;
-            mtd.m = base.m;
-            mtd.y = base.y;
+            mtd.r = base.r;
+            mtd.g = base.g;
+            mtd.b = base.b;
             mtd.a = super.trueDistance().distance;
             return mtd;
         }
