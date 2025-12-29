@@ -169,7 +169,8 @@ public class MSDFErrorCorrection {
                     }
 
                     Vector2d tVector = new Vector2d(direction).mul(t);
-                    float[] oldMSD = new float[nChannels];
+                    //TODO 20251229 oldMSD was incorrect here.
+                    float[] oldMSD = new float[3];
                     float[] newMSD = new float[3];
 
                     // Compute the color that would be currently interpolated at the artifact candidate's position
@@ -245,7 +246,7 @@ public class MSDFErrorCorrection {
         int rbIdx = bitmap.sectionOperator(r, b);
         int ltIdx = bitmap.sectionOperator(l, t);
         int rtIdx = bitmap.sectionOperator(r, t);
-        int channels = pixels.length;
+        int channels = bitmap.nChannels;
         for (int i = 0; i < channels && i < output.length; ++i) {
             output[i] = mix(
                     mix(pixels[lbIdx + i], pixels[rbIdx + i], lr),
