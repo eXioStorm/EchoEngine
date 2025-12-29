@@ -98,7 +98,10 @@ public class msdfgen {
             BitmapRef<byte[]> stencil = new BitmapRef<>(
                     new byte[output.width * output.height],
                     output.width,
-                    output.height
+                    output.height,
+                    output.width,  // rowStride = width * nChannels (which is 1 for stencil)
+                    0,             // offset
+                    1              // nChannels
             );
 
             // Create error correction instance

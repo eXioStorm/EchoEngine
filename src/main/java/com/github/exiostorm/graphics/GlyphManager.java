@@ -379,7 +379,9 @@ public class GlyphManager {
                     new float[GLYPH_SIZE * GLYPH_SIZE * 3],
                     GLYPH_SIZE,
                     GLYPH_SIZE,
-                    3
+                    GLYPH_SIZE * 3,  // rowStride = width * nChannels
+                    0,                // offset
+                    3                 // nChannels
             );
             //TODO !!!!! 20251213
             Rectangle2D.Double bounds = new Rectangle2D.Double();
