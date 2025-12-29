@@ -4,6 +4,7 @@ package com.github.exiostorm.graphics;
 
 //import com.github.exiostorm.utils.MSDFGenExt;
 
+import com.github.exiostorm.utils.enums.YAxisOrientation;
 import com.github.exiostorm.utils.msdf.*;
 import org.joml.Vector2d;
 import org.lwjgl.PointerBuffer;
@@ -392,11 +393,11 @@ public class GlyphManager {
             double r = bounds.x + bounds.width;
             double t = bounds.y + bounds.height;
 
-// Apply range padding (assuming RANGE_UNIT mode)
-            l += RANGE;
-            b += RANGE;
-            r -= RANGE;
-            t -= RANGE;
+// Apply range padding to expand bounds outward
+            l -= RANGE;  // Move left edge further left
+            b -= RANGE;  // Move bottom edge further down
+            r += RANGE;  // Move right edge further right
+            t += RANGE;  // Move top edge further up
 
 // Check for degenerate bounds
             if (l >= r || b >= t) {
@@ -464,6 +465,8 @@ public class GlyphManager {
             //System.out.println("Sampling bitmap data:");
             float[] data = bitmap.pixels;
             // 6. Convert to BufferedImage (utility function)
+            //TODO 20251230 might need to remove reorient methods from msdfgen internal structures
+            bitmap.reorient(YAxisOrientation.getDefault().getBool());
             BufferedImage msdfImage = BitmapUtil.toBufferedImage(bitmap);
 
             // 7. Save PNG
