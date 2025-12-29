@@ -196,7 +196,7 @@ public class msdfgen {
                 
                 // Convert distance to pixel values and write to output
                 int pixelIndex = output.sectionOperator(x, y);
-                output.pixels[pixelIndex + 0] = (float) distanceMapping.map(distance.c);
+                output.pixels[pixelIndex] = (float) distanceMapping.map(distance.c);
                 output.pixels[pixelIndex + 1] = (float) distanceMapping.map(distance.m);
                 output.pixels[pixelIndex + 2] = (float) distanceMapping.map(distance.y);
                 
