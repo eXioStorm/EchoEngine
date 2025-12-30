@@ -393,6 +393,11 @@ public class GlyphManager {
             double r = bounds.x + bounds.width;
             double t = bounds.y + bounds.height;
 
+// Apply range padding (assuming RANGE_UNIT mode)
+            l += RANGE;
+            b += RANGE;
+            r -= RANGE;
+            t -= RANGE;
 
 // Check for degenerate bounds
             if (l >= r || b >= t) {
@@ -418,9 +423,7 @@ public class GlyphManager {
                 scale = GLYPH_SIZE / dimsX;
             }
 
-            // RANGE is in pixels, need to convert to shape-space units
-            double rangeInShapeUnits = RANGE / SCALE;  // 4.0 / 32.0 = 0.125
-            Range range = new Range(rangeInShapeUnits);
+            Range range = new Range(RANGE);
             Vector2d translate = new Vector2d(translateX, translateY);
             Projection projection = new Projection(
                     new Vector2d(scale, scale),

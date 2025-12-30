@@ -11,7 +11,6 @@ import java.util.List;
 import static com.github.exiostorm.utils.msdf.enums.EdgeColorEnum.*;
 
 public class EdgeColoring {
-    //TODO have claude fix this one?
     private static int symmetricalTrichotomy(int position, int n) {
         return (int) ((3+2.875*position/(n-1)-1.4375+.5)-3);
     }
