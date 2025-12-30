@@ -167,7 +167,7 @@ class LinearSegment extends EdgeSegment {
         double endpointDistance = eq.length();
         if (param[0] > 0 && param[0] < 1) {
             Vector2d abNorm = new Vector2d(ab).normalize();
-            Vector2d ortho = new Vector2d(-abNorm.y, abNorm.x); // Perpendicular vector
+            Vector2d ortho = new Vector2d(abNorm.y, -abNorm.x); // ✓ Correct left-hand perpendicular
             double orthoDistance = ortho.dot(aq);
             if (Math.abs(orthoDistance) < endpointDistance)
                 return new SignedDistance(orthoDistance, 0);
