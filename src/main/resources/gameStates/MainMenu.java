@@ -19,6 +19,7 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class MainMenu implements State {
     private Texture backgroundTexture;
+    private Texture msdfTexture;
     private Texture testTexture;
     private Texture patrickTexture;
     private FrameBuffer fbo;
@@ -28,6 +29,7 @@ public class MainMenu implements State {
     Shader exampleShader = gamePanel.getShader();
     Shader lightShader;
     Shader testShader;
+    Shader msdfShader;
     List<GUIElement> guiElements = gamePanel.guiElements;
 
     private int frameTester = 0;
@@ -41,6 +43,7 @@ public class MainMenu implements State {
         //TODO something here to select UIHandler? <- huh?
         initTextures();//TODO
         lightShader = new Shader("light",  "src/main/resources/Shaders/lights_vertex.glsl", "src/main/resources/Shaders/lights_fragment.glsl");
+        msdfShader = new Shader("msdf", "src/main/resources/Shaders/msdf_vertex.glsl", "src/main/resources/Shaders/msdf_fragment.glsl");
         //testShader = lightShader;
         testShader = exampleShader;
         //gamePanel.setShader(testShader);
@@ -92,6 +95,7 @@ public class MainMenu implements State {
 
 
         renderer.draw(backgroundTexture, gamePanel.getAtlas(), 0, 0, 0, exampleShader, ShaderManager.getDefaultMaterial(exampleShader));
+        renderer.draw(msdfTexture, gamePanel.getAtlas(), 0, 0, 0.000000000000000000000000000000000000000000001f, msdfShader, ShaderManager.getDefaultMaterial(msdfShader));
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
         //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
 
@@ -124,6 +128,7 @@ public class MainMenu implements State {
     }
     private void initShaders() {
         exampleShader = new Shader("test", "src/main/resources/Shaders/test_vertex.glsl", "src/main/resources/Shaders/test_fragment.glsl");
+        //msdfShader = new Shader("msdf", "src/main/resources/Shaders/msdf_vertex.glsl", "src/main/resources/Shaders/msdf_fragment.glsl");
         /*
         exampleShader = new Shader("src/main/resources/Shaders/example_vertex.glsl", "src/main/resources/Shaders/example_fragment.glsl");
         exampleShader.enable();
@@ -137,6 +142,7 @@ public class MainMenu implements State {
         //TODO in the future we will have a method somewhere, maybe the TextureManager, to both add Textures, and create TextureAtlas? maybe...
         backgroundTexture = TextureManager.addTexture("src/main/resources/Backgrounds/storm2.png"); // Replace with your path
         testTexture = TextureManager.addTexture("src/main/resources/Backgrounds/test3.png");
+        msdfTexture = TextureManager.addTexture("test_output/newglyph_65.png");
         patrickTexture = TextureManager.addTexture("src/main/resources/HUD/funnybutton.png");
     }
     private void initAudio(){
@@ -250,7 +256,8 @@ public class MainMenu implements State {
         //TODO [0] bad logic here, need to fix.
         boolean recalculateAtlases = AtlasManager.addToAtlas(gamePanel.getAtlas(), "general", "general", backgroundTexture) ||
                 AtlasManager.addToAtlas(gamePanel.getAtlas(), "general", "general", testTexture) ||
-                AtlasManager.addToAtlas(gamePanel.getAtlas(), "general", "general", patrickTexture);
+                AtlasManager.addToAtlas(gamePanel.getAtlas(), "general", "general", patrickTexture) ||
+                AtlasManager.addToAtlas(gamePanel.getAtlas(), "general", "general", msdfTexture);
         if (!recalculateAtlases) AtlasManager.finalizeAtlasMaps(gamePanel.getAtlas());
         //TODO [0] can have logic to check if we need to reupload.
         AtlasManager.saveAtlasToGPU(gamePanel.getAtlas());
@@ -285,6 +292,7 @@ public class MainMenu implements State {
     }*/
     public void initializeMaterials() {
         ShaderManager.setDefaultMaterial(exampleShader, ShaderManager.newMaterial("CSMD").setMap("brightness", 1.0f));
+        ShaderManager.setDefaultMaterial(msdfShader, ShaderManager.newMaterial("MSDFMat"));
         ShaderManager.newMaterial("GUIHIGHLIGHT").setMap("brightness", 0.5f);
         ShaderManager.newMaterial("lights");/*
                 .setMap("screenSize", new Vector2f(gamePanel.WIDTH, gamePanel.HEIGHT))

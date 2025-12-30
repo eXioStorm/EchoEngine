@@ -438,8 +438,8 @@ public class AtlasManager {
         atlasBuffer.flip();
         glBindTexture(atlas.getAtlasSlot(), atlas.getAtlasID());
         glTexImage2D(atlas.getAtlasSlot(), 0, GL_RGBA, atlas.getWidth(), atlas.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, atlasBuffer);
-        glTexParameteri(atlas.getAtlasSlot(), GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(atlas.getAtlasSlot(), GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(atlas.getAtlasSlot(), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(atlas.getAtlasSlot(), GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glBindTexture(atlas.getAtlasSlot(), 0);
 
         // Save debug image
