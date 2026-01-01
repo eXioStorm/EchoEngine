@@ -142,7 +142,8 @@ public class MainMenu implements State {
         //TODO in the future we will have a method somewhere, maybe the TextureManager, to both add Textures, and create TextureAtlas? maybe...
         backgroundTexture = TextureManager.addTexture("src/main/resources/Backgrounds/storm2.png"); // Replace with your path
         testTexture = TextureManager.addTexture("src/main/resources/Backgrounds/test3.png");
-        msdfTexture = TextureManager.addTexture("test_output/newglyph_65.png");
+        msdfTexture = TextureManager.addTexture("test_output/glyph_65.png");
+        //msdfTexture = TextureManager.addTexture("test_output/`msdf65.png");
         patrickTexture = TextureManager.addTexture("src/main/resources/HUD/funnybutton.png");
     }
     private void initAudio(){

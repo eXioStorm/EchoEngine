@@ -55,7 +55,7 @@ public abstract class EdgeSegment {
                 double perpendicularDistance = crossProduct(aq, dir);
                 if (Math.abs(perpendicularDistance) <= Math.abs(distance.distance)) {
                     distance.distance = perpendicularDistance;
-                    distance.dot = Math.abs(aq.normalize().dot(dir));  // Proper alignment!
+                    distance.dot = 0;
                 }
             }
         } else if (param > 1) {
@@ -66,7 +66,7 @@ public abstract class EdgeSegment {
                 double perpendicularDistance = crossProduct(bq, dir);
                 if (Math.abs(perpendicularDistance) <= Math.abs(distance.distance)) {
                     distance.distance = perpendicularDistance;
-                    distance.dot = Math.abs(bq.normalize().dot(dir));  // Proper alignment!
+                    distance.dot = 0;
                 }
             }
         }

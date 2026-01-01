@@ -1,28 +1,46 @@
 #version 330 core
 
+// ---- Inputs (match existing shader) ----
 in vec2 TexCoord;
-in vec4 fragColor;
+in vec4 VertexColor;
 
-out vec4 color;
+// ---- Output (match existing shader) ----
+out vec4 FragColor;
 
+// ---- Uniforms (match existing shader names) ----
 uniform sampler2D textureSampler;
 
+// Optional controls you already had
+uniform float brightness = 1.0;
+uniform vec3 colorTint = vec3(1.0, 1.0, 1.0);
+
+// ---- MSDF helpers ----
 float median(float r, float g, float b) {
     return max(min(r, g), min(max(r, g), b));
 }
 
-void main()
-{
-    vec2 uv = vec2(TexCoord.x, 1.0 - TexCoord.y);
+// Standard MSDF screen pixel range function
+float screenPxRange() {
+    vec2 unitRange = vec2(1.0) / vec2(textureSize(textureSampler, 0));
+    vec2 screenTexSize = vec2(1.0) / fwidth(TexCoord);
+    return max(0.5 * dot(unitRange, screenTexSize), 1.0);
+}
 
-    vec3 sample = texture(textureSampler, uv).rgb;
+void main() {
+    // Sample MSDF texture
+    vec3 msd = texture(textureSampler, TexCoord).rgb;
 
-    vec2 texSize = vec2(textureSize(textureSampler, 0));
-    vec2 dxdy = vec2(dFdx(uv.x), dFdy(uv.y)) * texSize;
-    float toPixels = inversesqrt(dot(dxdy, dxdy));
+    // Compute signed distance
+    float sd = median(msd.r, msd.g, msd.b);
 
-    float sigDist = (median(sample.r, sample.g, sample.b) - 0.5) * toPixels;
-    float alpha = clamp(sigDist + 0.5, 0.0, 1.0);
+    // Convert to screen-space distance
+    float screenPxDistance = screenPxRange() * (sd - 0.5);
 
-    color = vec4(1.0, 0.0, 1.0, alpha+1.0);
+    // Final alpha
+    float alpha = clamp(screenPxDistance + 0.5, 0.0, 1.0);
+
+    // Apply vertex color, brightness, and tint
+    vec3 finalColor = VertexColor.rgb * brightness * colorTint;
+
+    FragColor = vec4(finalColor, alpha * VertexColor.a);
 }
