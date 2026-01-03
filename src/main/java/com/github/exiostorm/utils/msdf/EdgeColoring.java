@@ -35,7 +35,7 @@ public class EdgeColoring {
         return v;
     }
     static int initColor(SeedHolder seedHolder) {
-        final int[] colors = { RED.getValue().color, GREEN.getValue().color, BLUE.getValue().color };
+        final int[] colors = { CYAN.getValue().color, MAGENTA.getValue().color, YELLOW.getValue().color };
         return colors[seedExtract3(seedHolder)];
     }
     public static List<Contours.Contour> extractContours(Shape shape) {
@@ -127,14 +127,14 @@ public class EdgeColoring {
         java.util.List<Integer> corners = new java.util.ArrayList<>();
         int contourIndex = 0;
 
-        System.out.println("=== Starting edgeColoringSimple ===");
+        //System.out.println("=== Starting edgeColoringSimple ===");
 
         for (java.util.Iterator<Contours.Contour> contourIter = contours.iterator(); contourIter.hasNext();) {
             Contours.Contour contour = contourIter.next();
             if (contour.edges.isEmpty())
                 continue;
 
-            System.out.println("\n--- Contour " + contourIndex + " with " + contour.edges.size() + " edges ---");
+            //System.out.println("\n--- Contour " + contourIndex + " with " + contour.edges.size() + " edges ---");
 
             {
                 corners.clear();
@@ -157,7 +157,7 @@ public class EdgeColoring {
                 }
             }
 
-            System.out.println("Corners found: " + corners.size() + " at indices: " + corners);
+            //System.out.println("Corners found: " + corners.size() + " at indices: " + corners);
             int m = contour.edges.size();
 
             /*
@@ -275,12 +275,13 @@ public class EdgeColoring {
 
                     if (spline + 1 < cornerCount && corners.get(spline + 1) == index) {
                         ++spline;
+                        //TODO 20260104 Original C++ code uses a math trick where anything times 0 equals 0. our logic doesn't use that trick, however appears to do the same job?
                         switchColor(
                                 colorHolder,
                                 seedHolder,
                                 (spline == cornerCount - 1)
                                         ? initialColor
-                                        : WHITE.getValue().color //TODO 20251214 might need to change this to 0 for black?? from WHITE.getValue().color
+                                        : BLACK.getValue().color //TODO 20251214 might need to change this to 0 for black?? from WHITE.getValue().color
                         );
                     }
 
@@ -289,13 +290,14 @@ public class EdgeColoring {
                 }
             }
             contourIndex++;
+            /*
             System.out.println("\nFinal colors in storage order for contour " + contourIndex + ":");
             for (int z = 0; z < contour.edges.size(); z++) {
                 System.out.println("  Storage index " + z + ": color " + contour.edges.get(z).edge.edgeColor);
             }
+             */
         }
-
-        System.out.println("\n=== Finished edgeColoringSimple ===");
+        //System.out.println("\n=== Finished edgeColoringSimple ===");
     }
     private static void splitSingleEdgeContour(
             Contours.Contour contour,
