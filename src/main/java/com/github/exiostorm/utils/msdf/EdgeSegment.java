@@ -5,6 +5,7 @@ import org.joml.Vector2d;
 
 import java.awt.geom.Rectangle2D;
 
+import static com.github.exiostorm.utils.msdf.Arithmetics.mix;
 import static com.github.exiostorm.utils.msdf.EquationSolver.*;
 
 public abstract class EdgeSegment {
@@ -20,12 +21,12 @@ public abstract class EdgeSegment {
     public static EdgeSegment create(Vector2d p0, Vector2d p1, ColorHolder edgeColor) {
         return new LinearSegment(p0, p1, edgeColor);
     }
+    //TODO 20260104 manually convert this method.
     public static EdgeSegment create(Vector2d p0, Vector2d p1, Vector2d p2, ColorHolder edgeColor) {
-
         Vector2d v1 = new Vector2d(p1).sub(p0);
         Vector2d v2 = new Vector2d(p2).sub(p1);
 
-        if (v1.dot(v2) == 0.0f) {
+        if (crossProduct(v1, v2) == 0.0) {
             return new LinearSegment(p0, p2, edgeColor);
         }
 
@@ -672,31 +673,48 @@ class CubicSegment extends EdgeSegment {
         p[3] = new Vector2d(to);
     }
 
+    //TODO 20260104 manually convert this method.
+    // De Casteljau's algorithm for cubic curve subdivision
     @Override
     public void splitInThirds(EdgeSegment[] parts) {
-        // De Casteljau's algorithm for cubic curve subdivision
-        Vector2d p01 = new Vector2d(p[0]).lerp(p[1], 1.0/3.0);
-        Vector2d p12 = new Vector2d(p[1]).lerp(p[2], 1.0/3.0);
-        Vector2d p23 = new Vector2d(p[2]).lerp(p[3], 1.0/3.0);
-        Vector2d p012 = new Vector2d(p01).lerp(p12, 1.0/3.0);
-        Vector2d p123 = new Vector2d(p12).lerp(p23, 1.0/3.0);
-        Vector2d p0123 = new Vector2d(p012).lerp(p123, 1.0/3.0);
 
-        parts[0] = new CubicSegment(p[0], p01, p012, p0123, EdgeColorEnum.WHITE.getValue());
+        // First third (0 to 1/3)
+        EdgeSegment part0 = new CubicSegment(
+                p[0],
+                p[0].equals(p[1]) ? new Vector2d(p[0]) : mix(p[0], p[1], 1.0/3.0),
+                mix(mix(p[0], p[1], 1.0/3.0), mix(p[1], p[2], 1.0/3.0), 1.0/3.0),
+                point(1.0/3.0),
+                EdgeColorEnum.WHITE.getValue()
+        );
 
-        // For the middle segment, we need different control points
-        Vector2d p01_2 = new Vector2d(p[0]).lerp(p[1], 2.0/3.0);
-        Vector2d p12_2 = new Vector2d(p[1]).lerp(p[2], 2.0/3.0);
-        Vector2d p23_2 = new Vector2d(p[2]).lerp(p[3], 2.0/3.0);
-        Vector2d p012_2 = new Vector2d(p01_2).lerp(p12_2, 2.0/3.0);
-        Vector2d p123_2 = new Vector2d(p12_2).lerp(p23_2, 2.0/3.0);
-        Vector2d p0123_2 = new Vector2d(p012_2).lerp(p123_2, 2.0/3.0);
+        // Middle third (1/3 to 2/3)
+        EdgeSegment part1 = new CubicSegment(
+                point(1.0/3.0),
+                mix(
+                        mix(mix(p[0], p[1], 1.0/3.0), mix(p[1], p[2], 1.0/3.0), 1.0/3.0),
+                        mix(mix(p[1], p[2], 1.0/3.0), mix(p[2], p[3], 1.0/3.0), 1.0/3.0),
+                        2.0/3.0
+                ),
+                mix(
+                        mix(mix(p[0], p[1], 2.0/3.0), mix(p[1], p[2], 2.0/3.0), 2.0/3.0),
+                        mix(mix(p[1], p[2], 2.0/3.0), mix(p[2], p[3], 2.0/3.0), 2.0/3.0),
+                        1.0/3.0
+                ),
+                point(2.0/3.0),
+                EdgeColorEnum.WHITE.getValue()
+        );
 
-        Vector2d mid1 = new Vector2d(p123).lerp(p012_2, 0.5);
-        Vector2d mid2 = new Vector2d(p0123_2).lerp(p123, 0.5);
+        // Last third (2/3 to 1)
+        EdgeSegment part2 = new CubicSegment(
+                point(2.0/3.0),
+                mix(mix(p[1], p[2], 2.0/3.0), mix(p[2], p[3], 2.0/3.0), 2.0/3.0),
+                p[2].equals(p[3]) ? new Vector2d(p[3]) : mix(p[2], p[3], 2.0/3.0),
+                p[3],
+                EdgeColorEnum.WHITE.getValue()
+        );
 
-        parts[1] = new CubicSegment(p0123, mid1, mid2, p0123_2, EdgeColorEnum.WHITE.getValue());
-
-        parts[2] = new CubicSegment(p0123_2, p123_2, p23_2, p[3], EdgeColorEnum.WHITE.getValue());
+        parts[0] = part0;
+        parts[1] = part1;
+        parts[2] = part2;
     }
 }

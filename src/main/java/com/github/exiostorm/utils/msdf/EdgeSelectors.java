@@ -240,6 +240,7 @@ public class EdgeSelectors {
                     b.isEdgeRelevant(cache, edge, p);
 
             if (redRelevant || greenRelevant || blueRelevant) {
+                //TODO 20260104 might need to manually convert this, Claude doesn't like param. supposedly unused.
                 DoubleReference param = new DoubleReference();
                 SignedDistance distance = edge.signedDistance(p, new double[] {param.getValue()});
 

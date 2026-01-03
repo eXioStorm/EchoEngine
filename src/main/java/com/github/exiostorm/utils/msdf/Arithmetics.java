@@ -1,5 +1,9 @@
 package com.github.exiostorm.utils.msdf;
 
+import org.joml.*;
+
+import java.lang.Math;
+
 public final class Arithmetics {
 
     private Arithmetics() {}
@@ -25,6 +29,13 @@ public final class Arithmetics {
 
     public static double mix(double a, double b, double weight) {
         return (1.0 - weight) * a + weight * b;
+    }
+
+    public static Vector2d mix(Vector2d a, Vector2d b, double weight) {
+        return new Vector2d(
+                Arithmetics.mix(a.x, b.x, weight),
+                Arithmetics.mix(a.y, b.y, weight)
+        );
     }
 
     public static float clamp01(float n) {
