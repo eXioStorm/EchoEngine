@@ -33,6 +33,7 @@ public class MainMenu implements State {
     List<GUIElement> guiElements = gamePanel.guiElements;
 
     private int frameTester = 0;
+    private int unicode = 'A';
     private boolean brighttester = false;
 
 
@@ -40,6 +41,8 @@ public class MainMenu implements State {
     public void init() {
         //System.out.println("GLSL Version: " + glGetString(GL_SHADING_LANGUAGE_VERSION));
         initAudio();
+        initializeGlyphs();
+        testSingleGlyph(glyphManager, unicode);
         //TODO something here to select UIHandler? <- huh?
         initTextures();//TODO
         lightShader = new Shader("light",  "src/main/resources/Shaders/lights_vertex.glsl", "src/main/resources/Shaders/lights_fragment.glsl");
@@ -54,12 +57,11 @@ public class MainMenu implements State {
         panelAtlas();
         initFBO();
         //TODO [!][!!][!!!][20250819@12:33am]
-        initializeGlyphs();
-        int unicode = 'A';
-        while(unicode<'B') {
+
+        /*while(unicode<'B') {
             testSingleGlyph(glyphManager, unicode);
             unicode++;
-        }
+        }*/
         //testSingleGlyph(glyphManager, unicode);
     }
 
@@ -96,6 +98,7 @@ public class MainMenu implements State {
 
         renderer.draw(backgroundTexture, gamePanel.getAtlas(), 0, 0, 0, exampleShader, ShaderManager.getDefaultMaterial(exampleShader));
         renderer.draw(msdfTexture, gamePanel.getAtlas(), 0, 0, 0.000000000000000000000000000000000000000000001f, msdfShader, ShaderManager.getDefaultMaterial(msdfShader));
+        renderer.draw(msdfTexture, gamePanel.getAtlas(), 0, 100, 0.000000000000000000000000000000000000000000001f, msdfShader, ShaderManager.getDefaultMaterial(msdfShader));
         //renderer.draw(testTexture, 10, 10, exampleShader, false);
         //renderer.draw(patrickTexture, 200, 140, exampleShader, false);
 
@@ -142,7 +145,8 @@ public class MainMenu implements State {
         //TODO in the future we will have a method somewhere, maybe the TextureManager, to both add Textures, and create TextureAtlas? maybe...
         backgroundTexture = TextureManager.addTexture("src/main/resources/Backgrounds/storm2.png"); // Replace with your path
         testTexture = TextureManager.addTexture("src/main/resources/Backgrounds/test3.png");
-        msdfTexture = TextureManager.addTexture("test_output/glyph_65.png");
+        //TODO 20260103
+        msdfTexture = TextureManager.addTexture("test_output/glyph_"+unicode+".png");
         //msdfTexture = TextureManager.addTexture("test_output/`msdf65.png");
         patrickTexture = TextureManager.addTexture("src/main/resources/HUD/funnybutton.png");
     }

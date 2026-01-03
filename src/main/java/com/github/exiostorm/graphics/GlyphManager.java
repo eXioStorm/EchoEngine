@@ -351,6 +351,7 @@ public class GlyphManager {
                     3.0,
                     new SeedHolder(0)
             );
+            /*
             System.err.println("=== Shape edge data ===");
             if (!msdfShape.contours.isEmpty()) {
                 Contours.Contour firstContour = msdfShape.contours.get(0);
@@ -364,6 +365,7 @@ public class GlyphManager {
                             i, edge.type(), p0.x, p0.y, p1.x, p1.y);
                 }
             }
+            */
             /*
             System.out.println("=== After edgeColoringSimple ===");
             for (int i = 0; i < msdfShape.contours.size(); i++) {
