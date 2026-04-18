@@ -128,7 +128,7 @@ public final class ImportFont {
     // ------------------------------
 
     private static int ftMoveTo(long to, long user) {
-        FtContext context = getUserObject(user);
+        FtContext context = contextHolder.get();
         FT_Vector toVec = FT_Vector.create(to);
 
         if (!(context.contour != null && context.contour.edges.isEmpty())) {
@@ -140,7 +140,7 @@ public final class ImportFont {
     }
 
     private static int ftLineTo(long to, long user) {
-        FtContext context = getUserObject(user);
+        FtContext context = contextHolder.get();
         FT_Vector toVec = FT_Vector.create(to);
         Vector2d endpoint = ftPoint2(toVec, context.scale);
 
@@ -155,7 +155,7 @@ public final class ImportFont {
     }
 
     private static int ftConicTo(long control, long to, long user) {
-        FtContext context = getUserObject(user);
+        FtContext context = contextHolder.get();
         FT_Vector controlVec = FT_Vector.create(control);
         FT_Vector toVec = FT_Vector.create(to);
         Vector2d endpoint = ftPoint2(toVec, context.scale);
@@ -171,7 +171,7 @@ public final class ImportFont {
     }
 
     private static int ftCubicTo(long control1, long control2, long to, long user) {
-        FtContext context = getUserObject(user);
+        FtContext context = contextHolder.get();
         FT_Vector control1Vec = FT_Vector.create(control1);
         FT_Vector control2Vec = FT_Vector.create(control2);
         FT_Vector toVec = FT_Vector.create(to);
@@ -181,7 +181,7 @@ public final class ImportFont {
 
         // Check if endpoint is different OR if control points are non-degenerate
         if (!endpoint.equals(context.position) ||
-                crossProduct(c1.sub(endpoint), c2.sub(endpoint)) != 0.0) {
+                crossProduct(c1.sub(endpoint, new Vector2d()), c2.sub(endpoint, new Vector2d())) != 0.0) {
             context.contour.edges.add(new EdgeHolder(
                     EdgeSegment.create(context.position, c1, c2, endpoint,
                             new ColorHolder(EdgeColorEnum.WHITE.getValue().color))
@@ -201,10 +201,6 @@ public final class ImportFont {
     private static long storeUserObject(FtContext context) {
         contextHolder.set(context);
         return 0; // Return dummy value, actual context retrieved from ThreadLocal
-    }
-
-    private static FtContext getUserObject(long user) {
-        return contextHolder.get();
     }
 
     // ------------------------------
