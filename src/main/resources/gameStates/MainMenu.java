@@ -33,7 +33,7 @@ public class MainMenu implements State {
     List<GUIElement> guiElements = gamePanel.guiElements;
 
     private int frameTester = 0;
-    private int unicode = 'A';
+    private int unicode = 'G';
     private boolean brighttester = false;
 
 

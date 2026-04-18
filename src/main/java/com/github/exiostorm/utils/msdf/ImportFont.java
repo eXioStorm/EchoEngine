@@ -149,7 +149,7 @@ public final class ImportFont {
                     EdgeSegment.create(context.position, endpoint,
                             new ColorHolder(EdgeColorEnum.WHITE.getValue().color))
             ));
-            context.position = endpoint;
+            context.position = new Vector2d(endpoint);
         }
         return 0;
     }
@@ -165,7 +165,7 @@ public final class ImportFont {
                     EdgeSegment.create(context.position, ftPoint2(controlVec, context.scale), endpoint,
                             new ColorHolder(EdgeColorEnum.WHITE.getValue().color))
             ));
-            context.position = endpoint;
+            context.position = new Vector2d(endpoint);
         }
         return 0;
     }
@@ -205,7 +205,9 @@ public final class ImportFont {
     // ------------------------------
     // Main outline reading function
     // ------------------------------
-
+    public static int readFreetypeOutline(MsdfShape output, FT_Outline outline) {
+        return readFreetypeOutline(output, outline, 1.0 / 64.0);
+    }
     public static int readFreetypeOutline(MsdfShape output, FT_Outline outline, double scale) {
         output.contours.clear();
 
