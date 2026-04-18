@@ -39,7 +39,7 @@ public class GamePanel {
     private String Name = "Application";
     private String DefaultState = "MainMenu";
     private String DefaultMapper = "MainMenu";
-    private String FontDirectory = "src/main/resources/fonts";
+    private String FontDirectory = "src/main/resources/fonts/";
     private String DefaultFont = "Ariel";
     private String iconPath = null;
     private String stateDirectory = null;

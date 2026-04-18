@@ -32,15 +32,18 @@ public abstract class EdgeSegment {
 
         return new QuadraticSegment(p0, p1, p2, edgeColor);
     }
+    //TODO 20260104 manually convert this method.
     public static EdgeSegment create(Vector2d p0, Vector2d p1, Vector2d p2, Vector2d p3, ColorHolder edgeColor) {
-
         Vector2d p12 = new Vector2d(p2).sub(p1);
-        if (new Vector2d(p1).sub(p0).dot(p12) == 0.0f && p12.dot(new Vector2d(p3).sub(p2)) == 0.0f) {
+
+        // Check if all control points are collinear (cross products are zero)
+        if (crossProduct(new Vector2d(p1).sub(p0), p12) == 0.0 &&
+                crossProduct(p12, new Vector2d(p3).sub(p2)) == 0.0) {
             return new LinearSegment(p0, p3, edgeColor);
         }
-        Vector2d newP12 = new Vector2d(p1).mul(1.5f).sub(new Vector2d(p0).mul(0.5f));
 
-        Vector2d rightSide = new Vector2d(p2).mul(1.5f).sub(new Vector2d(p3).mul(0.5f));
+        Vector2d newP12 = new Vector2d(p1).mul(1.5).sub(new Vector2d(p0).mul(0.5));
+        Vector2d rightSide = new Vector2d(p2).mul(1.5).sub(new Vector2d(p3).mul(0.5));
 
         if (newP12.equals(rightSide)) {
             return new QuadraticSegment(p0, newP12, p3, edgeColor);

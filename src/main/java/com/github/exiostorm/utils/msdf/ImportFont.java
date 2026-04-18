@@ -106,7 +106,6 @@ public final class ImportFont {
     // ------------------------------
     // Utility functions
     // ------------------------------
-
     private static Vector2d ftPoint2(FT_Vector vector, double scale) {
         return new Vector2d(scale * vector.x(), scale * vector.y());
     }
@@ -129,7 +128,7 @@ public final class ImportFont {
     // ------------------------------
 
     private static int ftMoveTo(long to, long user) {
-        FtContext context = (FtContext) getUserObject(user);
+        FtContext context = getUserObject(user);
         FT_Vector toVec = FT_Vector.create(to);
 
         if (!(context.contour != null && context.contour.edges.isEmpty())) {
@@ -141,7 +140,7 @@ public final class ImportFont {
     }
 
     private static int ftLineTo(long to, long user) {
-        FtContext context = (FtContext) getUserObject(user);
+        FtContext context = getUserObject(user);
         FT_Vector toVec = FT_Vector.create(to);
         Vector2d endpoint = ftPoint2(toVec, context.scale);
 
@@ -156,7 +155,7 @@ public final class ImportFont {
     }
 
     private static int ftConicTo(long control, long to, long user) {
-        FtContext context = (FtContext) getUserObject(user);
+        FtContext context = getUserObject(user);
         FT_Vector controlVec = FT_Vector.create(control);
         FT_Vector toVec = FT_Vector.create(to);
         Vector2d endpoint = ftPoint2(toVec, context.scale);
@@ -172,7 +171,7 @@ public final class ImportFont {
     }
 
     private static int ftCubicTo(long control1, long control2, long to, long user) {
-        FtContext context = (FtContext) getUserObject(user);
+        FtContext context = getUserObject(user);
         FT_Vector control1Vec = FT_Vector.create(control1);
         FT_Vector control2Vec = FT_Vector.create(control2);
         FT_Vector toVec = FT_Vector.create(to);
@@ -214,8 +213,6 @@ public final class ImportFont {
 
     public static int readFreetypeOutline(MsdfShape output, FT_Outline outline, double scale) {
         output.contours.clear();
-        // Note: setYAxisOrientation not shown in your code, add if available
-         //output.inverseYAxis = false;
 
         FtContext context = new FtContext();
         context.scale = scale;
