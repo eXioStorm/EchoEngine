@@ -181,7 +181,8 @@ public final class ImportFont {
 
         // Check if endpoint is different OR if control points are non-degenerate
         if (!endpoint.equals(context.position) ||
-                crossProduct(c1.sub(endpoint, new Vector2d()), c2.sub(endpoint, new Vector2d())) != 0.0) {
+                crossProduct(new Vector2d(c1).sub(endpoint),
+                        new Vector2d(c2).sub(endpoint)) != 0.0) {
             context.contour.edges.add(new EdgeHolder(
                     EdgeSegment.create(context.position, c1, c2, endpoint,
                             new ColorHolder(EdgeColorEnum.WHITE.getValue().color))
@@ -225,7 +226,7 @@ public final class ImportFont {
             ftFunctions.delta(0);
 
             long userPtr = storeUserObject(context);
-            int error = FT_Outline_Decompose(outline, ftFunctions, userPtr);
+            int error = FT_Outline_Decompose(outline, ftFunctions, 0L);
 
             // Remove empty trailing contour if present
             if (!output.contours.isEmpty() &&
@@ -255,9 +256,10 @@ public final class ImportFont {
         FT_Face face = font.face();
         int glyphIndex = FT_Get_Char_Index(face, unicode);
 
+        /*
         if (glyphIndex == 0) {
             return false;
-        }
+        }*/
 
         int error = FT_Load_Glyph(face, glyphIndex, FT_LOAD_NO_SCALE);
         if (error != 0) {
