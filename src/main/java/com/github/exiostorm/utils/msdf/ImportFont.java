@@ -178,11 +178,10 @@ public final class ImportFont {
         Vector2d endpoint = ftPoint2(toVec, context.scale);
         Vector2d c1 = ftPoint2(control1Vec, context.scale);
         Vector2d c2 = ftPoint2(control2Vec, context.scale);
-        double cross = (c1.x - endpoint.x) * (c2.y - endpoint.y)
-                - (c1.y - endpoint.y) * (c2.x - endpoint.x);
-
         // Check if endpoint is different OR if control points are non-degenerate
-        if (!endpoint.equals(context.position) || cross != 0.0) {
+        if (!endpoint.equals(context.position) ||
+                crossProduct(new Vector2d(c1).sub(endpoint),
+                        new Vector2d(c2).sub(endpoint)) != 0.0) {
             context.contour.edges.add(new EdgeHolder(
                     EdgeSegment.create(context.position, c1, c2, endpoint,
                             new ColorHolder(EdgeColorEnum.WHITE.getValue().color))
