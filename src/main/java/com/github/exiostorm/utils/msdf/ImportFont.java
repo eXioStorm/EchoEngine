@@ -178,7 +178,6 @@ public final class ImportFont {
         Vector2d endpoint = ftPoint2(toVec, context.scale);
         Vector2d c1 = ftPoint2(control1Vec, context.scale);
         Vector2d c2 = ftPoint2(control2Vec, context.scale);
-        // Check if endpoint is different OR if control points are non-degenerate
         if (!endpoint.equals(context.position) ||
                 crossProduct(new Vector2d(c1).sub(endpoint),
                         new Vector2d(c2).sub(endpoint)) != 0.0) {
@@ -186,7 +185,7 @@ public final class ImportFont {
                     EdgeSegment.create(context.position, c1, c2, endpoint,
                             new ColorHolder(EdgeColorEnum.WHITE.getValue().color))
             ));
-            context.position = endpoint;
+            context.position = new Vector2d(endpoint);
         }
         return 0;
     }
