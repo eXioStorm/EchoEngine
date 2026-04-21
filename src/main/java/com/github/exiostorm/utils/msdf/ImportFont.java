@@ -51,6 +51,19 @@ public final class ImportFont {
     }
 
     // ------------------------------
+    // Font metrics
+    // ------------------------------
+
+    public static final class FontMetrics {
+        public double emSize;
+        public double ascenderY;
+        public double descenderY;
+        public double lineHeight;
+        public double underlineY;
+        public double underlineThickness;
+    }
+
+    // ------------------------------
     // Font handle wrapper
     // ------------------------------
 
@@ -210,6 +223,7 @@ public final class ImportFont {
     }
     public static int readFreetypeOutline(MsdfShape output, FT_Outline outline, double scale) {
         output.contours.clear();
+        //output.inverseYAxis = false;
 
         FtContext context = new FtContext();
         context.scale = scale;
@@ -225,6 +239,7 @@ public final class ImportFont {
             ftFunctions.shift(0);
             ftFunctions.delta(0);
 
+            // not used, but method is necessary for the rest of the process.
             long userPtr = storeUserObject(context);
             int error = FT_Outline_Decompose(outline, ftFunctions, 0L);
 
@@ -238,6 +253,20 @@ public final class ImportFont {
         } finally {
             contextHolder.remove();
         }
+    }
+
+    public static boolean getFontMetrics(FontMetrics metrics, FontHandle font,
+                                         FontCoordinateScaling coordinateScaling) {
+        if (font == null) return false;
+        FT_Face face = font.face();
+        double scale = getFontCoordinateScale(face, coordinateScaling);
+        metrics.emSize             = scale * face.units_per_EM();
+        metrics.ascenderY          = scale * face.ascender();
+        metrics.descenderY         = scale * face.descender();
+        metrics.lineHeight         = scale * face.height();
+        metrics.underlineY         = scale * face.underline_position();
+        metrics.underlineThickness = scale * face.underline_thickness();
+        return true;
     }
 
     // ------------------------------
@@ -306,5 +335,53 @@ public final class ImportFont {
         }
 
         return readFreetypeOutline(output, slot.outline(), scale) == 0;
+    }
+    // ------------------------------
+// Kerning
+// ------------------------------
+
+    /**
+     * Outputs the kerning distance between two glyphs, addressed by glyph index.
+     * Mirrors: bool getKerning(double &output, FontHandle*, GlyphIndex, GlyphIndex, FontCoordinateScaling)
+     */
+    public static boolean getKerning(double[] output, FontHandle font, int glyphIndex0, int glyphIndex1,
+                                     FontCoordinateScaling coordinateScaling) {
+        if (font == null) return false;
+        FT_Face face = font.face();
+        try (MemoryStack stack = stackPush()) {
+            FT_Vector kerning = FT_Vector.malloc(stack);
+            int error = FT_Get_Kerning(face, glyphIndex0, glyphIndex1, FT_KERNING_UNSCALED, kerning);
+            if (error != 0) {
+                if (output != null && output.length > 0) output[0] = 0.0;
+                return false;
+            }
+            if (output != null && output.length > 0) {
+                output[0] = getFontCoordinateScale(face, coordinateScaling) * kerning.x();
+            }
+            return true;
+        }
+    }
+
+    // Default overload matching C++'s FONT_SCALING_LEGACY default parameter
+    public static boolean getKerning(double[] output, FontHandle font, int glyphIndex0, int glyphIndex1) {
+        return getKerning(output, font, glyphIndex0, glyphIndex1, FontCoordinateScaling.FONT_SCALING_LEGACY);
+    }
+
+    /**
+     * Outputs the kerning distance between two glyphs, addressed by Unicode codepoint.
+     * Mirrors: bool getKerning(double &output, FontHandle*, unicode_t, unicode_t, FontCoordinateScaling)
+     */
+    public static boolean getKerning(double[] output, FontHandle font, long unicode0, long unicode1,
+                                     FontCoordinateScaling coordinateScaling) {
+        if (font == null) return false;
+        FT_Face face = font.face();
+        int glyphIndex0 = FT_Get_Char_Index(face, unicode0);
+        int glyphIndex1 = FT_Get_Char_Index(face, unicode1);
+        return getKerning(output, font, glyphIndex0, glyphIndex1, coordinateScaling);
+    }
+
+    // Default overload
+    public static boolean getKerning(double[] output, FontHandle font, long unicode0, long unicode1) {
+        return getKerning(output, font, unicode0, unicode1, FontCoordinateScaling.FONT_SCALING_LEGACY);
     }
 }
