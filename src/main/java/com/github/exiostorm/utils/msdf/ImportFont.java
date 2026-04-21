@@ -269,6 +269,47 @@ public final class ImportFont {
         return true;
     }
 
+    public static boolean
+    getFontWhitespaceWidth(
+            double[] spaceAdvance,
+            double[] tabAdvance,
+            FontHandle font,
+            FontCoordinateScaling coordinateScaling) {
+
+        if (font == null) return false;
+        FT_Face face = font.face();
+        double scale =
+                getFontCoordinateScale(
+                        face,
+                        coordinateScaling);
+
+        int error =
+                FT_Load_Char(face,
+                        ' ', FT_LOAD_NO_SCALE);
+        if (error != 0)
+            return false;
+
+        if (spaceAdvance != null
+                && spaceAdvance.length > 0)
+            spaceAdvance[0] =
+                    scale * face.glyph()
+                            .advance().x();
+
+        error =
+                FT_Load_Char(face,
+                        '\t', FT_LOAD_NO_SCALE);
+        if (error != 0)
+            return false;
+
+        if (tabAdvance != null
+                && tabAdvance.length > 0)
+            tabAdvance[0] =
+                    scale * face.glyph()
+                            .advance().x();
+
+        return true;
+    }
+
     // ------------------------------
     // Glyph loading
     // ------------------------------
