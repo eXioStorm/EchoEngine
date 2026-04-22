@@ -2,6 +2,7 @@ package com.github.exiostorm.utils.msdf;
 
 import com.github.exiostorm.utils.msdf.enums.EdgeColorEnum;
 import org.joml.Vector2d;
+import org.lwjgl.CLongBuffer;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.*;
 import org.lwjgl.util.freetype.*;
@@ -133,6 +134,100 @@ public final class ImportFont {
                 return 1.0 / 64.0; // MSDFGEN_LEGACY_FONT_COORDINATE_SCALE
             default:
                 return 1.0;
+        }
+    }
+
+    // Matches: #define DOUBLE_TO_F16DOT16(x) FT_Fixed(65536.*x)
+    private static long DOUBLE_TO_F16DOT16(double x) {
+        return (long)(65536.0 * x);
+    }
+
+    private static double F16DOT16_TO_DOUBLE(long x) {
+        return x / 65536.0;
+    }
+    // FontVariationAxis mirrors the C++ struct of the same name
+    public static final class FontVariationAxis {
+        public String name;
+        public double minValue;
+        public double maxValue;
+        public double defaultValue;
+    }
+
+    public static boolean setFontVariationAxis(
+            FreetypeHandle library, FontHandle font,
+            String name, double coordinate) {
+
+        boolean success = false;
+        FT_Face face = font.face();
+
+        if ((face.face_flags() & FT_FACE_FLAG_MULTIPLE_MASTERS) != 0) {
+            try (MemoryStack stack = stackPush()) {
+                PointerBuffer pMaster = stack.mallocPointer(1);
+                if (FT_Get_MM_Var(face, pMaster) != 0)
+                    return false;
+
+                FT_MM_Var master = FT_MM_Var.createSafe(pMaster.get(0));
+                try {
+                    if (master != null && master.num_axis() > 0) {
+                        int numAxes = master.num_axis();
+                        CLongBuffer coords = stack.mallocCLong(numAxes);
+
+                        if (FT_Get_Var_Design_Coordinates(face, coords) == 0) {
+                            FT_Var_Axis.Buffer axes = master.axis();
+                            for (int i = 0; i < numAxes; i++) {
+                                FT_Var_Axis axis = axes.get(i);
+                                if (name.equals(axis.nameString())) {
+                                    coords.put(i, DOUBLE_TO_F16DOT16(coordinate));
+                                    success = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (FT_Set_Var_Design_Coordinates(face, coords) != 0)
+                            success = false;
+                    }
+                } finally {
+                    // Mirrors: FT_Done_MM_Var(library->library, master)
+                    FT_Done_MM_Var(library.library(), master);
+                }
+            }
+        }
+        return success;
+    }
+
+    public static boolean listFontVariationAxes(
+            List<FontVariationAxis> axes,
+            FreetypeHandle library, FontHandle font) {
+
+        FT_Face face = font.face();
+        if ((face.face_flags() & FT_FACE_FLAG_MULTIPLE_MASTERS) == 0)
+            return false;
+
+        try (MemoryStack stack = stackPush()) {
+            PointerBuffer pMaster = stack.mallocPointer(1);
+            if (FT_Get_MM_Var(face, pMaster) != 0)
+                return false;
+
+            FT_MM_Var master = FT_MM_Var.createSafe(pMaster.get(0));
+            try {
+                if (master == null) return false;
+                int numAxes = master.num_axis();
+                axes.clear();
+                FT_Var_Axis.Buffer ftAxes = master.axis();
+                for (int i = 0; i < numAxes; i++) {
+                    FT_Var_Axis src = ftAxes.get(i);
+                    FontVariationAxis dst = new FontVariationAxis();
+                    dst.name         = src.nameString();
+                    dst.minValue     = F16DOT16_TO_DOUBLE(src.minimum());
+                    dst.maxValue     = F16DOT16_TO_DOUBLE(src.maximum());
+                    dst.defaultValue = F16DOT16_TO_DOUBLE(src.def());
+                    axes.add(dst);
+                }
+            } finally {
+                FT_Done_MM_Var(library.library(), master);
+            }
+            return true;
         }
     }
 
@@ -310,6 +405,20 @@ public final class ImportFont {
         return true;
     }
 
+    public static boolean getGlyphCount(int[] output, FontHandle font) {
+        if (font == null) return false;
+        if (output != null && output.length > 0)
+            output[0] = (int) font.face().num_glyphs();
+        return true;
+    }
+    public static boolean getGlyphIndex(int[] glyphIndex, FontHandle font, long unicode) {
+        if (font == null) return false;
+        int idx = FT_Get_Char_Index(font.face(), unicode);
+        if (glyphIndex != null && glyphIndex.length > 0)
+            glyphIndex[0] = idx;
+        return idx != 0;
+    }
+
     // ------------------------------
     // Glyph loading
     // ------------------------------
@@ -317,7 +426,7 @@ public final class ImportFont {
     /**
      * Loads a glyph by Unicode codepoint and converts its outline into an msdfgen Shape.
      */
-    public static boolean loadGlyph(MsdfShape output, FontHandle font, int unicode,
+    public static boolean loadGlyph(MsdfShape output, FontHandle font, long unicode,
                                     FontCoordinateScaling coordinateScaling, double[] outAdvance) {
         if (font == null) {
             return false;
@@ -347,7 +456,7 @@ public final class ImportFont {
     }
 
     // Convenience overload with legacy scaling
-    public static boolean loadGlyph(MsdfShape output, FontHandle font, int unicode, double[] outAdvance) {
+    public static boolean loadGlyph(MsdfShape output, FontHandle font, long unicode, double[] outAdvance) {
         return loadGlyph(output, font, unicode, FontCoordinateScaling.FONT_SCALING_LEGACY, outAdvance);
     }
 

@@ -20,7 +20,7 @@ public class MsdfShape {
 
     private static final double DECONVERGE_OVERSHOOT = 1.11111111111111111; // moves control points slightly more than necessary to account for floating-point errors
 
-    private boolean inverseYAxis;
+    public boolean inverseYAxis;
 
     public static class Bounds {
         public double l, b, r, t;
