@@ -186,6 +186,7 @@ public class TextureManager {
         }
     }
 
+    //TODO !!! [20260521] ffs. things I don't know about when I do things... width and height can be fetched when loading the image file... wait, I did that in my catch? need to figure out why I make a json with dimensions when the file itself already has them.
     private static void loadDimensionsFromJson(Texture texture, File jsonFile) {
         //System.out.println("FOUND EXISTING DIMENSIONS JSON FILE! : " + jsonFile.getPath());
 
